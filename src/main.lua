@@ -6,10 +6,10 @@ local camera
 local mode7
 
 function love.load()
-  -- Set up window
+  -- Set up window with vsync enabled
   love.window.setMode(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT, {
     resizable = false,
-    vsync = true,
+    vsync = true,           -- Ensure vsync is enabled
     minwidth = 400,
     minheight = 300
   })
@@ -19,8 +19,8 @@ function love.load()
   mode7 = Mode7:new()
   mode7:load()
   
-  -- Debug info
-  love.graphics.setNewFont(12)
+  -- Enable texture filtering
+  love.graphics.setDefaultFilter('linear', 'linear')
 end
 
 function love.update(dt)
