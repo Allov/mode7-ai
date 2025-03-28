@@ -2,10 +2,12 @@ local Constants = require('src.constants')
 local Camera = require('src.camera')
 local Mode7 = require('src.mode7')
 local Enemy = require('src.enemy')
+local Projectile = require('src.projectile')
 
 local camera
 local mode7
 local enemies = {}
+local projectiles = {}  -- Add projectiles table
 
 function love.load()
   -- Set up window with vsync enabled
@@ -23,6 +25,7 @@ function love.load()
   
   -- Create some enemies
   enemies = {}
+  projectiles = {}  -- Initialize projectiles table
   
   -- Add standing enemies in a circle formation
   local radius = 300
@@ -56,20 +59,30 @@ function love.update(dt)
   for _, enemy in ipairs(enemies) do
     enemy:update(dt)
   end
+  
+  -- Update projectiles
+  for i = #projectiles, 1, -1 do
+    local projectile = projectiles[i]
+    if projectile:update(dt) then
+      -- Remove projectile if it's expired
+      table.remove(projectiles, i)
+    end
+  end
 end
 
 function love.draw()
   -- Clear screen
   love.graphics.clear(0.5, 0.7, 1.0)
   
-  -- Render Mode 7 ground
-  mode7:render(camera, enemies)
+  -- Render Mode 7 ground with enemies and projectiles
+  mode7:render(camera, enemies, projectiles)
   
   -- Debug info
   love.graphics.setColor(1, 1, 1)
   love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
   love.graphics.print(string.format("Camera: X: %.1f Y: %.1f A: %.1f°", 
     camera.x, camera.y, math.deg(camera.angle)), 10, 30)
+  love.graphics.print("Projectiles: " .. #projectiles, 10, 50)
 end
 
 function love.keypressed(key)
@@ -77,5 +90,23 @@ function love.keypressed(key)
     love.event.quit()
   end
 end
+
+function love.mousepressed(x, y, button)
+  if button == 1 then  -- Left click
+    -- Create new projectile at camera position, adjusted for height
+    local proj = Projectile:new():init(
+      camera.x,
+      camera.y,
+      camera.angle,
+      camera.z  -- Pass camera height to init
+    )
+    table.insert(projectiles, proj)
+  end
+end
+
+
+
+
+
 
 

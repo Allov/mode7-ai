@@ -4,6 +4,7 @@ local Mode7 = {
   texture = nil,
   shader = nil,
   enemyTexture = nil,
+  projectileTexture = nil,
   fogColor = {0.5, 0.7, 1.0}
 }
 
@@ -20,7 +21,12 @@ function Mode7:load()
   
   -- Load enemy sprite with transparency enabled
   self.enemyTexture = love.graphics.newImage('assets/images/enemy.png')
-  self.enemyTexture:setFilter('linear', 'linear')  -- Optional: for smoother scaling
+  self.enemyTexture:setFilter('linear', 'linear')
+  
+  -- Add debug print to verify projectile texture loading
+  print("Loading projectile texture...")
+  self.projectileTexture = love.graphics.newImage('assets/images/projectile.png')
+  self.projectileTexture:setFilter('linear', 'linear')
   
   -- Load and setup shader
   self.shader = love.graphics.newShader('src/shaders/mode7.glsl')
@@ -33,7 +39,7 @@ function Mode7:load()
   self.shader:send('textureDimensions', {w, h})
 end
 
-function Mode7:render(camera, enemies)
+function Mode7:render(camera, enemies, projectiles)
   -- Draw ground plane with shader
   love.graphics.setShader(self.shader)
   love.graphics.setColor(1, 1, 1, 1)
@@ -58,7 +64,22 @@ function Mode7:render(camera, enemies)
   -- Draw enemies
   if enemies then
     for _, enemy in ipairs(enemies) do
-      self:drawSprite(enemy, camera)
+      self:drawSprite(enemy, camera, {
+        texture = self.enemyTexture,
+        scale = 6.0,
+        useAngleScaling = true
+      })
+    end
+  end
+  
+  -- Draw projectiles
+  if projectiles then
+    for _, projectile in ipairs(projectiles) do
+      self:drawSprite(projectile, camera, {
+        texture = self.projectileTexture,
+        scale = 2.0,
+        useAngleScaling = false
+      })
     end
   end
   
@@ -66,10 +87,15 @@ function Mode7:render(camera, enemies)
   love.graphics.setBlendMode('alpha', 'alphamultiply')
 end
 
-function Mode7:drawSprite(enemy, camera)
+function Mode7:drawSprite(entity, camera, options)
+  options = options or {}
+  local texture = options.texture or self.enemyTexture
+  local scale = options.scale or 6.0
+  local useAngleScaling = options.useAngleScaling or false
+  
   -- Adjust camera offset for X axis
-  local dx = enemy.x - camera.x
-  local dy = enemy.y - camera.y
+  local dx = entity.x - camera.x
+  local dy = entity.y - camera.y
   
   -- Transform to camera space using same rotation as shader
   local cosA = math.cos(camera.angle)
@@ -85,7 +111,7 @@ function Mode7:drawSprite(enemy, camera)
   ry = math.max(ry, MIN_RENDER_DISTANCE)
   
   -- Calculate sprite scale based on distance
-  local spriteScale = (Constants.CAMERA_HEIGHT / ry) * 6.0
+  local spriteScale = (Constants.CAMERA_HEIGHT / ry) * scale
   
   -- Match shader's perspective transformation exactly
   local screenX = Constants.SCREEN_WIDTH/2 + 
@@ -97,69 +123,34 @@ function Mode7:drawSprite(enemy, camera)
                   (Constants.CAMERA_HEIGHT / ry)
   
   -- Position sprite above ground position by half its height
-  local screenY = groundY - (self.enemyTexture:getHeight() * spriteScale / 2)
+  local screenY = groundY - (texture:getHeight() * spriteScale / 2)
   
   -- Apply fog
   local distance = math.sqrt(rx * rx + ry * ry)
   local fogFactor = math.min(distance / Constants.DRAW_DISTANCE, 1)
   love.graphics.setColor(1, 1, 1, 1 - fogFactor * 0.8)
   
-  -- Calculate the relative angle between enemy and camera
-  local relativeAngle = math.atan2(dx, dy) - camera.angle
-  
-  -- Calculate apparent width based on viewing angle
-  -- This will make the sprite appear thinner when viewed from the side
-  local angleScale = math.abs(math.cos(relativeAngle))
-  local widthScale = spriteScale * (0.2 + 0.8 * angleScale)  -- Keep minimum width of 20%
+  -- Calculate width scaling based on viewing angle if needed
+  local widthScale = spriteScale
   local heightScale = spriteScale
   
+  if useAngleScaling then
+    local relativeAngle = math.atan2(dx, dy) - camera.angle
+    local angleScale = math.abs(math.cos(relativeAngle))
+    widthScale = spriteScale * (0.2 + 0.8 * angleScale)  -- Keep minimum width of 20%
+  end
+  
   love.graphics.draw(
-    self.enemyTexture,
+    texture,
     screenX,
     screenY,
     0,  -- Keep sprite upright
     widthScale,
     heightScale,
-    self.enemyTexture:getWidth()/2,
-    self.enemyTexture:getHeight()/2
+    texture:getWidth()/2,
+    texture:getHeight()/2
   )
 end
 
 return Mode7
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
