@@ -1,4 +1,10 @@
 -- Root main.lua - Entry point
-require('src.main')
+if arg[1] == "test" then
+  -- Run tests
+  require('test.main')
+else
+  -- Normal game execution
+  require('src.main')
+end
 
 

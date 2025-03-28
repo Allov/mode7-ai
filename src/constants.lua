@@ -6,7 +6,7 @@ return {
   -- Mode 7 specific constants
   HORIZON_LINE = 100,
   FOV = 90,
-  DRAW_DISTANCE = 300,
+  DRAW_DISTANCE = 1500,  -- This now controls the fog distance
   CAMERA_HEIGHT = 100,
   
   -- Camera settings
@@ -16,3 +16,4 @@ return {
   CAMERA_HEIGHT = 100,        -- Camera height above ground
   CAMERA_FOV = 90,           -- Field of view in degrees
 }
+

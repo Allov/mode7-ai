@@ -3,12 +3,14 @@ uniform float cameraAngle;
 uniform float cameraHeight;
 uniform float horizonLine;
 uniform vec2 textureDimensions;
+uniform float maxDistance;  // Add this uniform for fog control
+uniform vec3 fogColor;      // Add this for fog color
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
     // Skip pixels above horizon
     if (screen_coords.y < horizonLine) {
-        return vec4(0.0);
+        return vec4(fogColor, 1.0);  // Return fog color above horizon
     }
     
     // Calculate distance from camera to point on ground plane
@@ -29,8 +31,16 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     
     // Sample texture
     vec2 texCoord = rotated / textureDimensions;
-    return Texel(tex, mod(texCoord, 1.0)) * color;
+    vec4 texColor = Texel(tex, mod(texCoord, 1.0)) * color;
+    
+    // Apply distance-based fog
+    float fogFactor = clamp(distance / maxDistance, 0.0, 1.0);
+    fogFactor = smoothstep(0.0, 1.0, fogFactor);  // Smooth the transition
+    
+    // Mix between texture color and fog color
+    return mix(texColor, vec4(fogColor, 1.0), fogFactor);
 }
+
 
 
 

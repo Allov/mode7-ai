@@ -2,7 +2,8 @@ local Constants = require('src.constants')
 
 local Mode7 = {
   texture = nil,
-  shader = nil
+  shader = nil,
+  fogColor = {0.5, 0.7, 1.0}  -- Sky blue fog color
 }
 
 function Mode7:new(o)
@@ -20,6 +21,8 @@ function Mode7:load()
   self.shader = love.graphics.newShader('src/shaders/mode7.glsl')
   self.shader:send('horizonLine', Constants.HORIZON_LINE)
   self.shader:send('cameraHeight', Constants.CAMERA_HEIGHT)
+  self.shader:send('maxDistance', Constants.DRAW_DISTANCE)
+  self.shader:send('fogColor', self.fogColor)
   
   -- Send texture dimensions
   local w, h = self.texture:getDimensions()
@@ -47,6 +50,7 @@ function Mode7:render(camera)
 end
 
 return Mode7
+
 
 
 
