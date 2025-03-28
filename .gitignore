@@ -1,0 +1,54 @@
+# Compiled Lua sources
+luac.out
+*.o
+*.os
+*.ko
+*.obj
+*.elf
+
+# Lua package manager (LuaRocks) build files
+*.src.rock
+*.zip
+*.tar.gz
+*.love
+
+# Build directory
+build/
+dist/
+
+# Dependencies
+/vendor/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor files
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Debug files
+debug.log
+*.log
+
+# Game save files (if applicable)
+saves/
+*.sav
+
+# Environment variables
+.env
+.env.local
+
+# Temporary files
+tmp/
+temp/

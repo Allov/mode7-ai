@@ -1,0 +1,3 @@
+@echo off
+echo Running LÖVE tests...
+lovec . test %* 2>NUL
