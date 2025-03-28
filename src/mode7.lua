@@ -77,7 +77,7 @@ function Mode7:render(camera, enemies, projectiles)
     for _, projectile in ipairs(projectiles) do
       self:drawSprite(projectile, camera, {
         texture = self.projectileTexture,
-        scale = 2.0,
+        scale = 4.0,  -- Increased from 2.0 to 4.0
         useAngleScaling = false
       })
     end
@@ -153,4 +153,5 @@ function Mode7:drawSprite(entity, camera, options)
 end
 
 return Mode7
+
 

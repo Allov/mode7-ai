@@ -18,8 +18,13 @@ function love.load()
     minheight = 300
   })
   
-  -- Initialize objects
+  -- Initialize camera first
   camera = Camera:new()
+  
+  -- Make camera globally accessible
+  _G.camera = camera  -- This allows projectiles to access camera position
+  
+  -- Initialize objects
   mode7 = Mode7:new()
   mode7:load()
   
@@ -56,15 +61,30 @@ function love.update(dt)
   camera:update(dt)
   
   -- Update enemies
-  for _, enemy in ipairs(enemies) do
+  for i = #enemies, 1, -1 do
+    local enemy = enemies[i]
     enemy:update(dt)
+    
+    -- Check collisions with projectiles
+    for j = #projectiles, 1, -1 do
+      local projectile = projectiles[j]
+      if projectile:checkCollision(enemy, camera) then
+        -- Remove projectile
+        table.remove(projectiles, j)
+        
+        -- Damage enemy and remove if defeated
+        if enemy:hit(25) then
+          table.remove(enemies, i)
+          break  -- Skip remaining projectile checks for this enemy
+        end
+      end
+    end
   end
   
   -- Update projectiles
   for i = #projectiles, 1, -1 do
     local projectile = projectiles[i]
     if projectile:update(dt) then
-      -- Remove projectile if it's expired
       table.remove(projectiles, i)
     end
   end
@@ -103,6 +123,9 @@ function love.mousepressed(x, y, button)
     table.insert(projectiles, proj)
   end
 end
+
+
+
 
 
 

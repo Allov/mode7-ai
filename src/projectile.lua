@@ -3,12 +3,20 @@ local Constants = require('src.constants')
 local Projectile = {
   x = 0,
   y = 0,
-  z = 0,  -- Add z coordinate for height
+  z = 0,
   angle = 0,
-  speed = 500,  -- Projectile speed (pixels per second)
-  lifetime = 2, -- How long the projectile lives (seconds)
-  age = 0      -- Current age of projectile
+  speed = 500,
+  lifetime = 2,
+  age = 0,
+  radius = 20  -- Increased from 10 to 20
 }
+
+-- Helper function to get distance to another position
+function Projectile:distanceTo(x, y)
+  local dx = self.x - x
+  local dy = self.y - y
+  return math.sqrt(dx * dx + dy * dy)
+end
 
 function Projectile:new(o)
   o = o or {}
@@ -26,6 +34,21 @@ function Projectile:init(x, y, angle, height)
   return self
 end
 
+-- Add collision check method
+function Projectile:checkCollision(enemy, camera)
+  local dx = self.x - enemy.x
+  local dy = self.y - enemy.y
+  local distance = math.sqrt(dx * dx + dy * dy)
+  
+  -- Scale enemy radius based on distance from camera
+  local MIN_RENDER_DISTANCE = 50
+  local distanceFromCamera = math.max(enemy:distanceTo(camera.x, camera.y), MIN_RENDER_DISTANCE)
+  local scaleMultiplier = Constants.CAMERA_HEIGHT / distanceFromCamera
+  local scaledEnemyRadius = enemy.radius * scaleMultiplier * 6.0  -- Match the sprite scale in Mode7:drawSprite
+  
+  return distance < (self.radius + scaledEnemyRadius)
+end
+
 function Projectile:update(dt)
   -- Update position based on angle and speed
   -- Match the camera's coordinate system
@@ -40,5 +63,9 @@ function Projectile:update(dt)
 end
 
 return Projectile
+
+
+
+
 
 

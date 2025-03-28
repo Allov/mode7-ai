@@ -6,12 +6,12 @@ local Enemy = {
   angle = 0,
   speed = 50,
   turnSpeed = 1,
-  
-  -- AI state
-  isMoving = true,  -- New property to control if enemy moves
+  radius = 25,  -- Base radius before scaling
+  isMoving = true,
   thinkTime = 0,
-  thinkInterval = 2, -- Time between direction changes
-  targetAngle = 0
+  thinkInterval = 2,
+  targetAngle = 0,
+  health = 100
 }
 
 function Enemy:new(o)
@@ -75,5 +75,13 @@ function math.clamp(x, min, max)
   return math.min(math.max(x, min), max)
 end
 
+-- Add hit method
+function Enemy:hit(damage)
+  self.health = self.health - (damage or 25)
+  return self.health <= 0  -- Return true if enemy is defeated
+end
+
 return Enemy
+
+
 
