@@ -13,33 +13,35 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         return vec4(fogColor, 1.0);
     }
     
-    // Use higher precision for distance calculation
+    // Calculate distance to point on ground plane
     float distance = (cameraHeight * (love_ScreenSize.y - horizonLine)) 
-                    / max(screen_coords.y - horizonLine, 0.001); // Prevent division by zero
+                    / (screen_coords.y - horizonLine);
     
-    // Improve precision for world position calculation
+    // Calculate world position
     vec2 worldPos;
     float aspectRatio = love_ScreenSize.x / love_ScreenSize.y;
-    worldPos.x = (screen_coords.x - love_ScreenSize.x * 0.5) * distance * aspectRatio / love_ScreenSize.y;
+    // Convert screen space to world space
+    worldPos.x = (screen_coords.x - love_ScreenSize.x * 0.5) * distance / (love_ScreenSize.y * 0.5);
     worldPos.y = distance;
     
-    // Use precise rotation matrix
-    float cosA = cos(cameraAngle);
-    float sinA = sin(cameraAngle);
+    // Rotate world position
+    float cosA = cos(-cameraAngle);  // Note: Positive angle
+    float sinA = sin(-cameraAngle);
     vec2 rotated = vec2(
         worldPos.x * cosA - worldPos.y * sinA,
         worldPos.x * sinA + worldPos.y * cosA
     );
     
-    // Add camera position after rotation to reduce floating point errors
+    // Add camera position
     rotated += cameraPos;
     
-    // Apply anti-aliasing to texture sampling
+    // Sample texture with wrapping
     vec2 texCoord = rotated / textureDimensions;
+    
+    // Apply bilinear filtering
     vec2 texelSize = 1.0 / textureDimensions;
     vec2 frac = fract(texCoord * textureDimensions);
     
-    // Bilinear filtering for smoother texture sampling
     vec2 texCoord1 = floor(texCoord * textureDimensions) / textureDimensions;
     vec2 texCoord2 = texCoord1 + vec2(texelSize.x, 0.0);
     vec2 texCoord3 = texCoord1 + vec2(0.0, texelSize.y);
@@ -56,10 +58,13 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         frac.y
     ) * color;
     
-    // Smooth fog transition
-    float fogStart = maxDistance * 0.6; // Start fog earlier
+    // Apply fog
+    float fogStart = maxDistance * 0.6;
     float fogFactor = smoothstep(fogStart, maxDistance, distance);
     
     return mix(texColor, vec4(fogColor, 1.0), fogFactor);
 }
+
+
+
 

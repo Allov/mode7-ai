@@ -46,10 +46,10 @@ function Camera:handleInput()
   
   -- Rotation (Q/E or Left/Right arrows)
   if love.keyboard.isDown('q') or love.keyboard.isDown('left') then
-    self.rotation = 1
+    self.rotation = -1
   end
   if love.keyboard.isDown('e') or love.keyboard.isDown('right') then
-    self.rotation = -1
+    self.rotation = 1
   end
 end
 
@@ -61,10 +61,10 @@ function Camera:update(dt)
   self.angle = self.angle + (self.rotation * self.turnSpeed * dt)
   
   -- Calculate forward and sideways movement vectors
-  local forwardX = -math.sin(self.angle)  -- Changed cos to -sin
-  local forwardY = math.cos(self.angle)   -- Changed sin to cos
-  local strafeX = -math.cos(self.angle)   -- Changed to -cos
-  local strafeY = -math.sin(self.angle)   -- Changed to -sin
+  local forwardX = math.sin(self.angle)  -- Changed from -sin to cos
+  local forwardY = math.cos(self.angle)  -- Changed from cos to sin
+  local strafeX = math.sin(self.angle - math.pi/2)  -- Changed to proper right vector
+  local strafeY = math.cos(self.angle - math.pi/2)  -- Changed to proper right vector
   
   -- Apply forward/backward movement
   self.x = self.x + (forwardX * self.forward * self.moveSpeed * dt)
@@ -86,12 +86,13 @@ end
 -- Helper function to get camera right vector (perpendicular to direction)
 function Camera:getRightVector()
   return {
-    x = math.cos(self.angle + math.pi/2),
-    y = math.sin(self.angle + math.pi/2)
+    x = math.cos(self.angle - math.pi/2),
+    y = math.sin(self.angle - math.pi/2)
   }
 end
 
 return Camera
+
 
 
 
