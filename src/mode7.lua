@@ -84,6 +84,9 @@ function Mode7:drawSprite(enemy, camera)
   local MIN_RENDER_DISTANCE = 50
   ry = math.max(ry, MIN_RENDER_DISTANCE)
   
+  -- Calculate sprite scale based on distance
+  local spriteScale = (Constants.CAMERA_HEIGHT / ry) * 6.0
+  
   -- Match shader's perspective transformation exactly
   local screenX = Constants.SCREEN_WIDTH/2 + 
                   (rx * Constants.SCREEN_HEIGHT * 0.5) / ry
@@ -93,31 +96,42 @@ function Mode7:drawSprite(enemy, camera)
                   (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
                   (Constants.CAMERA_HEIGHT / ry)
   
-  local screenY = groundY
-  -- Increased base scale factor from 2.0 to 6.0 for larger sprites
-  local spriteScale = (Constants.CAMERA_HEIGHT / ry) * 6.0
+  -- Position sprite above ground position by half its height
+  local screenY = groundY - (self.enemyTexture:getHeight() * spriteScale / 2)
   
   -- Apply fog
   local distance = math.sqrt(rx * rx + ry * ry)
   local fogFactor = math.min(distance / Constants.DRAW_DISTANCE, 1)
   love.graphics.setColor(1, 1, 1, 1 - fogFactor * 0.8)
   
-  -- Fix sprite rotation to match camera space
-  local spriteAngle = enemy.angle - camera.angle
+  -- Calculate the relative angle between enemy and camera
+  local relativeAngle = math.atan2(dx, dy) - camera.angle
+  
+  -- Calculate apparent width based on viewing angle
+  -- This will make the sprite appear thinner when viewed from the side
+  local angleScale = math.abs(math.cos(relativeAngle))
+  local widthScale = spriteScale * (0.2 + 0.8 * angleScale)  -- Keep minimum width of 20%
+  local heightScale = spriteScale
   
   love.graphics.draw(
     self.enemyTexture,
     screenX,
     screenY,
-    spriteAngle,
-    spriteScale,
-    spriteScale,
+    0,  -- Keep sprite upright
+    widthScale,
+    heightScale,
     self.enemyTexture:getWidth()/2,
-    self.enemyTexture:getHeight()
+    self.enemyTexture:getHeight()/2
   )
 end
 
 return Mode7
+
+
+
+
+
+
 
 
 
