@@ -7,7 +7,7 @@ local Player = {
   y = 0,
   angle = 0,
   moveSpeed = 200,
-  strafeSpeed = 300,
+  strafeSpeed = 500,
   turnSpeed = 3.0,
   
   -- Combat properties
@@ -50,7 +50,16 @@ local Player = {
     moveSpeedMultiplier = 1.0,
     damageMultiplier = 1.0,
     critChanceBonus = 0
-  }
+  },
+  
+  -- Add dash properties
+  dashSpeed = 800,         -- Speed multiplier during dash
+  dashDuration = 0.15,     -- How long the dash lasts in seconds
+  dashCooldown = 0.5,      -- Time between dashes
+  isDashing = false,       -- Current dash state
+  dashTimer = 0,          -- Current dash duration
+  dashCooldownTimer = 0,  -- Current cooldown timer
+  dashDirection = {x = 0, y = 0}, -- Store dash direction
 }
 
 function Player:new(o)
@@ -97,10 +106,10 @@ function Player:handleInput()
   
   -- Strafe Left/Right (A/D)
   if love.keyboard.isDown('a') then
-    self.strafe = 1
+    self.strafe = -1  -- Changed from 1 to -1
   end
   if love.keyboard.isDown('d') then
-    self.strafe = -1
+    self.strafe = 1   -- Changed from -1 to 1
   end
   
   -- Rotation (Q/E or Left/Right arrows)
@@ -145,6 +154,11 @@ function Player:update(dt)
     self.invulnerableTimer = math.max(0, self.invulnerableTimer - dt)
   end
   
+  -- Update dash cooldown
+  if self.dashCooldownTimer > 0 then
+    self.dashCooldownTimer = self.dashCooldownTimer - dt
+  end
+
   -- Store previous position
   self.lastX = self.x
   self.lastY = self.y
@@ -155,19 +169,53 @@ function Player:update(dt)
   -- Update rotation
   self.angle = self.angle + (self.rotation * self.turnSpeed * dt)
   
-  -- Calculate forward and sideways movement vectors
-  local forwardX = math.sin(self.angle)
-  local forwardY = math.cos(self.angle)
-  local strafeX = math.sin(self.angle - math.pi/2)
-  local strafeY = math.cos(self.angle - math.pi/2)
-  
-  -- Apply forward/backward movement
-  self.x = self.x + (forwardX * self.forward * self.moveSpeed * dt)
-  self.y = self.y + (forwardY * self.forward * self.moveSpeed * dt)
-  
-  -- Apply strafe movement
-  self.x = self.x + (strafeX * self.strafe * self.strafeSpeed * dt)
-  self.y = self.y + (strafeY * self.strafe * self.strafeSpeed * dt)
+  -- Update dash state
+  if self.isDashing then
+    self.dashTimer = self.dashTimer - dt
+    if self.dashTimer <= 0 then
+      self.isDashing = false
+    end
+    
+    -- Move in dash direction
+    self.x = self.x + self.dashDirection.x * self.dashSpeed * dt
+    self.y = self.y + self.dashDirection.y * self.dashSpeed * dt
+  else
+    -- Normal movement
+    if self.forward ~= 0 or self.strafe ~= 0 then
+      -- Calculate movement vector (relative to player's angle)
+      local moveX = 0
+      local moveY = 0
+      
+      -- Forward/backward movement (relative to facing direction)
+      if self.forward ~= 0 then
+        moveX = math.sin(self.angle) * self.forward * self.moveSpeed
+        moveY = math.cos(self.angle) * self.forward * self.moveSpeed
+      end
+      
+      -- Strafe movement (perpendicular to facing direction)
+      if self.strafe ~= 0 then
+        moveX = moveX + math.sin(self.angle + math.pi/2) * self.strafe * self.strafeSpeed
+        moveY = moveY + math.cos(self.angle + math.pi/2) * self.strafe * self.strafeSpeed
+      end
+      
+      -- Check for dash input
+      if love.keyboard.isDown('lshift') and self.dashCooldownTimer <= 0 then
+        -- Normalize direction for dash
+        local length = math.sqrt(moveX * moveX + moveY * moveY)
+        if length > 0 then
+          self.dashDirection.x = moveX / length
+          self.dashDirection.y = moveY / length
+        end
+        self.isDashing = true
+        self.dashTimer = self.dashDuration
+        self.dashCooldownTimer = self.dashCooldown
+      else
+        -- Normal movement
+        self.x = self.x + moveX * dt
+        self.y = self.y + moveY * dt
+      end
+    end
+  end
   
   -- Update power-ups
   for i = #self.activePowerUps, 1, -1 do
@@ -271,6 +319,12 @@ function Player:updateStats()
 end
 
 return Player
+
+
+
+
+
+
 
 
 
