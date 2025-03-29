@@ -33,6 +33,13 @@ local Player = {
   experience = 0,
   level = 1,
   experienceToNextLevel = 100,  -- Base XP needed
+  
+  -- Add power-up related properties
+  activePowerUps = {},  -- Stores active power-ups
+  baseMoveSpeed = 200,  -- Store base values
+  baseDamage = 25,
+  basePickupRange = 50,
+  pickupRange = 50,     -- Current pickup range
 }
 
 function Player:new(o)
@@ -41,6 +48,7 @@ function Player:new(o)
   self.__index = self
   o.lastX = o.x
   o.lastY = o.y
+  o.activePowerUps = {}  -- Initialize power-ups table
   return o
 end
 
@@ -149,6 +157,17 @@ function Player:update(dt)
   -- Apply strafe movement
   self.x = self.x + (strafeX * self.strafe * self.strafeSpeed * dt)
   self.y = self.y + (strafeY * self.strafe * self.strafeSpeed * dt)
+  
+  -- Update power-ups
+  for i = #self.activePowerUps, 1, -1 do
+    local powerUp = self.activePowerUps[i]
+    powerUp.timeLeft = powerUp.timeLeft - dt
+    
+    if powerUp.timeLeft <= 0 then
+      table.remove(self.activePowerUps, i)
+      self:updatePowerUpEffects()  -- Recalculate effects when power-up expires
+    end
+  end
 end
 
 -- Helper function to get direction vector
@@ -179,6 +198,43 @@ function Player:levelUp()
   self.health = self.maxHealth
 end
 
+function Player:addPowerUp(type, multiplier, duration)
+  -- Debug print to verify power-up is being added
+  print("Adding power-up:", type, multiplier, duration)
+  
+  table.insert(self.activePowerUps, {
+    type = type,
+    multiplier = multiplier,
+    timeLeft = duration,
+    duration = duration  -- Store initial duration for UI
+  })
+  
+  -- Immediately apply effects
+  self:updatePowerUpEffects()
+end
+
+function Player:updatePowerUpEffects()
+  -- Reset to base values
+  self.moveSpeed = self.baseMoveSpeed
+  self.pickupRange = self.basePickupRange
+  
+  -- Apply all active power-ups
+  for _, powerUp in ipairs(self.activePowerUps) do
+    if powerUp.type == "speed" then
+      self.moveSpeed = self.moveSpeed * powerUp.multiplier
+    elseif powerUp.type == "range" then
+      self.pickupRange = self.pickupRange * powerUp.multiplier
+    elseif powerUp.type == "damage" then
+      -- Update damage
+      self.baseDamage = self.baseDamage * powerUp.multiplier
+    end
+  end
+end
+
 return Player
+
+
+
+
 
 

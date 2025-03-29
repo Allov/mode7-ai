@@ -3,19 +3,16 @@ local Constants = require('src.constants')
 local ExperienceOrb = {
   x = 0,
   y = 0,
-  z = 0,
+  z = 20,  -- Fixed height above ground
   value = 10,
   radius = 15,
-  pickupRadius = 50,      -- Distance at which player can collect
   magnetRadius = 150,     -- Distance at which orbs start flying to player
   maxSpeed = 500,        -- Maximum flight speed
   acceleration = 1000,   -- How quickly orb accelerates toward player
   velocityX = 0,
   velocityY = 0,
   age = 0,
-  lifetime = 20.0,       -- Orbs disappear after 20 seconds
-  bobHeight = 10,        -- How high it bobs up and down
-  bobSpeed = 2,          -- Speed of bobbing motion
+  lifetime = 20.0       -- Orbs disappear after 20 seconds
 }
 
 function ExperienceOrb:new(o)
@@ -39,9 +36,6 @@ end
 function ExperienceOrb:update(dt)
   self.age = self.age + dt
   
-  -- Bob up and down
-  self.z = self.bobHeight * math.sin(self.age * self.bobSpeed)
-  
   -- Check if expired
   if self.age >= self.lifetime then
     return true
@@ -52,8 +46,8 @@ function ExperienceOrb:update(dt)
   local dy = _G.player.y - self.y
   local distance = math.sqrt(dx * dx + dy * dy)
   
-  -- Check for pickup
-  if distance < self.pickupRadius then
+  -- Check for pickup using player's pickup range
+  if distance < _G.player.pickupRange then
     _G.player:gainExperience(self.value)
     return true
   end
@@ -90,3 +84,5 @@ function ExperienceOrb:update(dt)
 end
 
 return ExperienceOrb
+
+

@@ -5,6 +5,9 @@ local Mode7 = require('src.mode7')
 local Enemy = require('src.enemy')
 local Projectile = require('src.projectile')
 local ExperienceOrb = require('src.experienceorb')
+local Chest = require('src.chest')
+local PowerUp = require('src.powerup')
+local GameData = require('src.gamedata')
 
 -- Declare all global variables at the top
 local camera
@@ -14,6 +17,8 @@ local enemies = {}  -- Initialize empty table here
 local projectiles = {}  -- Initialize empty table here
 local experienceOrbs = {}
 local gameFont
+local chests = {}  -- Add chests to global variables
+local powerUps = {}
 
 -- Add spawn control variables
 local spawnTimer = 0
@@ -56,6 +61,64 @@ function findValidSpawnPosition()
   return nil, nil
 end
 
+function findValidChestPosition()
+  local attempts = 10
+  local minDistance = 200  -- Minimum distance from player
+  local maxDistance = 400  -- Maximum distance from player
+  
+  for _ = 1, attempts do
+    -- Generate random angle and distance
+    local angle = math.random() * math.pi * 2
+    local distance = minDistance + math.random() * (maxDistance - minDistance)
+    
+    -- Calculate position
+    local x = player.x + math.cos(angle) * distance
+    local y = player.y + math.sin(angle) * distance
+    
+    -- Check if position is valid (not too close to enemies or other chests)
+    if getDistanceToNearestEnemy(x, y) >= 150 then
+      -- Check distance to other chests
+      local tooClose = false
+      for _, chest in ipairs(chests) do
+        local dx = chest.x - x
+        local dy = chest.y - y
+        if math.sqrt(dx * dx + dy * dy) < 200 then
+          tooClose = true
+          break
+        end
+      end
+      
+      if not tooClose then
+        return x, y
+      end
+    end
+  end
+  
+  return nil, nil
+end
+
+function spawnChest()
+  local x, y = findValidChestPosition()
+  if x and y then
+    local chest = Chest:new():init(x, y)
+    table.insert(chests, chest)
+  end
+end
+
+-- Modify the player's levelUp function to spawn a chest
+function Player:levelUp()
+  self.level = self.level + 1
+  self.experience = self.experience - self.experienceToNextLevel
+  self.experienceToNextLevel = math.floor(self.experienceToNextLevel * 1.5)
+  
+  -- Level up benefits
+  self.maxHealth = self.maxHealth + 10
+  self.health = self.maxHealth
+  
+  -- Spawn a chest to celebrate level up
+  spawnChest()
+end
+
 function love.load()
   -- Load font for game over screen
   gameFont = love.graphics.newFont(32)
@@ -93,6 +156,8 @@ function initializeGame()
   enemies = {}
   projectiles = {}
   experienceOrbs = {}
+  chests = {}  -- Clear chests array
+  powerUps = {}
   
   -- Enable texture filtering
   love.graphics.setDefaultFilter('linear', 'linear')
@@ -176,6 +241,35 @@ function love.update(dt)
         table.remove(experienceOrbs, i)
       end
     end
+    
+    -- Update chests
+    for i = #chests, 1, -1 do
+      local chest = chests[i]
+      if chest:update(dt) then
+        if chest.spawnPowerUp then
+          -- Spawn power-up
+          local powerUp = PowerUp:new():init(
+            chest.spawnPowerUp.x,
+            chest.spawnPowerUp.y,
+            chest.spawnPowerUp.type
+          )
+          table.insert(powerUps, powerUp)
+        elseif chest.spawnExperienceOrbs then
+          -- Add all spawned experience orbs
+          for _, orb in ipairs(chest.spawnExperienceOrbs) do
+            table.insert(experienceOrbs, orb)
+          end
+        end
+        table.remove(chests, i)
+      end
+    end
+
+    -- Update power-ups
+    for i = #powerUps, 1, -1 do
+      if powerUps[i]:update(dt) then
+        table.remove(powerUps, i)
+      end
+    end
   end
 end
 
@@ -215,6 +309,41 @@ function love.draw()
   love.graphics.print("Level " .. player.level, 10, 185)
   love.graphics.print(string.format("XP: %d/%d", 
     player.experience, player.experienceToNextLevel), 10, 205)
+    
+  -- Draw active power-ups
+  local powerUpY = 230
+  love.graphics.print("Active Power-ups:", 10, powerUpY)
+  powerUpY = powerUpY + 25
+  
+  for _, powerUp in ipairs(player.activePowerUps) do
+    -- Debug print to verify we're getting here
+    print("Drawing powerup:", powerUp.type, powerUp.timeLeft)
+    
+    -- Get the power-up data using uppercase key
+    local powerUpKey = powerUp.type:upper()
+    local powerUpData = GameData.POWERUP_TYPES[powerUpKey]
+    
+    if powerUpData then
+      -- Draw power-up icon/background
+      love.graphics.setColor(powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.3)
+      love.graphics.rectangle('fill', 10, powerUpY, 200, 20)
+      
+      -- Draw power-up text
+      love.graphics.setColor(1, 1, 1)
+      local text = string.format("%s (%.1fs)", powerUpData.description, powerUp.timeLeft)
+      love.graphics.print(text, 15, powerUpY + 2)
+      
+      -- Draw duration bar
+      love.graphics.setColor(powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.8)
+      local barWidth = (powerUp.timeLeft / powerUp.duration) * 190
+      love.graphics.rectangle('fill', 15, powerUpY + 15, barWidth, 3)
+      
+      powerUpY = powerUpY + 25
+    end
+  end
+  
+  -- Reset color for subsequent drawing
+  love.graphics.setColor(1, 1, 1)
   
   -- Draw experience orbs
   for _, orb in ipairs(experienceOrbs) do
@@ -222,6 +351,53 @@ function love.draw()
       texture = mode7.orbTexture,
       scale = 3.0,
       useAngleScaling = false
+    })
+  end
+  
+  -- Draw chests
+  for _, chest in ipairs(chests) do
+    mode7:drawSprite(chest, camera, {
+      texture = mode7.chestTexture,  -- You'll need to load this texture
+      scale = 6.0,        -- Increased from 2.0 to 6.0 for much larger appearance
+      useAngleScaling = false
+    })
+    
+    -- Draw interaction prompt if player is close
+    if not chest.isOpen then
+      local dx = player.x - chest.x
+      local dy = player.y - chest.y
+      local distance = math.sqrt(dx * dx + dy * dy)
+      
+      if distance < chest.interactRadius then
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("Press E to open", 
+          Constants.SCREEN_WIDTH/2 - 100,
+          Constants.SCREEN_HEIGHT - 100,
+          200, "center")
+      end
+    end
+  end
+
+  -- Draw power-ups
+  for _, powerUp in ipairs(powerUps) do
+    local powerUpData = GameData.POWERUP_TYPES[powerUp.type]
+    local scale = 1.0 + (powerUpData.rarity * 0.2)  -- Bigger scale for rarer items
+    
+    -- Add glow effect based on rarity
+    if powerUpData.rarity > 1 then
+      -- Draw glow
+      mode7:drawSprite(powerUp, camera, {
+        color = {powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.3},
+        scale = scale * 1.5,
+        angle = powerUp.angle
+      })
+    end
+    
+    -- Draw power-up
+    mode7:drawSprite(powerUp, camera, {
+      color = powerUpData.color,
+      scale = scale,
+      angle = powerUp.angle
     })
   end
   

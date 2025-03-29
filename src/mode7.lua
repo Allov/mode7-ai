@@ -61,6 +61,9 @@ function Mode7:load()
   love.graphics.circle('fill', 8, 8, 4)
   love.graphics.setCanvas()
   self.orbTexture = orbCanvas
+
+  -- Load chest texture
+  self.chestTexture = love.graphics.newImage("assets/images/chest.png")
 end
 
 function Mode7:render(camera, enemies, projectiles)
