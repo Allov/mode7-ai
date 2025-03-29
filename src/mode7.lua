@@ -3,6 +3,7 @@ local Constants = require('src.constants')
 local Mode7 = {
   texture = nil,
   shader = nil,
+  skyTexture = nil,  -- Add sky texture
   enemyTexture = nil,
   projectileTexture = nil,
   fogColor = {0.5, 0.7, 1.0}
@@ -19,14 +20,9 @@ function Mode7:load()
   self.texture = love.graphics.newImage('assets/images/ground.png')
   self.texture:setWrap('repeat', 'repeat')
   
-  -- Load enemy sprite with transparency enabled
-  self.enemyTexture = love.graphics.newImage('assets/images/enemy.png')
-  self.enemyTexture:setFilter('linear', 'linear')
-  
-  -- Add debug print to verify projectile texture loading
-  print("Loading projectile texture...")
-  self.projectileTexture = love.graphics.newImage('assets/images/projectile.png')
-  self.projectileTexture:setFilter('linear', 'linear')
+  -- Load sky texture
+  self.skyTexture = love.graphics.newImage('assets/images/sky.png')
+  self.skyTexture:setWrap('repeat', 'clamp')
   
   -- Load and setup shader
   self.shader = love.graphics.newShader('src/shaders/mode7.glsl')
@@ -37,9 +33,66 @@ function Mode7:load()
   
   local w, h = self.texture:getDimensions()
   self.shader:send('textureDimensions', {w, h})
+  
+  -- Create temporary textures
+  local enemyCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(enemyCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(1, 0, 0, 1)  -- Red for enemy
+  love.graphics.rectangle('fill', 0, 0, 32, 32)
+  love.graphics.setCanvas()
+  self.enemyTexture = enemyCanvas
+  
+  local projectileCanvas = love.graphics.newCanvas(16, 16)
+  love.graphics.setCanvas(projectileCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(1, 1, 0, 1)  -- Yellow for projectile
+  love.graphics.circle('fill', 8, 8, 8)
+  love.graphics.setCanvas()
+  self.projectileTexture = projectileCanvas
 end
 
 function Mode7:render(camera, enemies, projectiles)
+  -- Update shader with current camera height including bob
+  self.shader:send('cameraHeight', camera.z)
+  
+  -- Draw sky with spherical projection
+  love.graphics.setColor(1, 1, 1, 1)
+  
+  -- Calculate sky parameters
+  local screenWidth = love.graphics.getWidth()
+  local screenHeight = love.graphics.getHeight()
+  local skyHeight = Constants.HORIZON_LINE
+  local skyTextureWidth = self.skyTexture:getWidth()
+  local skyTextureHeight = self.skyTexture:getHeight()
+  
+  -- Draw sky in vertical strips
+  local numStrips = 32  -- Increase for smoother projection
+  local stripWidth = screenWidth / numStrips
+  
+  for i = 0, numStrips - 1 do
+    local x = i * stripWidth
+    local screenX = x + stripWidth / 2
+    
+    -- Calculate angle for this strip relative to camera view
+    local angleOffset = math.atan2(screenX - screenWidth/2, screenWidth/2)
+    local totalAngle = camera.angle + angleOffset
+    
+    -- Calculate UV coordinates with wraparound
+    local u = (totalAngle / (math.pi * 2)) * skyTextureWidth
+    local sourceX = u % skyTextureWidth
+    
+    -- Draw the sky strip
+    love.graphics.draw(
+      self.skyTexture,
+      x, 0,                    -- Position
+      0,                       -- Rotation
+      stripWidth / skyTextureWidth, skyHeight / skyTextureHeight,  -- Scale
+      sourceX, 0,              -- Source quad x, y
+      1, skyTextureHeight     -- Source quad width, height
+    )
+  end
+
   -- Draw ground plane with shader
   love.graphics.setShader(self.shader)
   love.graphics.setColor(1, 1, 1, 1)
@@ -58,10 +111,7 @@ function Mode7:render(camera, enemies, projectiles)
   
   love.graphics.setShader()
   
-  -- Enable alpha blending for sprites
-  love.graphics.setBlendMode('alpha')
-  
-  -- Draw enemies
+  -- Draw sprites
   if enemies then
     for _, enemy in ipairs(enemies) do
       self:drawSprite(enemy, camera, {
@@ -72,19 +122,15 @@ function Mode7:render(camera, enemies, projectiles)
     end
   end
   
-  -- Draw projectiles
   if projectiles then
     for _, projectile in ipairs(projectiles) do
       self:drawSprite(projectile, camera, {
         texture = self.projectileTexture,
-        scale = 4.0,  -- Increased from 2.0 to 4.0
+        scale = 4.0,
         useAngleScaling = false
       })
     end
   end
-  
-  -- Reset blend mode
-  love.graphics.setBlendMode('alpha', 'alphamultiply')
 end
 
 function Mode7:drawSprite(entity, camera, options)

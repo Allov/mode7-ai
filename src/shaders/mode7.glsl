@@ -1,6 +1,6 @@
 uniform vec2 cameraPos;
 uniform float cameraAngle;
-uniform float cameraHeight;
+uniform float cameraHeight;  // This will now receive the bobbing height
 uniform float horizonLine;
 uniform vec2 textureDimensions;
 uniform float maxDistance;
@@ -8,12 +8,12 @@ uniform vec3 fogColor;
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
-    // Skip pixels above horizon
+    // Skip shader for pixels above horizon - sky is drawn separately
     if (screen_coords.y < horizonLine) {
-        return vec4(fogColor, 1.0);
+        discard;  // Let the sky texture show through
     }
     
-    // Calculate distance to point on ground plane
+    // Use dynamic camera height for perspective calculation
     float distance = (cameraHeight * (love_ScreenSize.y - horizonLine)) 
                     / (screen_coords.y - horizonLine);
     

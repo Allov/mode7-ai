@@ -113,12 +113,32 @@ end
 
 function love.mousepressed(x, y, button)
   if button == 1 then  -- Left click
-    -- Create new projectile at camera position, adjusted for height
+    -- Get normalized mouse coordinates (-1 to 1, with center being 0,0)
+    local mouseX = -(x / love.graphics.getWidth() * 2 - 1) * 0.75  -- Added negative sign to fix inversion
+    
+    -- Get base direction and right vectors
+    local dirVector = camera:getDirectionVector()
+    local rightVector = {
+      x = -dirVector.y,  -- Perpendicular to direction vector
+      y = dirVector.x
+    }
+    
+    -- Calculate final direction by adding mouse offset
+    local finalDirX = dirVector.x + (rightVector.x * mouseX)
+    local finalDirY = dirVector.y + (rightVector.y * mouseX)
+    
+    -- Normalize the final direction
+    local length = math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY)
+    finalDirX = finalDirX / length
+    finalDirY = finalDirY / length
+    
+    -- Calculate spawn position and angle
+    local spawnDistance = 40
     local proj = Projectile:new():init(
-      camera.x,
-      camera.y,
-      camera.angle,
-      camera.z  -- Pass camera height to init
+      camera.x + finalDirX * spawnDistance,
+      camera.y + finalDirY * spawnDistance,
+      math.atan2(finalDirX, finalDirY),
+      camera.z - 5
     )
     table.insert(projectiles, proj)
   end
