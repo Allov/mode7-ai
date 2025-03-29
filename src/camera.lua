@@ -1,15 +1,15 @@
 local Constants = require('src.constants')
 
 local Camera = {
-  -- View properties
-  z = Constants.CAMERA_HEIGHT,
-  baseHeight = Constants.CAMERA_HEIGHT,
-  
-  -- Bob settings
-  bobAmplitude = 6,
-  bobFrequency = 4,
-  bobAngleAmount = 0.001,
+  x = 0,
+  y = 0,
+  z = 0,
+  angle = 0,
+  baseHeight = Constants.CAMERA_HEIGHT,  -- Set default height from constants
   bobPhase = 0,
+  bobFrequency = 8,
+  bobAmplitude = 5,
+  bobAngleAmount = 0.02,
   bobActive = false
 }
 
@@ -20,7 +20,21 @@ function Camera:new(o)
   return o
 end
 
+function Camera:reset()
+  self.x = 0
+  self.y = 0
+  self.z = self.baseHeight
+  self.angle = 0
+  self.bobPhase = 0
+  self.bobActive = false
+end
+
 function Camera:update(dt, player)
+  if player.isDead then
+    -- Keep last position and angle when player is dead
+    return
+  end
+
   -- Get movement amount for bob effect
   local dx = player.x - player.lastX
   local dy = player.y - player.lastY

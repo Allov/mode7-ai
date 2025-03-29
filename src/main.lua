@@ -10,8 +10,17 @@ local player
 local mode7
 local enemies = {}
 local projectiles = {}  -- Add projectiles table
+local gameFont
 
 function love.load()
+  -- Load font for game over screen
+  gameFont = love.graphics.newFont(32)
+  
+  -- Initialize game objects
+  initializeGame()
+end
+
+function initializeGame()
   -- Set up window with vsync enabled
   love.window.setMode(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT, {
     resizable = false,
@@ -22,9 +31,11 @@ function love.load()
   
   -- Initialize player first
   player = Player:new()
+  player:reset()  -- Explicitly call reset
   
   -- Initialize camera to follow player
   camera = Camera:new()
+  camera:reset()  -- Add explicit camera reset
   
   -- Make both globally accessible if needed
   _G.player = player
@@ -34,9 +45,9 @@ function love.load()
   mode7 = Mode7:new()
   mode7:load()
   
-  -- Create some enemies
+  -- Reset enemies array
   enemies = {}
-  projectiles = {}  -- Initialize projectiles table
+  projectiles = {}
   
   -- Add standing enemies in a circle formation
   local radius = 300
@@ -64,35 +75,44 @@ function love.load()
 end
 
 function love.update(dt)
+  if player.isDead and player.deathTimer <= 0 then
+    -- Only handle restart input when death animation is complete
+    if love.keyboard.isDown('r') then
+      initializeGame()
+      return
+    end
+    return
+  end
+  
   player:update(dt)
   camera:update(dt, player)
   
-  -- Update enemies
-  for i = #enemies, 1, -1 do
-    local enemy = enemies[i]
-    enemy:update(dt)
-    
-    -- Check collisions with projectiles
-    for j = #projectiles, 1, -1 do
-      local projectile = projectiles[j]
-      if projectile:checkCollision(enemy, camera) then
-        -- Remove projectile
-        table.remove(projectiles, j)
-        
-        -- Damage enemy and remove if defeated
-        if enemy:hit(25) then
-          table.remove(enemies, i)
-          break  -- Skip remaining projectile checks for this enemy
+  -- Only update game objects if player is alive
+  if not player.isDead then
+    -- Update enemies
+    for i = #enemies, 1, -1 do
+      local enemy = enemies[i]
+      enemy:update(dt)
+      
+      -- Check collisions with projectiles
+      for j = #projectiles, 1, -1 do
+        local projectile = projectiles[j]
+        if projectile:checkCollision(enemy, camera) then
+          table.remove(projectiles, j)
+          if enemy:hit(25) then
+            table.remove(enemies, i)
+            break
+          end
         end
       end
     end
-  end
-  
-  -- Update projectiles
-  for i = #projectiles, 1, -1 do
-    local projectile = projectiles[i]
-    if projectile:update(dt) then
-      table.remove(projectiles, i)
+    
+    -- Update projectiles
+    for i = #projectiles, 1, -1 do
+      local projectile = projectiles[i]
+      if projectile:update(dt) then
+        table.remove(projectiles, i)
+      end
     end
   end
 end
@@ -104,7 +124,8 @@ function love.draw()
   -- Render Mode 7 ground with enemies and projectiles
   mode7:render(camera, enemies, projectiles)
   
-  -- Debug info
+  -- Draw HUD
+  love.graphics.setFont(love.graphics.getFont())  -- Reset to default font before HUD
   love.graphics.setColor(1, 1, 1)
   love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
   love.graphics.print(string.format("Camera: X: %.1f Y: %.1f A: %.1f°", 
@@ -122,6 +143,26 @@ function love.draw()
   if player.invulnerableTimer > 0 then
     love.graphics.setColor(1, 0, 0, player.invulnerableTimer / player.invulnerableTime * 0.3)
     love.graphics.rectangle('fill', 0, 0, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT)
+  end
+  
+  -- Draw game over screen
+  if player.isDead then
+    love.graphics.setFont(gameFont)
+    love.graphics.setColor(0, 0, 0, 0.7)
+    love.graphics.rectangle('fill', 0, 0, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT)
+    
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.printf("GAME OVER", 0, Constants.SCREEN_HEIGHT * 0.4, 
+      Constants.SCREEN_WIDTH, "center")
+    
+    if player.deathTimer <= 0 then
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.printf("Press R to Restart", 0, Constants.SCREEN_HEIGHT * 0.6, 
+        Constants.SCREEN_WIDTH, "center")
+    end
+    
+    -- Reset to default font
+    love.graphics.setFont(love.graphics.getFont())
   end
 end
 

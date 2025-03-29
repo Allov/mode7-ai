@@ -23,7 +23,11 @@ local Player = {
   
   -- Store last position for movement detection
   lastX = 0,
-  lastY = 0
+  lastY = 0,
+  
+  -- Add game over state
+  deathTimer = 0,
+  deathAnimationTime = 2.0  -- Time for death animation/transition
 }
 
 function Player:new(o)
@@ -35,7 +39,25 @@ function Player:new(o)
   return o
 end
 
+function Player:reset()
+  self.x = 0
+  self.y = 0
+  self.angle = 0
+  self.health = self.maxHealth
+  self.invulnerableTimer = 0
+  self.isDead = false
+  self.deathTimer = 0
+  self.forward = 0
+  self.strafe = 0
+  self.rotation = 0
+  self.lastX = 0  -- Reset last position
+  self.lastY = 0
+end
+
 function Player:handleInput()
+  -- Don't handle input if dead
+  if self.isDead then return end
+  
   -- Reset movement state
   self.forward = 0
   self.strafe = 0
@@ -67,19 +89,33 @@ function Player:handleInput()
 end
 
 function Player:takeDamage(amount)
-  if self.invulnerableTimer > 0 then return false end
+  if self.invulnerableTimer > 0 or self.isDead then return false end
   
   self.health = math.max(0, self.health - amount)
   self.invulnerableTimer = self.invulnerableTime
   
   if self.health <= 0 then
-    self.isDead = true
+    self:die()
   end
   
   return true
 end
 
+function Player:die()
+  self.isDead = true
+  self.deathTimer = self.deathAnimationTime
+  -- Stop all movement
+  self.forward = 0
+  self.strafe = 0
+  self.rotation = 0
+end
+
 function Player:update(dt)
+  if self.isDead then
+    self.deathTimer = math.max(0, self.deathTimer - dt)
+    return
+  end
+  
   -- Update invulnerability timer
   if self.invulnerableTimer > 0 then
     self.invulnerableTimer = math.max(0, self.invulnerableTimer - dt)
@@ -119,3 +155,4 @@ function Player:getDirectionVector()
 end
 
 return Player
+
