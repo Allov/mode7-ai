@@ -8,6 +8,7 @@ local ExperienceOrb = require('src.experienceorb')
 local Chest = require('src.chest')
 local PowerUp = require('src.powerup')
 local GameData = require('src.gamedata')
+local Boss = require('src.boss')
 
 -- Declare all global variables at the top
 local camera
@@ -117,6 +118,11 @@ function Player:levelUp()
   
   -- Spawn a chest to celebrate level up
   spawnChest()
+  
+  -- Spawn boss every 5 levels
+  if self.level % 5 == 0 then
+    spawnBoss()
+  end
 end
 
 function love.load()
@@ -180,6 +186,22 @@ function spawnEnemy()
     -- Reduce spawn interval, but not below minimum
     spawnInterval = math.max(minSpawnInterval, spawnInterval * spawnIntervalDecay)
   end
+end
+
+function spawnBoss()
+  -- Find valid spawn position (similar to enemy spawn)
+  local angle = math.random() * math.pi * 2
+  local spawnDistance = 600  -- Spawn further than normal enemies
+  
+  local spawnX = player.x + math.cos(angle) * spawnDistance
+  local spawnY = player.y + math.sin(angle) * spawnDistance
+  
+  -- Create and add new boss
+  local boss = Boss:new():init(spawnX, spawnY)
+  table.insert(enemies, boss)  -- Add to enemies table
+  
+  -- Optional: Add boss spawn announcement
+  bossSpawnTimer = 3  -- Show announcement for 3 seconds
 end
 
 function love.update(dt)
@@ -269,6 +291,13 @@ function love.update(dt)
       if powerUps[i]:update(dt) then
         table.remove(powerUps, i)
       end
+    end
+  end
+
+  if bossSpawnTimer then
+    bossSpawnTimer = bossSpawnTimer - dt
+    if bossSpawnTimer <= 0 then
+      bossSpawnTimer = nil
     end
   end
 end
@@ -425,6 +454,16 @@ function love.draw()
     
     -- Reset to default font
     love.graphics.setFont(love.graphics.getFont())
+  end
+
+  -- Draw boss spawn announcement
+  if bossSpawnTimer and bossSpawnTimer > 0 then
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.setFont(gameFont)
+    love.graphics.printf("BOSS HAS APPEARED!", 
+      0, Constants.SCREEN_HEIGHT/2 - 50, 
+      Constants.SCREEN_WIDTH, "center")
+    love.graphics.setColor(1, 1, 1)
   end
 end
 
