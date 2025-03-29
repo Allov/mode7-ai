@@ -167,7 +167,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       
       self:drawSprite(enemy, camera, {
         texture = isBoss and self.bossTexture or self.enemyTexture,
-        scale = (isBoss and 12.0) or (enemy.isElite and 9.0) or 6.0,  -- Larger scale for elites
+        scale = (isBoss and 1200.0) or (enemy.isElite and 900.0) or 600.0,  -- 10x bigger
         useAngleScaling = true
       })
       
@@ -190,17 +190,17 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     for _, projectile in ipairs(projectiles) do
       self:drawSprite(projectile, camera, {
         texture = self.projectileTexture,
-        scale = 4.0,
+        scale = 200.0,  -- Halved from 400.0
         useAngleScaling = false
       })
     end
   end
 
-  -- Render experience orbs
+  -- Render experience orbs with adjusted scale
   for _, orb in ipairs(experienceOrbs) do
     self:drawSprite(orb, camera, {
       texture = self.orbTexture,
-      scale = 3.0,
+      scale = 150.0,  -- Halved from 300.0
       useAngleScaling = false
     })
   end
@@ -209,7 +209,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   for _, chest in ipairs(chests) do
     self:drawSprite(chest, camera, {
       texture = self.chestTexture,
-      scale = 3.0,  -- Changed from 6.0 to 3.0 (50% smaller)
+      scale = 30.0,  -- Increased from 3.0
       useAngleScaling = false
     })
   end
@@ -259,24 +259,63 @@ function Mode7:drawSprite(entity, camera, options)
   -- Don't render if behind camera or too far
   if ry <= 0 or ry > Constants.DRAW_DISTANCE then return end
   
-  -- Clamp minimum distance to prevent extreme scaling
-  local MIN_RENDER_DISTANCE = 50
-  ry = math.max(ry, MIN_RENDER_DISTANCE)
+  -- Calculate perspective scale
+  local perspectiveScale = Constants.SCREEN_HEIGHT / (2.0 * ry)
+  local spriteScale = perspectiveScale * scale * 0.01
   
-  -- Calculate sprite scale based on distance
-  local spriteScale = (Constants.CAMERA_HEIGHT / ry) * scale
+  -- Calculate screen position
+  local screenX = Constants.SCREEN_WIDTH/2 + (rx * Constants.SCREEN_HEIGHT * 0.5) / ry
   
-  -- Match shader's perspective transformation exactly
-  local screenX = Constants.SCREEN_WIDTH/2 + 
-                  (rx * Constants.SCREEN_HEIGHT * 0.5) / ry
-  
-  -- Calculate ground position using same perspective
+  -- Calculate ground position for proper Y placement
   local groundY = Constants.HORIZON_LINE + 
-                  (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
-                  (Constants.CAMERA_HEIGHT / ry)
+                 (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
+                 (Constants.CAMERA_HEIGHT / ry)
   
   -- Position sprite above ground position by half its height, plus any offset
   local screenY = groundY - (texture:getHeight() * spriteScale / 2) - heightOffset
+  
+  -- Draw crosshair if this is the player's current target
+  if _G.player and _G.player.currentTarget == entity then
+    -- Save current color
+    local r, g, b, a = love.graphics.getColor()
+    
+    -- Draw targeting crosshair
+    love.graphics.setColor(1, 0, 0, 0.8)  -- Red with some transparency
+    
+    -- Calculate crosshair size based on perspective
+    local crosshairSize = 600 * perspectiveScale
+    local lineLength = 200 * perspectiveScale
+    local bracketSize = 300 * perspectiveScale
+    
+    -- Draw crosshair lines
+    love.graphics.setLineWidth(4)  -- Thicker lines for visibility
+    -- Horizontal lines
+    love.graphics.line(screenX - crosshairSize, screenY, screenX - lineLength, screenY)
+    love.graphics.line(screenX + lineLength, screenY, screenX + crosshairSize, screenY)
+    -- Vertical lines
+    love.graphics.line(screenX, screenY - crosshairSize, screenX, screenY - lineLength)
+    love.graphics.line(screenX, screenY + lineLength, screenX, screenY + crosshairSize)
+    
+    -- Draw corner brackets
+    -- Top-left
+    love.graphics.line(screenX - bracketSize, screenY - bracketSize, screenX - bracketSize, screenY - bracketSize/2)
+    love.graphics.line(screenX - bracketSize, screenY - bracketSize, screenX - bracketSize/2, screenY - bracketSize)
+    -- Top-right
+    love.graphics.line(screenX + bracketSize, screenY - bracketSize, screenX + bracketSize, screenY - bracketSize/2)
+    love.graphics.line(screenX + bracketSize, screenY - bracketSize, screenX + bracketSize/2, screenY - bracketSize)
+    -- Bottom-left
+    love.graphics.line(screenX - bracketSize, screenY + bracketSize, screenX - bracketSize, screenY + bracketSize/2)
+    love.graphics.line(screenX - bracketSize, screenY + bracketSize, screenX - bracketSize/2, screenY + bracketSize)
+    -- Bottom-right
+    love.graphics.line(screenX + bracketSize, screenY + bracketSize, screenX + bracketSize, screenY + bracketSize/2)
+    love.graphics.line(screenX + bracketSize, screenY + bracketSize, screenX + bracketSize/2, screenY + bracketSize)
+    
+    -- Reset line width
+    love.graphics.setLineWidth(1)
+    
+    -- Restore original color
+    love.graphics.setColor(r, g, b, a)
+  end
   
   -- Apply color if specified
   love.graphics.setColor(unpack(color))

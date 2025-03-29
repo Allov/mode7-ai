@@ -65,6 +65,12 @@ local Player = {
   -- Add shooting properties
   shootCooldown = 0.2,  -- Time between shots
   shootTimer = 0,       -- Current cooldown timer
+
+  -- Add targeting properties
+  currentTarget = nil,
+  targetLockRange = 400,  -- Range to acquire targets
+  orbitDistance = 200,    -- Preferred distance to orbit target
+  orbitSpeed = 3.0,       -- Base orbit rotation speed
 }
 
 function Player:new(o)
@@ -92,6 +98,47 @@ function Player:reset()
   self.lastY = 0
 end
 
+function Player:findTarget()
+  if not _G.enemies then return nil end
+  
+  local closestEnemy = nil
+  local closestAngle = math.huge
+  local closestDist = math.huge
+  
+  -- Get our forward vector
+  local forwardX = math.sin(self.angle)
+  local forwardY = math.cos(self.angle)
+  
+  for _, enemy in ipairs(_G.enemies) do
+    -- Calculate vector to enemy
+    local dx = enemy.x - self.x
+    local dy = enemy.y - self.y
+    local dist = math.sqrt(dx * dx + dy * dy)
+    
+    -- Only consider enemies within range
+    if dist <= self.targetLockRange then
+      -- Normalize direction to enemy
+      local dirX = dx / dist
+      local dirY = dy / dist
+      
+      -- Calculate dot product with forward vector (gives cosine of angle)
+      local dot = dirX * forwardX + dirY * forwardY
+      
+      -- Convert to angle (in radians)
+      local angle = math.acos(dot)
+      
+      -- If this is the closest enemy within a 60-degree cone in front
+      if angle < math.pi/3 and angle < closestAngle then
+        closestAngle = angle
+        closestDist = dist
+        closestEnemy = enemy
+      end
+    end
+  end
+  
+  return closestEnemy
+end
+
 function Player:handleInput()
   -- Don't handle input if dead
   if self.isDead then return end
@@ -109,20 +156,73 @@ function Player:handleInput()
     self.forward = -1
   end
   
-  -- Strafe Left/Right (A/D)
-  if love.keyboard.isDown('a') then
-    self.strafe = -1  -- Changed from 1 to -1
-  end
-  if love.keyboard.isDown('d') then
-    self.strafe = 1   -- Changed from -1 to 1
-  end
+  -- Check if shooting
+  local isShooting = love.keyboard.isDown('space') or love.mouse.isDown(1)
   
-  -- Rotation (Q/E or Left/Right arrows)
-  if love.keyboard.isDown('q') or love.keyboard.isDown('left') then
-    self.rotation = -1
-  end
-  if love.keyboard.isDown('e') or love.keyboard.isDown('right') then
-    self.rotation = 1
+  if isShooting then
+    -- Try to acquire target when shooting starts
+    if not self.currentTarget then
+      self.currentTarget = self:findTarget()
+    end
+    
+    if self.currentTarget then
+      -- Calculate vector to target
+      local dx = self.currentTarget.x - self.x
+      local dy = self.currentTarget.y - self.y
+      local dist = math.sqrt(dx * dx + dy * dy)
+      
+      -- If target gets too far, lose lock
+      if dist > self.targetLockRange then
+        self.currentTarget = nil
+      else
+        -- Calculate desired angle to target
+        local targetAngle = math.atan2(dy, dx)  -- Changed order to dy, dx
+        self.angle = targetAngle
+        
+        -- Handle orbital movement
+        if love.keyboard.isDown('a') or love.keyboard.isDown('q') then
+          self.rotation = -1
+          -- Orbit counterclockwise
+          local targetDist = math.max(dist, self.orbitDistance)
+          local orbitAngle = targetAngle - self.orbitSpeed * love.timer.getDelta()
+          self.x = self.currentTarget.x + math.cos(orbitAngle) * targetDist  -- Use cos for x
+          self.y = self.currentTarget.y + math.sin(orbitAngle) * targetDist  -- Use sin for y
+        elseif love.keyboard.isDown('d') or love.keyboard.isDown('e') then
+          self.rotation = 1
+          -- Orbit clockwise
+          local targetDist = math.max(dist, self.orbitDistance)
+          local orbitAngle = targetAngle + self.orbitSpeed * love.timer.getDelta()
+          self.x = self.currentTarget.x + math.cos(orbitAngle) * targetDist  -- Use cos for x
+          self.y = self.currentTarget.y + math.sin(orbitAngle) * targetDist  -- Use sin for y
+        end
+      end
+    else
+      -- No target locked, handle normal rotation
+      if love.keyboard.isDown('a') or love.keyboard.isDown('q') then
+        self.rotation = -1
+      elseif love.keyboard.isDown('d') or love.keyboard.isDown('e') then
+        self.rotation = 1
+      end
+    end
+  else
+    -- Reset target when not shooting
+    self.currentTarget = nil
+    
+    -- Normal strafing movement when not shooting
+    if love.keyboard.isDown('a') then
+      self.strafe = -1
+    end
+    if love.keyboard.isDown('d') then
+      self.strafe = 1
+    end
+    
+    -- Normal rotation for Q/E
+    if love.keyboard.isDown('q') or love.keyboard.isDown('left') then
+      self.rotation = -1
+    end
+    if love.keyboard.isDown('e') or love.keyboard.isDown('right') then
+      self.rotation = 1
+    end
   end
 end
 
@@ -174,6 +274,11 @@ function Player:update(dt)
     end
   end
 
+  -- Update dash cooldown timer
+  if self.dashCooldownTimer > 0 then
+    self.dashCooldownTimer = self.dashCooldownTimer - dt
+  end
+
   -- Store previous position
   self.lastX = self.x
   self.lastY = self.y
@@ -189,6 +294,7 @@ function Player:update(dt)
     self.dashTimer = self.dashTimer - dt
     if self.dashTimer <= 0 then
       self.isDashing = false
+      self.dashCooldownTimer = self.dashCooldown  -- Start cooldown when dash ends
     end
     
     -- Move in dash direction
@@ -213,17 +319,16 @@ function Player:update(dt)
         moveY = moveY + math.cos(self.angle + math.pi/2) * self.strafe * self.strafeSpeed
       end
       
-      -- Check for dash input
-      if love.keyboard.isDown('lshift') and self.dashCooldownTimer <= 0 then
+      -- Check for dash input (now using right mouse button)
+      if love.mouse.isDown(2) and self.dashCooldownTimer <= 0 then
         -- Normalize direction for dash
         local length = math.sqrt(moveX * moveX + moveY * moveY)
         if length > 0 then
           self.dashDirection.x = moveX / length
           self.dashDirection.y = moveY / length
+          self.isDashing = true
+          self.dashTimer = self.dashDuration
         end
-        self.isDashing = true
-        self.dashTimer = self.dashDuration
-        self.dashCooldownTimer = self.dashCooldown
       else
         -- Normal movement
         self.x = self.x + moveX * dt
@@ -339,6 +444,13 @@ function Player:shoot()
 end
 
 return Player
+
+
+
+
+
+
+
 
 
 
