@@ -4,6 +4,7 @@ local Player = require('src.player')
 local Mode7 = require('src.mode7')
 local Enemy = require('src.enemy')
 local Projectile = require('src.projectile')
+local ExperienceOrb = require('src.experienceorb')
 
 -- Declare all global variables at the top
 local camera
@@ -11,6 +12,7 @@ local player
 local mode7
 local enemies = {}  -- Initialize empty table here
 local projectiles = {}  -- Initialize empty table here
+local experienceOrbs = {}
 local gameFont
 
 -- Add spawn control variables
@@ -90,6 +92,7 @@ function initializeGame()
   -- Clear arrays
   enemies = {}
   projectiles = {}
+  experienceOrbs = {}
   
   -- Enable texture filtering
   love.graphics.setDefaultFilter('linear', 'linear')
@@ -147,6 +150,11 @@ function love.update(dt)
         if projectile:checkCollision(enemy, camera) then
           table.remove(projectiles, j)
           if enemy:hit(25) then
+            -- Check if should drop experience
+            if enemy.shouldDropExp then
+              local expOrb = ExperienceOrb:new():init(enemy.x, enemy.y, enemy.experienceValue)
+              table.insert(experienceOrbs, expOrb)
+            end
             table.remove(enemies, i)
             break
           end
@@ -159,6 +167,13 @@ function love.update(dt)
       local projectile = projectiles[i]
       if projectile:update(dt) then
         table.remove(projectiles, i)
+      end
+    end
+    
+    -- Update experience orbs
+    for i = #experienceOrbs, 1, -1 do
+      if experienceOrbs[i]:update(dt) then
+        table.remove(experienceOrbs, i)
       end
     end
   end
@@ -187,6 +202,28 @@ function love.draw()
   love.graphics.setColor(1, 1, 1)
   love.graphics.rectangle('line', 10, 110, 200, 20)
   love.graphics.print("Health: " .. math.floor(player.health), 10, 135)
+  
+  -- Draw experience bar
+  love.graphics.setColor(0, 1, 1, 0.8)  -- Cyan color for XP
+  love.graphics.rectangle('fill', 10, 160, 
+    (player.experience / player.experienceToNextLevel) * 200, 20)
+  love.graphics.setColor(0, 0.7, 0.7, 1)  -- Darker cyan for border
+  love.graphics.rectangle('line', 10, 160, 200, 20)
+  
+  -- Draw level and XP text
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.print("Level " .. player.level, 10, 185)
+  love.graphics.print(string.format("XP: %d/%d", 
+    player.experience, player.experienceToNextLevel), 10, 205)
+  
+  -- Draw experience orbs
+  for _, orb in ipairs(experienceOrbs) do
+    mode7:drawSprite(orb, camera, {
+      texture = mode7.orbTexture,
+      scale = 3.0,
+      useAngleScaling = false
+    })
+  end
   
   -- Flash screen red when taking damage
   if player.invulnerableTimer > 0 then

@@ -50,6 +50,17 @@ function Mode7:load()
   love.graphics.circle('fill', 8, 8, 8)
   love.graphics.setCanvas()
   self.projectileTexture = projectileCanvas
+  
+  -- Create experience orb texture
+  local orbCanvas = love.graphics.newCanvas(16, 16)
+  love.graphics.setCanvas(orbCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(0, 1, 1, 1)  -- Cyan for experience orbs
+  love.graphics.circle('fill', 8, 8, 8)
+  love.graphics.setColor(1, 1, 1, 1)  -- White inner glow
+  love.graphics.circle('fill', 8, 8, 4)
+  love.graphics.setCanvas()
+  self.orbTexture = orbCanvas
 end
 
 function Mode7:render(camera, enemies, projectiles)

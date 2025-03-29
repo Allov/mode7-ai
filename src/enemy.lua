@@ -14,7 +14,9 @@ local Enemy = {
   health = 100,
   damageAmount = 20,
   damageRadius = 50,  -- How close enemy needs to be to damage player
-  damageNumber = nil  -- Single damage number instead of array
+  damageNumber = nil,  -- Single damage number instead of array
+  experienceValue = 25,
+  dropChance = 0.75,  -- 75% chance to drop exp orb
 }
 
 -- Add new DamageNumber class with isCritical flag
@@ -127,20 +129,29 @@ end
 function Enemy:hit(damage, isCritical)
   self.health = self.health - (damage or 25)
   
-  -- Create new damage number, starting in front of enemy
+  -- Create damage number
   self.damageNumber = DamageNumber:new({
     value = damage or 25,
     x = self.x,
     y = self.y,
     z = Constants.CAMERA_HEIGHT - 10,
-    baseScale = isCritical and 1.5 or 1.0,  -- Bigger scale for crits
+    baseScale = isCritical and 1.5 or 1.0,
     isCritical = isCritical
   })
   
-  return self.health <= 0
+  local isDead = self.health <= 0
+  
+  -- Drop experience orb if enemy dies
+  if isDead and math.random() < self.dropChance then
+    -- We'll need to handle this in main.lua
+    self.shouldDropExp = true
+  end
+  
+  return isDead
 end
 
 return Enemy
+
 
 
 

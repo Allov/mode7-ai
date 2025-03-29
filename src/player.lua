@@ -27,7 +27,12 @@ local Player = {
   
   -- Add game over state
   deathTimer = 0,
-  deathAnimationTime = 2.0  -- Time for death animation/transition
+  deathAnimationTime = 2.0,  -- Time for death animation/transition
+  
+  -- Experience system
+  experience = 0,
+  level = 1,
+  experienceToNextLevel = 100,  -- Base XP needed
 }
 
 function Player:new(o)
@@ -154,5 +159,26 @@ function Player:getDirectionVector()
   }
 end
 
+function Player:gainExperience(amount)
+  self.experience = self.experience + amount
+  
+  -- Check for level up
+  while self.experience >= self.experienceToNextLevel do
+    self:levelUp()
+  end
+end
+
+function Player:levelUp()
+  self.level = self.level + 1
+  self.experience = self.experience - self.experienceToNextLevel
+  -- Increase XP needed for next level (by 50%)
+  self.experienceToNextLevel = math.floor(self.experienceToNextLevel * 1.5)
+  
+  -- Could add level-up benefits here
+  self.maxHealth = self.maxHealth + 10
+  self.health = self.maxHealth
+end
+
 return Player
+
 
