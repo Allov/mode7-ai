@@ -29,19 +29,12 @@ function Mode7:load()
   self.skyTexture:setFilter('nearest', 'nearest')
   self.skyTexture:setWrap('repeat', 'clamp')
   
-  -- Initialize torch light parameters
-  self.lightPos = {0, 0}  -- Will be updated to follow player/camera
-  self.lightColor = {1.0, 0.7, 0.3}  -- Warm orange color
-  self.lightRadius = 300  -- Adjust this value to change light reach
-  
   -- Load and setup shader
   self.shader = love.graphics.newShader('src/shaders/mode7.glsl')
   self.shader:send('horizonLine', Constants.HORIZON_LINE)
   self.shader:send('cameraHeight', Constants.CAMERA_HEIGHT)
   self.shader:send('maxDistance', Constants.DRAW_DISTANCE)
   self.shader:send('fogColor', self.fogColor)
-  self.shader:send('lightColor', self.lightColor)
-  self.shader:send('lightRadius', self.lightRadius)
   
   local w, h = self.texture:getDimensions()
   self.shader:send('textureDimensions', {w, h})
@@ -173,9 +166,6 @@ function Mode7:load()
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
-  -- Update light position to follow camera/player
-  self.lightPos = {camera.x, camera.y}  -- Or offset if you want the light slightly ahead
-
   -- First render the sky
   love.graphics.setColor(1, 1, 1, 1)
   local skyScale = love.graphics.getHeight() / self.skyTexture:getHeight()
@@ -190,7 +180,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   -- Update shader uniforms
   self.shader:send('cameraPos', {camera.x, camera.y})
   self.shader:send('cameraAngle', camera.angle)
-  self.shader:send('lightPos', self.lightPos)
+  self.shader:send('cameraHeight', Constants.CAMERA_HEIGHT)
   
   -- Draw the ground quad
   love.graphics.setColor(1, 1, 1, 1)
@@ -558,17 +548,6 @@ function Mode7:drawSprite(entity, camera, options)
       love.graphics.pop()
     end
   end
-end
-
-function Mode7:update(dt)
-  -- Add subtle torch flicker
-  local flickerIntensity = 1.0 + math.sin(love.timer.getTime() * 10) * 0.1
-  local flickeringColor = {
-    self.lightColor[1] * flickerIntensity,
-    self.lightColor[2] * flickerIntensity,
-    self.lightColor[3] * flickerIntensity
-  }
-  self.shader:send('lightColor', flickeringColor)
 end
 
 return Mode7
