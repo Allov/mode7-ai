@@ -192,7 +192,7 @@ function initializeGame()
   spawnRandomRunes(8)
   
   -- Enable texture filtering
-  love.graphics.setDefaultFilter('linear', 'linear')
+  love.graphics.setDefaultFilter('nearest', 'nearest')
   
   -- Reset spawn control
   spawnTimer = 0

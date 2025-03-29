@@ -19,11 +19,14 @@ function Mode7:new(o)
 end
 
 function Mode7:load()
+  -- Set filtering for ground texture
   self.texture = love.graphics.newImage('assets/images/ground.png')
+  self.texture:setFilter('nearest', 'nearest')
   self.texture:setWrap('repeat', 'repeat')
   
-  -- Load sky texture
+  -- Set filtering for sky texture
   self.skyTexture = love.graphics.newImage('assets/images/sky.png')
+  self.skyTexture:setFilter('nearest', 'nearest')
   self.skyTexture:setWrap('repeat', 'clamp')
   
   -- Load and setup shader
@@ -36,6 +39,36 @@ function Mode7:load()
   local w, h = self.texture:getDimensions()
   self.shader:send('textureDimensions', {w, h})
   
+  -- Create all canvas textures first
+  -- Create more visible rune texture
+  local runeCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(runeCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.circle('fill', 16, 16, 14)  -- Filled circle as base
+  love.graphics.setColor(0, 0, 0, 1)
+  love.graphics.circle('line', 16, 16, 14)  -- Outline
+  love.graphics.setLineWidth(2)
+  love.graphics.line(8, 16, 24, 16)  -- Thicker rune symbols
+  love.graphics.line(16, 8, 16, 24)
+  love.graphics.setCanvas()
+  self.runeTexture = runeCanvas
+  self.runeTexture:setFilter('nearest', 'nearest')
+
+  -- Load chest texture
+  self.chestTexture = love.graphics.newImage("assets/images/chest.png")
+  self.chestTexture:setFilter('nearest', 'nearest')
+
+  -- Create glow texture
+  local glowCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(glowCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.circle('fill', 16, 16, 16)
+  love.graphics.setCanvas()
+  self.glowTexture = glowCanvas
+  self.glowTexture:setFilter('nearest', 'nearest')
+
   -- Create temporary textures
   -- Regular enemy texture (triangle shape)
   local enemyCanvas = love.graphics.newCanvas(32, 32)
@@ -49,6 +82,7 @@ function Mode7:load()
   love.graphics.polygon('line', 16, 0, 32, 32, 0, 32)
   love.graphics.setCanvas()
   self.enemyTexture = enemyCanvas
+  self.enemyTexture:setFilter('nearest', 'nearest')  -- Add filtering
 
   -- Elite enemy texture (diamond shape)
   local eliteCanvas = love.graphics.newCanvas(32, 32)
@@ -62,6 +96,7 @@ function Mode7:load()
   love.graphics.polygon('line', 16, 0, 32, 16, 16, 32, 0, 16)
   love.graphics.setCanvas()
   self.eliteTexture = eliteCanvas
+  self.eliteTexture:setFilter('nearest', 'nearest')  -- Add filtering
 
   -- Boss texture (pentagonal shape with details)
   local bossCanvas = love.graphics.newCanvas(64, 64)  -- Larger canvas for more detail
@@ -96,6 +131,7 @@ function Mode7:load()
   )
   love.graphics.setCanvas()
   self.bossTexture = bossCanvas
+  self.bossTexture:setFilter('nearest', 'nearest')  -- Add filtering
 
   local projectileCanvas = love.graphics.newCanvas(16, 16)
   love.graphics.setCanvas(projectileCanvas)
@@ -104,6 +140,7 @@ function Mode7:load()
   love.graphics.circle('fill', 8, 8, 8)
   love.graphics.setCanvas()
   self.projectileTexture = projectileCanvas
+  self.projectileTexture:setFilter('nearest', 'nearest')  -- Add filtering
   
   -- Create experience orb texture
   local orbCanvas = love.graphics.newCanvas(32, 32)
@@ -125,32 +162,7 @@ function Mode7:load()
   
   love.graphics.setCanvas()
   self.orbTexture = orbCanvas
-
-  -- Load chest texture
-  self.chestTexture = love.graphics.newImage("assets/images/chest.png")
-
-  -- Create glow texture
-  local glowCanvas = love.graphics.newCanvas(32, 32)
-  love.graphics.setCanvas(glowCanvas)
-  love.graphics.clear()
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.circle('fill', 16, 16, 16)
-  love.graphics.setCanvas()
-  self.glowTexture = glowCanvas
-
-  -- Create more visible rune texture
-  local runeCanvas = love.graphics.newCanvas(32, 32)
-  love.graphics.setCanvas(runeCanvas)
-  love.graphics.clear()
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.circle('fill', 16, 16, 14)  -- Filled circle as base
-  love.graphics.setColor(0, 0, 0, 1)
-  love.graphics.circle('line', 16, 16, 14)  -- Outline
-  love.graphics.setLineWidth(2)
-  love.graphics.line(8, 16, 24, 16)  -- Thicker rune symbols
-  love.graphics.line(16, 8, 16, 24)
-  love.graphics.setCanvas()
-  self.runeTexture = runeCanvas
+  self.orbTexture:setFilter('nearest', 'nearest')  -- Add filtering
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
@@ -308,10 +320,11 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         useAngleScaling = false
       })
     elseif obj.type == "chest" then
+      -- Draw the chest texture
       love.graphics.setColor(1, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.chestTexture,
-        scale = 150.0,  -- Reduced from 250.0 to 150.0
+        scale = 75.0,  -- Reduced from 100.0 to 75.0
         heightScale = 1.0,
         useAngleScaling = false
       })
@@ -321,7 +334,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(1, 1, 0, 0.5) -- Yellow glow
         self:drawSprite(obj.object, camera, {
           texture = self.glowTexture,
-          scale = 200.0,  -- Reduced from 300.0 to 200.0
+          scale = 100.0,  -- Reduced from 150.0 to 100.0
           heightScale = 1.0,
           useAngleScaling = false
         })

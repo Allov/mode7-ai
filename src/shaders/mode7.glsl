@@ -37,26 +37,7 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     
     // Sample texture with wrapping
     vec2 texCoord = rotated / textureDimensions;
-    
-    // Apply bilinear filtering
-    vec2 texelSize = 1.0 / textureDimensions;
-    vec2 frac = fract(texCoord * textureDimensions);
-    
-    vec2 texCoord1 = floor(texCoord * textureDimensions) / textureDimensions;
-    vec2 texCoord2 = texCoord1 + vec2(texelSize.x, 0.0);
-    vec2 texCoord3 = texCoord1 + vec2(0.0, texelSize.y);
-    vec2 texCoord4 = texCoord1 + texelSize;
-    
-    vec4 s1 = Texel(tex, mod(texCoord1, 1.0));
-    vec4 s2 = Texel(tex, mod(texCoord2, 1.0));
-    vec4 s3 = Texel(tex, mod(texCoord3, 1.0));
-    vec4 s4 = Texel(tex, mod(texCoord4, 1.0));
-    
-    vec4 texColor = mix(
-        mix(s1, s2, frac.x),
-        mix(s3, s4, frac.x),
-        frac.y
-    ) * color;
+    vec4 texColor = Texel(tex, mod(texCoord, 1.0)) * color;
     
     // Apply fog
     float fogStart = maxDistance * 0.6;
