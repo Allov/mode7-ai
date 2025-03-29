@@ -210,12 +210,19 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         useAngleScaling = false
       })
       
-    elseif obj.type == "orb" then
+    elseif obj.type == "experienceOrb" then
+      -- Set color for experience orbs
+      love.graphics.setColor(0, 1, 1, 1)  -- Cyan color
+      
       self:drawSprite(obj.object, camera, {
         texture = self.orbTexture,
-        scale = 150.0,
+        scale = 100.0,  -- Smaller scale for orbs
+        heightScale = 1.0,
         useAngleScaling = false
       })
+      
+      -- Reset color
+      love.graphics.setColor(1, 1, 1, 1)
       
     elseif obj.type == "chest" then
       self:drawSprite(obj.object, camera, {
@@ -339,6 +346,31 @@ function Mode7:drawSprite(entity, camera, options)
   
   -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
+  
+  -- Draw health bar if entity has health
+  if entity.health and entity.health > 0 then
+    -- Calculate health bar dimensions
+    local barWidth = texture:getWidth() * spriteScale
+    local barHeight = 5 * spriteScale  -- Height of health bar
+    local barY = screenY - (texture:getHeight() * spriteScale * heightScale / 2) - (barHeight * 2)  -- Position above sprite
+    local barX = screenX - (barWidth / 2)
+    
+    -- Draw background (red)
+    love.graphics.setColor(1, 0, 0, 0.8)
+    love.graphics.rectangle('fill', barX, barY, barWidth, barHeight)
+    
+    -- Draw health (green)
+    local healthPercent = entity.health / (entity.isElite and (100 * entity.eliteMultiplier) or 100)
+    love.graphics.setColor(0, 1, 0, 0.8)
+    love.graphics.rectangle('fill', barX, barY, barWidth * healthPercent, barHeight)
+    
+    -- Draw border
+    love.graphics.setColor(0, 0, 0, 0.8)
+    love.graphics.rectangle('line', barX, barY, barWidth, barHeight)
+    
+    -- Reset color
+    love.graphics.setColor(1, 1, 1, 1)
+  end
   
   -- Draw damage number if entity has one
   if entity.damageNumber then

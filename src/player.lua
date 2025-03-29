@@ -64,8 +64,8 @@ local Player = {
   dashDirection = {x = 0, y = 0}, -- Store dash direction
 
   -- Add shooting properties
-  baseShootCooldown = 1.2,  -- Significantly increased base cooldown (much slower fire rate)
-  shootCooldown = 1.2,      -- Current cooldown (affected by power-ups/runes)
+  baseShootCooldown = 0.6,  -- Reduced from 1.2 (lower cooldown = faster firing)
+  shootCooldown = 0.6,      -- Initial cooldown matches base cooldown
   shootTimer = 0,
 
   -- Add targeting properties
@@ -447,6 +447,7 @@ function Player:shoot()
 end
 
 return Player
+
 
 
 
