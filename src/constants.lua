@@ -5,7 +5,7 @@ return {
   
   -- Mode 7 specific constants
   HORIZON_LINE = 100,
-  FOV = 75,
+  FOV = 75,  -- Keep the 75 degree FOV, remove CAMERA_FOV
   DRAW_DISTANCE = 1500,  -- This now controls the fog distance
 
   -- Camera settings
@@ -13,7 +13,6 @@ return {
   CAMERA_STRAFE_SPEED = 150,  -- Sideways movement speed
   CAMERA_TURN_SPEED = 3,      -- Rotation speed in radians/second
   CAMERA_HEIGHT = 100,        -- Camera height above ground
-  CAMERA_FOV = 90,           -- Field of view in degrees
 }
 
 
