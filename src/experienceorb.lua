@@ -83,6 +83,14 @@ function ExperienceOrb:update(dt)
   return false
 end
 
+-- Add if not already present
+function ExperienceOrb:distanceTo(x, y)
+  local dx = self.x - x
+  local dy = self.y - y
+  return math.sqrt(dx * dx + dy * dy)
+end
+
 return ExperienceOrb
+
 
 

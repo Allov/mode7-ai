@@ -9,7 +9,7 @@ local Player = {
   angle = 0,
   moveSpeed = 200,
   strafeSpeed = 300,
-  turnSpeed = 3.0,
+  turnSpeed = 3.0,mm,
   
   -- Combat properties
   health = 100,

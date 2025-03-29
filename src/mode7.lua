@@ -98,141 +98,107 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   
   -- Update shader with current camera height including bob
   self.shader:send('cameraHeight', camera.z)
-  
-  -- Draw sky with spherical projection
-  love.graphics.setColor(1, 1, 1, 1)
-  
-  -- Calculate sky parameters
-  local screenWidth = love.graphics.getWidth()
-  local screenHeight = love.graphics.getHeight()
-  local skyHeight = Constants.HORIZON_LINE
-  local skyTextureWidth = self.skyTexture:getWidth()
-  local skyTextureHeight = self.skyTexture:getHeight()
-  
-  -- Draw sky in vertical strips
-  local numStrips = 32  -- Increase for smoother projection
-  local stripWidth = screenWidth / numStrips
-  
-  for i = 0, numStrips - 1 do
-    local x = i * stripWidth
-    local screenX = x + stripWidth / 2
-    
-    -- Calculate angle for this strip relative to camera view
-    local angleOffset = math.atan2(screenX - screenWidth/2, screenWidth/2)
-    local totalAngle = camera.angle + angleOffset
-    
-    -- Calculate UV coordinates with wraparound
-    local u = (totalAngle / (math.pi * 2)) * skyTextureWidth
-    local sourceX = u % skyTextureWidth
-    
-    -- Draw the sky strip
-    love.graphics.draw(
-      self.skyTexture,
-      x, 0,                    -- Position
-      0,                       -- Rotation
-      stripWidth / skyTextureWidth, skyHeight / skyTextureHeight,  -- Scale
-      sourceX, 0,              -- Source quad x, y
-      1, skyTextureHeight     -- Source quad width, height
-    )
-  end
-
-  -- Draw ground plane with shader
-  love.graphics.setShader(self.shader)
-  love.graphics.setColor(1, 1, 1, 1)
-  
-  -- Send camera data to shader
   self.shader:send('cameraPos', {camera.x, camera.y})
   self.shader:send('cameraAngle', camera.angle)
   
-  love.graphics.draw(
-    self.texture,
-    0, 0,
-    0,
-    Constants.SCREEN_WIDTH / self.texture:getWidth(),
-    Constants.SCREEN_HEIGHT / self.texture:getHeight()
-  )
+  -- Draw sky first
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(self.skyTexture, 0, 0, 0, 
+    love.graphics.getWidth() / self.skyTexture:getWidth(),
+    love.graphics.getHeight() / self.skyTexture:getHeight())
   
+  -- Draw ground with shader - using screen dimensions
+  love.graphics.setShader(self.shader)
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(self.texture, 0, 0, 0, 
+    love.graphics.getWidth() / self.texture:getWidth(),
+    love.graphics.getHeight() / self.texture:getHeight())
   love.graphics.setShader()
   
-  -- Draw sprites
-  if enemies then
-    for _, enemy in ipairs(enemies) do
-      -- Check if enemy is a boss or elite
-      local isBoss = enemy.chargeSpeed ~= nil  -- Boss-specific property
-      
+  -- Create a table of all objects to sort
+  local allObjects = {}
+  
+  -- Add enemies
+  for _, enemy in ipairs(enemies) do
+    table.insert(allObjects, {
+      type = "enemy",
+      object = enemy,
+      distance = enemy:distanceTo(camera.x, camera.y),
+      isBoss = enemy.chargeSpeed ~= nil,
+      isElite = enemy.isElite
+    })
+  end
+  
+  -- Add projectiles
+  for _, proj in ipairs(projectiles) do
+    table.insert(allObjects, {
+      type = "projectile",
+      object = proj,
+      distance = proj:distanceTo(camera.x, camera.y)
+    })
+  end
+  
+  -- Add experience orbs
+  for _, orb in ipairs(experienceOrbs) do
+    table.insert(allObjects, {
+      type = "orb",
+      object = orb,
+      distance = orb:distanceTo(camera.x, camera.y)
+    })
+  end
+  
+  -- Add chests
+  for _, chest in ipairs(chests) do
+    table.insert(allObjects, {
+      type = "chest",
+      object = chest,
+      distance = chest:distanceTo(camera.x, camera.y)
+    })
+  end
+  
+  -- Sort objects by distance (furthest first)
+  table.sort(allObjects, function(a, b)
+    return a.distance > b.distance
+  end)
+  
+  -- Draw all objects in sorted order
+  for _, obj in ipairs(allObjects) do
+    if obj.type == "enemy" then
       -- Set color for elite enemies
-      if enemy.isElite then
-        love.graphics.setColor(enemy.eliteColor)
+      if obj.isElite then
+        love.graphics.setColor(obj.object.eliteColor)
+      else
+        love.graphics.setColor(1, 1, 1, 1)
       end
       
-      self:drawSprite(enemy, camera, {
-        texture = isBoss and self.bossTexture or self.enemyTexture,
-        scale = (isBoss and 1200.0) or (enemy.isElite and 900.0) or 600.0,  -- 10x bigger
+      self:drawSprite(obj.object, camera, {
+        texture = obj.isBoss and self.bossTexture or self.enemyTexture,
+        scale = (obj.isBoss and 1200.0) or (obj.isElite and 900.0) or 600.0,
         useAngleScaling = true
       })
       
       -- Reset color
       love.graphics.setColor(1, 1, 1, 1)
       
-      -- Debug visualization for elite enemies
-      if enemy.isElite then
-        love.graphics.setColor(1, 0.5, 0, 0.3)
-        love.graphics.circle('line', 
-          enemy.x - camera.x, 
-          enemy.y - camera.y, 
-          enemy.radius)
-        love.graphics.setColor(1, 1, 1, 1)
-      end
-    end
-  end
-  
-  if projectiles then
-    for _, projectile in ipairs(projectiles) do
-      self:drawSprite(projectile, camera, {
+    elseif obj.type == "projectile" then
+      self:drawSprite(obj.object, camera, {
         texture = self.projectileTexture,
-        scale = 200.0,  -- Halved from 400.0
+        scale = 200.0,
         useAngleScaling = false
       })
-    end
-  end
-
-  -- Render experience orbs with adjusted scale
-  for _, orb in ipairs(experienceOrbs) do
-    self:drawSprite(orb, camera, {
-      texture = self.orbTexture,
-      scale = 150.0,  -- Halved from 300.0
-      useAngleScaling = false
-    })
-  end
-
-  -- Render chests
-  for _, chest in ipairs(chests) do
-    self:drawSprite(chest, camera, {
-      texture = self.chestTexture,
-      scale = 30.0,  -- Increased from 3.0
-      useAngleScaling = false
-    })
-  end
-
-  -- Render runes
-  for _, rune in ipairs(runes) do
-    local runeData = Rune.TYPES[rune.type]
-    if runeData then
-      -- Draw glow effect first
-      self:drawSprite(rune, camera, {
-        texture = self.glowTexture,  -- We'll need to create this
-        scale = 8.0,
-        useAngleScaling = false,
-        color = {runeData.color[1], runeData.color[2], runeData.color[3], 
-                 0.5 + math.sin(rune.glowPhase) * 0.2}
+      
+    elseif obj.type == "orb" then
+      self:drawSprite(obj.object, camera, {
+        texture = self.orbTexture,
+        scale = 150.0,
+        useAngleScaling = false
       })
       
-      -- Draw rune symbol
-      self:drawSprite(rune, camera, {
-        texture = self.runeTexture,  -- We'll need to create this
-        scale = 6.0,
-        useAngleScaling = false,
-        heightOffset = math.sin(rune.glowPhase) * 10  -- Float effect
+    elseif obj.type == "chest" then
+      self:drawSprite(obj.object, camera, {
+        texture = self.chestTexture,
+        scale = 30.0,
+        useAngleScaling = false
       })
     end
   end
