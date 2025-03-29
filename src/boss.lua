@@ -38,6 +38,7 @@ function Boss:init(x, y)
   self.enrageTimer = 0
   self.isEnraged = false
   self.chargeTimer = 0
+  self.isBoss = true     -- Add this line to properly flag as boss
   return self
 end
 
@@ -143,6 +144,7 @@ function Boss:hit(damage, isCritical)
 end
 
 return Boss
+
 
 
 

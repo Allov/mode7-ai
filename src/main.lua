@@ -31,11 +31,11 @@ _G.Rune = Rune  -- Make Rune class available to console
 
 -- Add spawn control variables
 local spawnTimer = 0
-local spawnInterval = 3.0  -- Start with 3 seconds between spawns
-local minSpawnInterval = 0.5  -- Fastest spawn rate
-local spawnIntervalDecay = 0.95  -- Reduce interval by 5% each spawn
-local spawnDistance = 500  -- How far from player to spawn enemies
-local minEnemyDistance = 150  -- Minimum distance between enemies
+local spawnInterval = 4.0  -- Start with 4 seconds between spawns
+local minSpawnInterval = 1.0  -- Slowest spawn rate is 1 per second
+local spawnIntervalDecay = 0.98  -- Reduce interval by 2% each spawn
+local spawnDistance = 800  -- Increased from 500 to 800 units
+local minEnemyDistance = 200  -- Increased from 150 to 200 units
 
 -- Add mouse shooting variables
 local mouseShootTimer = 0
@@ -227,7 +227,7 @@ end
 function spawnBoss()
   -- Find valid spawn position (similar to enemy spawn)
   local angle = math.random() * math.pi * 2
-  local spawnDistance = 800  -- Increased from 600 to be more visible
+  local spawnDistance = 1200  -- Increased from 800 to 1200
   
   local spawnX = player.x + math.cos(angle) * spawnDistance
   local spawnY = player.y + math.sin(angle) * spawnDistance
