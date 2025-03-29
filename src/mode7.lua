@@ -311,7 +311,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       love.graphics.setColor(1, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.chestTexture,
-        scale = 250.0,
+        scale = 150.0,  -- Reduced from 250.0 to 150.0
         heightScale = 1.0,
         useAngleScaling = false
       })
@@ -321,7 +321,30 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(1, 1, 0, 0.5) -- Yellow glow
         self:drawSprite(obj.object, camera, {
           texture = self.glowTexture,
-          scale = 300.0,
+          scale = 200.0,  -- Reduced from 300.0 to 200.0
+          heightScale = 1.0,
+          useAngleScaling = false
+        })
+      end
+    elseif obj.type == "rune" then
+      -- Get the rune data for color
+      local runeData = Rune.TYPES[obj.object.type]
+      if runeData then
+        -- Draw the rune with its type color
+        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 1)
+        self:drawSprite(obj.object, camera, {
+          texture = self.runeTexture,  -- Use runeTexture instead of chestTexture
+          scale = 150.0,
+          heightScale = 1.0,
+          useAngleScaling = false
+        })
+        
+        -- Add glow effect
+        local glowAlpha = (math.sin(obj.object.glowPhase) + 1) * 0.3
+        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], glowAlpha)
+        self:drawSprite(obj.object, camera, {
+          texture = self.glowTexture,
+          scale = 200.0,
           heightScale = 1.0,
           useAngleScaling = false
         })

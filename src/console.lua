@@ -141,6 +141,15 @@ local Console = {
         self:print(string.format("Spawned %s rune at X:%.1f Y:%.1f", 
           _G.Rune.TYPES[runeType].name, spawnX, spawnY))
       end
+    },
+    
+    targeting = {
+      desc = "Toggle targeting system",
+      func = function(self)
+        _G.player.targetingEnabled = not _G.player.targetingEnabled
+        self:print(string.format("Targeting system: %s", 
+          _G.player.targetingEnabled and "ENABLED" or "DISABLED"))
+      end
     }
   }
 }
@@ -262,6 +271,7 @@ function Console:draw()
 end
 
 return Console
+
 
 
 

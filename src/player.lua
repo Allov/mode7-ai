@@ -70,6 +70,7 @@ local Player = {
   shootTimer = 0,
 
   -- Add targeting properties
+  targetingEnabled = false,  -- Add this line to default targeting to false
   currentTarget = nil,
   targetLockRange = 400,  -- Range to acquire targets
   orbitDistance = 200,    -- Preferred distance to orbit target
@@ -105,7 +106,7 @@ function Player:reset()
 end
 
 function Player:findTarget()
-  if not _G.enemies then return nil end
+  if not self.targetingEnabled or not _G.enemies then return nil end
   
   local closestEnemy = nil
   local closestAngle = math.huge

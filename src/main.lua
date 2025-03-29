@@ -696,14 +696,35 @@ function spawnRandomRunes(count)
     table.insert(availableRuneTypes, runeType)
   end
   
-  -- Parameters for spawn distance
+  -- First, spawn one rune close to the player (within 500 units)
+  local nearDistance = {
+    min = 200,  -- Not too close
+    max = 500   -- Within reasonable reach
+  }
+  
+  -- Spawn the near rune
+  local nearAngle = math.random() * math.pi * 2
+  local nearDist = nearDistance.min + math.random() * (nearDistance.max - nearDistance.min)
+  local nearX = math.cos(nearAngle) * nearDist
+  local nearY = math.sin(nearAngle) * nearDist
+  
+  -- Choose random rune type for near rune
+  local nearRuneType = availableRuneTypes[math.random(#availableRuneTypes)]
+  local nearRune = _G.Rune:new():init(nearX, nearY, nearRuneType)
+  table.insert(_G.runes, nearRune)
+  
+  print(string.format("Spawned starting %s rune at X:%.1f Y:%.1f (Distance: %.1f)", 
+    nearRuneType, nearX, nearY, nearDist))
+  
+  -- Parameters for remaining distant runes
   local minDistance = 15000
   local maxDistance = 20000
   local minAngleDiff = math.pi/2
   
-  local usedAngles = {}
+  local usedAngles = { nearAngle }  -- Include the near rune's angle
   
-  for i = 1, count do
+  -- Spawn remaining runes at distance (count - 1 since we already spawned one)
+  for i = 1, count - 1 do
     local attempts = 20
     local validPosition = false
     
@@ -726,14 +747,13 @@ function spawnRandomRunes(count)
         local y = math.sin(angle) * distance
         
         local runeType = availableRuneTypes[math.random(#availableRuneTypes)]
-        
-        -- Make sure to use _G.runes here
         local rune = _G.Rune:new():init(x, y, runeType)
-        table.insert(_G.runes, rune)  -- Use global table
+        table.insert(_G.runes, rune)
         table.insert(usedAngles, angle)
         validPosition = true
         
-        print(string.format("Spawned %s rune at X:%.1f Y:%.1f", runeType, x, y))
+        print(string.format("Spawned distant %s rune at X:%.1f Y:%.1f (Distance: %.1f)", 
+          runeType, x, y, distance))
       end
       
       attempts = attempts - 1
