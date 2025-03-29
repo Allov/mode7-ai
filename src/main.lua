@@ -130,8 +130,9 @@ function Player:levelUp()
 end
 
 function love.load()
-  -- Load font for game over screen
-  gameFont = love.graphics.newFont(32)
+  -- Load different fonts for different UI elements
+  hudFont = love.graphics.newFont(16)  -- Smaller font for HUD
+  notificationFont = love.graphics.newFont(32)  -- Larger font for center notifications
   
   -- Initialize game objects
   initializeGame()
@@ -349,8 +350,8 @@ function love.draw()
   -- Render Mode 7 ground with enemies and projectiles
   mode7:render(camera, enemies, projectiles)
   
-  -- Draw HUD
-  love.graphics.setFont(love.graphics.getFont())  -- Reset to default font before HUD
+  -- Draw HUD with hudFont
+  love.graphics.setFont(hudFont)
   love.graphics.setColor(1, 1, 1)
   love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
   love.graphics.print(string.format("Camera: X: %.1f Y: %.1f A: %.1f°", 
@@ -379,30 +380,23 @@ function love.draw()
   love.graphics.print(string.format("XP: %d/%d", 
     player.experience, player.experienceToNextLevel), 10, 205)
     
-  -- Draw active power-ups
+  -- Draw active power-ups with hudFont
   local powerUpY = 230
   love.graphics.print("Active Power-ups:", 10, powerUpY)
   powerUpY = powerUpY + 25
   
   for _, powerUp in ipairs(player.activePowerUps) do
-    -- Debug print to verify we're getting here
-    print("Drawing powerup:", powerUp.type, powerUp.timeLeft)
-    
-    -- Get the power-up data using uppercase key
     local powerUpKey = powerUp.type:upper()
     local powerUpData = GameData.POWERUP_TYPES[powerUpKey]
     
     if powerUpData then
-      -- Draw power-up icon/background
       love.graphics.setColor(powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.3)
       love.graphics.rectangle('fill', 10, powerUpY, 200, 20)
       
-      -- Draw power-up text
       love.graphics.setColor(1, 1, 1)
       local text = string.format("%s (%.1fs)", powerUpData.description, powerUp.timeLeft)
       love.graphics.print(text, 15, powerUpY + 2)
       
-      -- Draw duration bar
       love.graphics.setColor(powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.8)
       local barWidth = (powerUp.timeLeft / powerUp.duration) * 190
       love.graphics.rectangle('fill', 15, powerUpY + 15, barWidth, 3)
@@ -411,27 +405,11 @@ function love.draw()
     end
   end
   
-  -- Reset color for subsequent drawing
-  love.graphics.setColor(1, 1, 1)
+  -- Center notifications with notificationFont
+  love.graphics.setFont(notificationFont)
   
-  -- Draw experience orbs
-  for _, orb in ipairs(experienceOrbs) do
-    mode7:drawSprite(orb, camera, {
-      texture = mode7.orbTexture,
-      scale = 3.0,
-      useAngleScaling = false
-    })
-  end
-  
-  -- Draw chests
+  -- Draw chest interaction prompt
   for _, chest in ipairs(chests) do
-    mode7:drawSprite(chest, camera, {
-      texture = mode7.chestTexture,  -- You'll need to load this texture
-      scale = 6.0,        -- Increased from 2.0 to 6.0 for much larger appearance
-      useAngleScaling = false
-    })
-    
-    -- Draw interaction prompt if player is close
     if not chest.isOpen then
       local dx = player.x - chest.x
       local dy = player.y - chest.y
@@ -447,61 +425,16 @@ function love.draw()
     end
   end
 
-  -- Draw power-ups
-  for _, powerUp in ipairs(powerUps) do
-    local powerUpData = GameData.POWERUP_TYPES[powerUp.type]
-    local scale = 1.0 + (powerUpData.rarity * 0.2)  -- Bigger scale for rarer items
-    
-    -- Add glow effect based on rarity
-    if powerUpData.rarity > 1 then
-      -- Draw glow
-      mode7:drawSprite(powerUp, camera, {
-        color = {powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.3},
-        scale = scale * 1.5,
-        angle = powerUp.angle
-      })
-    end
-    
-    -- Draw power-up
-    mode7:drawSprite(powerUp, camera, {
-      color = powerUpData.color,
-      scale = scale,
-      angle = powerUp.angle
-    })
+  -- Draw boss spawn announcement
+  if bossSpawnTimer and bossSpawnTimer > 0 then
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.printf("BOSS HAS APPEARED!", 
+      0, Constants.SCREEN_HEIGHT/2 - 50, 
+      Constants.SCREEN_WIDTH, "center")
   end
 
-  -- Draw runes
-  for _, rune in ipairs(runes) do
-    local runeData = Rune.TYPES[rune.type]  -- Change GameData.RUNE_TYPES to Rune.TYPES
-    local scale = 1.0 + (runeData.rarity * 0.2)  -- Bigger scale for rarer items
-    
-    -- Add glow effect based on rarity
-    if runeData.rarity > 1 then
-      -- Draw glow
-      mode7:drawSprite(rune, camera, {
-        color = {runeData.color[1], runeData.color[2], runeData.color[3], 0.3},
-        scale = scale * 1.5,
-        angle = rune.angle
-      })
-    end
-    
-    -- Draw rune
-    mode7:drawSprite(rune, camera, {
-      color = runeData.color,
-      scale = scale,
-      angle = rune.angle
-    })
-  end
-  
-  -- Flash screen red when taking damage
-  if player.invulnerableTimer > 0 then
-    love.graphics.setColor(1, 0, 0, player.invulnerableTimer / player.invulnerableTime * 0.3)
-    love.graphics.rectangle('fill', 0, 0, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT)
-  end
-  
   -- Draw game over screen
   if player.isDead then
-    love.graphics.setFont(gameFont)
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle('fill', 0, 0, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT)
     
@@ -514,22 +447,13 @@ function love.draw()
       love.graphics.printf("Press R to Restart", 0, Constants.SCREEN_HEIGHT * 0.6, 
         Constants.SCREEN_WIDTH, "center")
     end
-    
-    -- Reset to default font
-    love.graphics.setFont(love.graphics.getFont())
   end
 
-  -- Draw boss spawn announcement
-  if bossSpawnTimer and bossSpawnTimer > 0 then
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.setFont(gameFont)
-    love.graphics.printf("BOSS HAS APPEARED!", 
-      0, Constants.SCREEN_HEIGHT/2 - 50, 
-      Constants.SCREEN_WIDTH, "center")
-    love.graphics.setColor(1, 1, 1)
-  end
+  -- Reset color and font
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.setFont(hudFont)
 
-  -- Draw console last so it appears on top
+  -- Draw console last
   console:draw()
 end
 
