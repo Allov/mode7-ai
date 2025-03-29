@@ -396,7 +396,7 @@ function Mode7:drawSprite(entity, camera, options)
   options = options or {}
   local texture = options.texture or self.enemyTexture
   local scale = options.scale or 6.0
-  local heightScale = options.heightScale or 1.0  -- New height scale parameter
+  local heightScale = options.heightScale or 1.0
   local useAngleScaling = options.useAngleScaling or false
   local color = options.color or {1, 1, 1, 1}
   local heightOffset = options.heightOffset or 0
@@ -414,12 +414,17 @@ function Mode7:drawSprite(entity, camera, options)
   -- Don't render if behind camera or too far
   if ry <= 0 or ry > Constants.DRAW_DISTANCE then return end
   
-  -- Calculate perspective scale with separate height scaling
-  local perspectiveScale = Constants.SCREEN_HEIGHT / (2.0 * ry)
-  local spriteScale = perspectiveScale * scale * 0.01
+  -- Calculate screen position using proper FOV projection
+  local fovRadians = math.rad(Constants.FOV)
+  local tanHalfFOV = math.tan(fovRadians * 0.5)
   
-  -- Calculate screen position
-  local screenX = Constants.SCREEN_WIDTH/2 + (rx * Constants.SCREEN_HEIGHT * 0.5) / ry
+  -- Project X coordinate using FOV
+  local screenX = Constants.SCREEN_WIDTH/2 + 
+                 (rx * Constants.SCREEN_HEIGHT) / (ry * tanHalfFOV)
+  
+  -- Calculate perspective scale using same FOV
+  local perspectiveScale = (Constants.SCREEN_HEIGHT) / (ry * tanHalfFOV)
+  local spriteScale = perspectiveScale * scale * 0.01
   
   -- Calculate ground position for proper Y placement
   local groundY = Constants.HORIZON_LINE + 
