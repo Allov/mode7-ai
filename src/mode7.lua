@@ -64,6 +64,9 @@ function Mode7:load()
 
   -- Load chest texture
   self.chestTexture = love.graphics.newImage("assets/images/chest.png")
+
+  -- Load boss texture
+  self.bossTexture = love.graphics.newImage('assets/images/boss.png')
 end
 
 function Mode7:render(camera, enemies, projectiles)
@@ -128,11 +131,32 @@ function Mode7:render(camera, enemies, projectiles)
   -- Draw sprites
   if enemies then
     for _, enemy in ipairs(enemies) do
+      -- Check if enemy is a boss or elite
+      local isBoss = enemy.chargeSpeed ~= nil  -- Boss-specific property
+      
+      -- Set color for elite enemies
+      if enemy.isElite then
+        love.graphics.setColor(enemy.eliteColor)
+      end
+      
       self:drawSprite(enemy, camera, {
-        texture = self.enemyTexture,
-        scale = 6.0,
+        texture = isBoss and self.bossTexture or self.enemyTexture,
+        scale = (isBoss and 12.0) or (enemy.isElite and 9.0) or 6.0,  -- Larger scale for elites
         useAngleScaling = true
       })
+      
+      -- Reset color
+      love.graphics.setColor(1, 1, 1, 1)
+      
+      -- Debug visualization for elite enemies
+      if enemy.isElite then
+        love.graphics.setColor(1, 0.5, 0, 0.3)
+        love.graphics.circle('line', 
+          enemy.x - camera.x, 
+          enemy.y - camera.y, 
+          enemy.radius)
+        love.graphics.setColor(1, 1, 1, 1)
+      end
     end
   end
   

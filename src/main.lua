@@ -179,8 +179,11 @@ function spawnEnemy()
   
   -- Only spawn if valid position found
   if spawnX and spawnY then
+    -- 10% chance to spawn an elite enemy
+    local isElite = math.random() < 0.10
+    
     -- Create and add new enemy
-    local enemy = Enemy:new():init(spawnX, spawnY, true)
+    local enemy = Enemy:new():init(spawnX, spawnY, isElite)
     table.insert(enemies, enemy)
     
     -- Reduce spawn interval, but not below minimum
@@ -191,7 +194,7 @@ end
 function spawnBoss()
   -- Find valid spawn position (similar to enemy spawn)
   local angle = math.random() * math.pi * 2
-  local spawnDistance = 600  -- Spawn further than normal enemies
+  local spawnDistance = 800  -- Increased from 600 to be more visible
   
   local spawnX = player.x + math.cos(angle) * spawnDistance
   local spawnY = player.y + math.sin(angle) * spawnDistance
@@ -200,7 +203,10 @@ function spawnBoss()
   local boss = Boss:new():init(spawnX, spawnY)
   table.insert(enemies, boss)  -- Add to enemies table
   
-  -- Optional: Add boss spawn announcement
+  -- Debug print to confirm spawn
+  print(string.format("Boss spawned at: X=%.1f, Y=%.1f", spawnX, spawnY))
+  
+  -- Show announcement
   bossSpawnTimer = 3  -- Show announcement for 3 seconds
 end
 

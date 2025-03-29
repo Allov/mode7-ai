@@ -10,7 +10,8 @@ local Boss = Enemy:new({
   health = 500,        -- Much more health
   damageAmount = 40,   -- Double damage
   damageRadius = 100,  -- Larger damage radius
-  experienceValue = 100,
+  experienceValue = 500,  -- Increased from 100 to 500
+  dropChance = 1.0,    -- 100% chance to drop exp (guaranteed)
   
   -- Boss specific properties
   enrageTimer = 0,
@@ -105,3 +106,4 @@ function Boss:update(dt)
 end
 
 return Boss
+

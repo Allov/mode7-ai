@@ -17,6 +17,12 @@ local Enemy = {
   damageNumber = nil,  -- Single damage number instead of array
   experienceValue = 25,
   dropChance = 0.75,  -- 75% chance to drop exp orb
+  
+  -- Elite properties
+  isElite = false,
+  eliteMultiplier = 2.5,  -- Elite enemies are 2.5x stronger
+  eliteScale = 1.5,       -- Elite enemies are 50% larger
+  eliteColor = {1, 0.5, 0, 1}  -- Orange color for elite enemies
 }
 
 -- Add new DamageNumber class with isCritical flag
@@ -46,12 +52,21 @@ function Enemy:new(o)
   return o
 end
 
-function Enemy:init(x, y, isMoving)
+function Enemy:init(x, y, makeElite)
   self.x = x
   self.y = y
   self.angle = math.random() * math.pi * 2
-  self.targetAngle = self.angle
-  self.isMoving = isMoving or false  -- Default to standing still
+  
+  -- Make elite if specified
+  if makeElite then
+    self.isElite = true
+    self.health = self.health * self.eliteMultiplier
+    self.damageAmount = self.damageAmount * 1.5
+    self.radius = self.radius * self.eliteScale
+    self.experienceValue = math.floor(self.experienceValue * self.eliteMultiplier)
+    self.dropChance = 1.0  -- Elite enemies always drop exp
+  end
+  
   return self
 end
 
@@ -151,6 +166,7 @@ function Enemy:hit(damage, isCritical)
 end
 
 return Enemy
+
 
 
 
