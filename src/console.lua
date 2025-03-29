@@ -1,4 +1,5 @@
 local Enemy = require('src.enemy')
+local GameData = require('src.gamedata')
 
 local Console = {
   isVisible = false,
@@ -101,6 +102,39 @@ local Console = {
         self:print(string.format("Spawned %d enemies (%d elites)", spawned, elites))
         -- Debug print total enemies
         print("Total enemies: " .. #_G.enemies)
+      end
+    },
+    
+    rune = {
+      desc = "Spawn a rune: rune [type]. Type 'rune list' to see available types",
+      func = function(self, args)
+        if not args[1] or args[1] == "list" then
+          self:print("Available rune types:")
+          for runeType, data in pairs(GameData.RUNE_TYPES) do
+            self:print(string.format("  %s: %s", runeType, data.description))
+          end
+          return
+        end
+        
+        local runeType = string.upper(args[1])
+        if not GameData.RUNE_TYPES[runeType] then
+          self:print("Invalid rune type: " .. args[1])
+          self:print("Type 'rune list' to see available types")
+          return
+        end  -- Changed from } to end
+        
+        -- Find spawn position in front of player
+        local dirVector = _G.camera:getDirectionVector()
+        local spawnDistance = 200  -- Spawn 200 units in front of player
+        local spawnX = _G.player.x + dirVector.x * spawnDistance
+        local spawnY = _G.player.y + dirVector.y * spawnDistance
+        
+        -- Create and add new rune
+        local rune = _G.Rune:new():init(spawnX, spawnY, runeType)
+        table.insert(_G.runes, rune)
+        
+        self:print(string.format("Spawned %s rune at X:%.1f Y:%.1f", 
+          GameData.RUNE_TYPES[runeType].name, spawnX, spawnY))
       end
     }
   }
@@ -222,6 +256,8 @@ function Console:draw()
 end
 
 return Console
+
+
 
 
 

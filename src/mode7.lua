@@ -1,5 +1,6 @@
 local Constants = require('src.constants')
 local Rune = require('src.rune')
+local GameData = require('src.gamedata')
 
 local Mode7 = {
   texture = nil,
@@ -77,7 +78,7 @@ function Mode7:load()
   love.graphics.circle('fill', 16, 16, 16)
   love.graphics.setCanvas()
   self.glowTexture = glowCanvas
-  
+
   -- Create rune texture
   local runeCanvas = love.graphics.newCanvas(32, 32)
   love.graphics.setCanvas(runeCanvas)
@@ -119,20 +120,18 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   
   -- Create a table of all objects to sort
   local allObjects = {}
-  
+
   -- Add enemies
   for _, enemy in ipairs(enemies) do
     if enemy.distanceTo then  -- Check if method exists
       table.insert(allObjects, {
         type = "enemy",
         object = enemy,
-        distance = enemy:distanceTo(camera.x, camera.y),
-        isBoss = enemy.chargeSpeed ~= nil,
-        isElite = enemy.isElite
+        distance = enemy:distanceTo(camera.x, camera.y)
       })
     end
   end
-  
+
   -- Add projectiles
   for _, proj in ipairs(projectiles) do
     if proj.distanceTo then  -- Check if method exists
@@ -143,29 +142,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       })
     end
   end
-  
-  -- Add experience orbs
-  for _, orb in ipairs(experienceOrbs) do
-    if orb.distanceTo then  -- Check if method exists
-      table.insert(allObjects, {
-        type = "experienceOrb",
-        object = orb,
-        distance = orb:distanceTo(camera.x, camera.y)
-      })
-    end
-  end
-  
-  -- Add chests
-  for _, chest in ipairs(chests) do
-    if chest.distanceTo then  -- Check if method exists
-      table.insert(allObjects, {
-        type = "chest",
-        object = chest,
-        distance = chest:distanceTo(camera.x, camera.y)
-      })
-    end
-  end
-  
+
   -- Add runes
   for _, rune in ipairs(runes) do
     if rune.distanceTo then  -- Check if method exists
@@ -176,12 +153,12 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       })
     end
   end
-  
+
   -- Sort objects by distance (furthest first)
   table.sort(allObjects, function(a, b)
     return a.distance > b.distance
   end)
-  
+
   -- Draw all objects in sorted order
   for _, obj in ipairs(allObjects) do
     if obj.type == "enemy" then
@@ -230,6 +207,34 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         scale = 30.0,
         useAngleScaling = false
       })
+    elseif obj.type == "rune" then
+      -- Get rune data for color
+      local runeData = GameData.RUNE_TYPES[obj.object.type]
+      if runeData then
+        -- Set the rune's color
+        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 1)
+        
+        -- Draw the rune
+        self:drawSprite(obj.object, camera, {
+          texture = self.runeTexture,
+          scale = 100.0,  -- Much smaller now
+          heightScale = 1.0,
+          useAngleScaling = false
+        })
+        
+        -- Draw glow effect
+        local glowSize = 1.0 + math.sin(obj.object.glowPhase) * 0.2
+        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 0.5)
+        self:drawSprite(obj.object, camera, {
+          texture = self.glowTexture,
+          scale = 150.0 * glowSize,  -- Much smaller glow
+          heightScale = 1.0,
+          useAngleScaling = false
+        })
+      end
+      
+      -- Reset color
+      love.graphics.setColor(1, 1, 1, 1)
     end
   end
 

@@ -25,6 +25,9 @@ local powerUps = {}
 local runes = {}
 local console
 
+-- Add to the global declarations section
+_G.Rune = Rune  -- Make Rune class available to console
+
 -- Add spawn control variables
 local spawnTimer = 0
 local spawnInterval = 3.0  -- Start with 3 seconds between spawns
@@ -167,13 +170,17 @@ function initializeGame()
   mode7 = Mode7:new()
   mode7:load()
   
-  -- Clear arrays
-  enemies = {}
-  projectiles = {}
-  experienceOrbs = {}
-  chests = {}  -- Clear chests array
-  powerUps = {}
-  runes = {}
+  -- Clear arrays and make them globally accessible
+  _G.enemies = {}
+  _G.projectiles = {}
+  _G.experienceOrbs = {}
+  _G.chests = {}
+  _G.powerUps = {}
+  _G.runes = {}  -- Make runes table globally accessible
+  _G.Rune = require('src.rune')  -- Make Rune class globally accessible
+  
+  -- Spawn more random runes
+  spawnRandomRunes(8)  -- Increased from 4 to 8
   
   -- Enable texture filtering
   love.graphics.setDefaultFilter('linear', 'linear')
@@ -371,6 +378,79 @@ function love.update(dt)
   -- Remove the separate mouseShootTimer update since we're using player's timer
 end
 
+function drawCompass(player, runes)
+  -- Position compass bar at top of screen
+  local barY = 30
+  local barHeight = 20  -- Reduced from 30
+  local barWidth = Constants.SCREEN_WIDTH * 0.5  -- Reduced from 0.8 to 0.5 (50% of screen width)
+  local barX = (Constants.SCREEN_WIDTH - barWidth) / 2
+  
+  -- Draw compass bar background
+  love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+  love.graphics.rectangle('fill', barX, barY, barWidth, barHeight)
+  love.graphics.setColor(1, 1, 1, 0.8)
+  love.graphics.rectangle('line', barX, barY, barWidth, barHeight)
+  
+  -- Draw cardinal points
+  love.graphics.setColor(1, 1, 1, 0.8)
+  local dirVector = camera:getDirectionVector()
+  local playerAngle = math.atan2(dirVector.x, dirVector.y)
+  
+  -- Calculate positions for cardinal points
+  local cardinalPoints = {
+    {text = "N", angle = 0},
+    {text = "E", angle = math.pi/2},
+    {text = "S", angle = math.pi},
+    {text = "W", angle = -math.pi/2}
+  }
+  
+  for _, point in ipairs(cardinalPoints) do
+    local relativeAngle = point.angle - playerAngle
+    while relativeAngle > math.pi do relativeAngle = relativeAngle - 2 * math.pi end
+    while relativeAngle < -math.pi do relativeAngle = relativeAngle + 2 * math.pi end
+    
+    local x = barX + barWidth/2 + (relativeAngle / math.pi) * (barWidth/2)
+    if x >= barX and x <= barX + barWidth then
+      love.graphics.print(point.text, x - 5, barY - 15)  -- Adjusted Y position
+    end
+  end
+  
+  -- Draw rune markers
+  for _, rune in ipairs(runes) do
+    local dx = rune.x - player.x
+    local dy = rune.y - player.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    local angle = math.atan2(dx, dy)
+    
+    local relativeAngle = angle - playerAngle
+    while relativeAngle > math.pi do relativeAngle = relativeAngle - 2 * math.pi end
+    while relativeAngle < -math.pi do relativeAngle = relativeAngle + 2 * math.pi end
+    
+    local x = barX + barWidth/2 + (relativeAngle / math.pi) * (barWidth/2)
+    
+    if x >= barX and x <= barX + barWidth then
+      local runeData = Rune.TYPES[rune.type]
+      if runeData then
+        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 1)
+        love.graphics.circle('fill', x, barY + barHeight/2, 4)  -- Reduced circle size from 6 to 4
+        
+        local distText = string.format("%.0fm", distance)
+        love.graphics.print(distText, x - 15, barY + barHeight + 2)  -- Adjusted position
+      end
+    end
+  end
+  
+  -- Draw player direction indicator (triangle at center)
+  love.graphics.setColor(1, 1, 1, 1)
+  local triangleSize = 8  -- Reduced from 10
+  local centerX = barX + barWidth/2
+  love.graphics.polygon('fill',
+    centerX, barY - 4,  -- Adjusted Y position
+    centerX - triangleSize/2, barY + 4,
+    centerX + triangleSize/2, barY + 4
+  )
+end
+
 function love.draw()
   -- Clear screen
   love.graphics.clear(0.5, 0.7, 1.0)
@@ -382,34 +462,61 @@ function love.draw()
   love.graphics.setFont(hudFont)
   love.graphics.setColor(1, 1, 1)
   love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
-  love.graphics.print(string.format("Camera: X: %.1f Y: %.1f A: %.1f°", 
-    camera.x, camera.y, math.deg(camera.angle)), 10, 30)
-  love.graphics.print("Projectiles: " .. #projectiles, 10, 50)
-  love.graphics.print("Enemies: " .. #enemies, 10, 70)
-  love.graphics.print(string.format("Spawn Rate: %.1fs", spawnInterval), 10, 90)
+  
+  -- Get cardinal direction based on camera's direction vector
+  local dirVector = camera:getDirectionVector()  -- Using colon : for method call
+  local displayAngle = math.atan2(dirVector.x, dirVector.y)
+  local degrees = math.deg(displayAngle)
+  if degrees < 0 then degrees = degrees + 360 end
+  
+  local direction = ""
+  if degrees >= 337.5 or degrees < 22.5 then
+    direction = "N"
+  elseif degrees < 67.5 then
+    direction = "NE"
+  elseif degrees < 112.5 then
+    direction = "E"
+  elseif degrees < 157.5 then
+    direction = "SE"
+  elseif degrees < 202.5 then
+    direction = "S"
+  elseif degrees < 247.5 then
+    direction = "SW"
+  elseif degrees < 292.5 then
+    direction = "W"
+  elseif degrees < 337.5 then
+    direction = "NW"
+  end
+  
+  -- Display position, angle, and cardinal direction
+  love.graphics.print(string.format("Position: X: %.1f Y: %.1f", player.x, player.y), 10, 30)
+  love.graphics.print(string.format("Facing: %s (%.1f°)", direction, degrees), 10, 50)
+  love.graphics.print("Projectiles: " .. #projectiles, 10, 70)
+  love.graphics.print("Enemies: " .. #enemies, 10, 90)
+  love.graphics.print(string.format("Spawn Rate: %.1fs", spawnInterval), 10, 110)
   
   -- Draw health bar
   love.graphics.setColor(1, 0, 0)
-  love.graphics.rectangle('fill', 10, 110, (player.health / player.maxHealth) * 200, 20)
+  love.graphics.rectangle('fill', 10, 130, (player.health / player.maxHealth) * 200, 20)
   love.graphics.setColor(1, 1, 1)
-  love.graphics.rectangle('line', 10, 110, 200, 20)
-  love.graphics.print("Health: " .. math.floor(player.health), 10, 135)
+  love.graphics.rectangle('line', 10, 130, 200, 20)
+  love.graphics.print("Health: " .. math.floor(player.health), 10, 155)
   
   -- Draw experience bar
   love.graphics.setColor(0, 1, 1, 0.8)  -- Cyan color for XP
-  love.graphics.rectangle('fill', 10, 160, 
+  love.graphics.rectangle('fill', 10, 180, 
     (player.experience / player.experienceToNextLevel) * 200, 20)
   love.graphics.setColor(0, 0.7, 0.7, 1)  -- Darker cyan for border
-  love.graphics.rectangle('line', 10, 160, 200, 20)
+  love.graphics.rectangle('line', 10, 180, 200, 20)
   
   -- Draw level and XP text
   love.graphics.setColor(1, 1, 1)
-  love.graphics.print("Level " .. player.level, 10, 185)
+  love.graphics.print("Level " .. player.level, 10, 205)
   love.graphics.print(string.format("XP: %d/%d", 
-    player.experience, player.experienceToNextLevel), 10, 205)
+    player.experience, player.experienceToNextLevel), 10, 225)
     
   -- Draw active power-ups with hudFont
-  local powerUpY = 230
+  local powerUpY = 250
   love.graphics.print("Active Power-ups:", 10, powerUpY)
   powerUpY = powerUpY + 25
   
@@ -518,6 +625,9 @@ function love.draw()
   love.graphics.setColor(1, 1, 1)
   love.graphics.setFont(hudFont)
 
+  -- Draw compass after other HUD elements
+  drawCompass(player, runes)
+
   -- Draw console last
   console:draw()
 end
@@ -577,3 +687,60 @@ _G.initializeGame = initializeGame
 _G.enemies = enemies
 _G.projectiles = projectiles
 _G.Enemy = Enemy  -- Add Enemy class to globals
+
+function spawnRandomRunes(count)
+  -- Get all available rune types from GameData
+  local availableRuneTypes = {}
+  for runeType, _ in pairs(GameData.RUNE_TYPES) do
+    table.insert(availableRuneTypes, runeType)
+  end
+  
+  -- Parameters for spawn distance - increased dramatically
+  local minDistance = 15000  -- Increased from 4000
+  local maxDistance = 20000  -- Increased from 5000
+  local minAngleDiff = math.pi/2  -- Minimum 90 degrees between runes
+  
+  -- Keep track of used angles to spread runes apart
+  local usedAngles = {}
+  
+  for i = 1, count do
+    local attempts = 20  -- Maximum attempts to find valid position
+    local validPosition = false
+    
+    while attempts > 0 and not validPosition do
+      -- Generate random angle and distance
+      local angle = math.random() * math.pi * 2
+      
+      -- Check if angle is far enough from other runes
+      local validAngle = true
+      for _, usedAngle in ipairs(usedAngles) do
+        local angleDiff = math.abs(angle - usedAngle)
+        angleDiff = math.min(angleDiff, math.pi * 2 - angleDiff)
+        if angleDiff < minAngleDiff then
+          validAngle = false
+          break
+        end
+      end
+      
+      if validAngle then
+        local distance = minDistance + math.random() * (maxDistance - minDistance)
+        local x = math.cos(angle) * distance
+        local y = math.sin(angle) * distance
+        
+        -- Choose random rune type
+        local runeType = availableRuneTypes[math.random(#availableRuneTypes)]
+        
+        -- Create and add new rune
+        local rune = Rune:new():init(x, y, runeType)
+        table.insert(runes, rune)
+        table.insert(usedAngles, angle)
+        validPosition = true
+        
+        -- Debug print
+        print(string.format("Spawned %s rune at X:%.1f Y:%.1f", runeType, x, y))
+      end
+      
+      attempts = attempts - 1
+    end
+  end
+end

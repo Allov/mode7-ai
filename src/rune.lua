@@ -3,7 +3,7 @@ local GameData = require('src.gamedata')
 local Rune = {
   x = 0,
   y = 0,
-  z = 40,  -- Float higher than powerups
+  z = 100,  -- Increased from 40 to 100 to float higher above ground
   radius = 25,
   pickupRadius = 75,
   type = "none",
@@ -54,6 +54,12 @@ function Rune:init(x, y, type)
   return self
 end
 
+function Rune:distanceTo(x, y)
+  local dx = self.x - x
+  local dy = self.y - y
+  return math.sqrt(dx * dx + dy * dy)
+end
+
 function Rune:update(dt)
   -- Rotate the rune
   self.angle = self.angle + self.rotationSpeed * dt
@@ -75,3 +81,6 @@ function Rune:update(dt)
 end
 
 return Rune
+
+
+

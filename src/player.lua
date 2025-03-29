@@ -7,9 +7,9 @@ local Player = {
   x = 0,
   y = 0,
   angle = 0,
-  moveSpeed = 200,
-  strafeSpeed = 300,
-  turnSpeed = 3.0,mm,
+  moveSpeed = 150,    -- Reduced from 200
+  strafeSpeed = 200,  -- Reduced from 300
+  turnSpeed = 3.0,
   
   -- Combat properties
   health = 100,
@@ -38,7 +38,7 @@ local Player = {
   
   -- Add power-up related properties
   activePowerUps = {},  -- Stores active power-ups
-  baseMoveSpeed = 200,  -- Store base values
+  baseMoveSpeed = 150,  -- Reduced from 200
   baseDamage = 25,
   basePickupRange = 50,
   pickupRange = 50,     -- Current pickup range
