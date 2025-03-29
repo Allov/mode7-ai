@@ -1,10 +1,12 @@
 local Constants = require('src.constants')
 local Camera = require('src.camera')
+local Player = require('src.player')
 local Mode7 = require('src.mode7')
 local Enemy = require('src.enemy')
 local Projectile = require('src.projectile')
 
 local camera
+local player
 local mode7
 local enemies = {}
 local projectiles = {}  -- Add projectiles table
@@ -18,13 +20,17 @@ function love.load()
     minheight = 300
   })
   
-  -- Initialize camera first
+  -- Initialize player first
+  player = Player:new()
+  
+  -- Initialize camera to follow player
   camera = Camera:new()
   
-  -- Make camera globally accessible
-  _G.camera = camera  -- This allows projectiles to access camera position
+  -- Make both globally accessible if needed
+  _G.player = player
+  _G.camera = camera
   
-  -- Initialize objects
+  -- Initialize other objects
   mode7 = Mode7:new()
   mode7:load()
   
@@ -58,7 +64,8 @@ function love.load()
 end
 
 function love.update(dt)
-  camera:update(dt)
+  player:update(dt)
+  camera:update(dt, player)
   
   -- Update enemies
   for i = #enemies, 1, -1 do
@@ -103,6 +110,19 @@ function love.draw()
   love.graphics.print(string.format("Camera: X: %.1f Y: %.1f A: %.1f°", 
     camera.x, camera.y, math.deg(camera.angle)), 10, 30)
   love.graphics.print("Projectiles: " .. #projectiles, 10, 50)
+  
+  -- Draw health bar
+  love.graphics.setColor(1, 0, 0)
+  love.graphics.rectangle('fill', 10, 70, (player.health / player.maxHealth) * 200, 20)
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.rectangle('line', 10, 70, 200, 20)
+  love.graphics.print("Health: " .. math.floor(player.health), 10, 95)
+  
+  -- Flash screen red when taking damage
+  if player.invulnerableTimer > 0 then
+    love.graphics.setColor(1, 0, 0, player.invulnerableTimer / player.invulnerableTime * 0.3)
+    love.graphics.rectangle('fill', 0, 0, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT)
+  end
 end
 
 function love.keypressed(key)

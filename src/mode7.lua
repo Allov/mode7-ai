@@ -6,7 +6,7 @@ local Mode7 = {
   skyTexture = nil,  -- Add sky texture
   enemyTexture = nil,
   projectileTexture = nil,
-  fogColor = {0.5, 0.7, 1.0}
+  fogColor = {0.1, 0.2, 0.25}
 }
 
 function Mode7:new(o)

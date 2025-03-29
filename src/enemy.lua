@@ -11,7 +11,9 @@ local Enemy = {
   thinkTime = 0,
   thinkInterval = 2,
   targetAngle = 0,
-  health = 100
+  health = 100,
+  damageAmount = 20,
+  damageRadius = 50  -- How close enemy needs to be to damage player
 }
 
 function Enemy:new(o)
@@ -33,13 +35,12 @@ end
 function Enemy:update(dt)
   if not self.isMoving then return end  -- Skip movement logic if standing still
   
-  -- Update AI thinking
-  self.thinkTime = self.thinkTime + dt
-  if self.thinkTime >= self.thinkInterval then
-    self.thinkTime = 0
-    -- Choose a new random direction
-    self.targetAngle = math.random() * math.pi * 2
-  end
+  -- Get direction to player
+  local dx = _G.player.x - self.x
+  local dy = _G.player.y - self.y
+  
+  -- Calculate angle to player
+  self.targetAngle = math.atan2(dx, dy)
   
   -- Smoothly rotate towards target angle
   local angleDiff = (self.targetAngle - self.angle)
@@ -57,6 +58,18 @@ function Enemy:update(dt)
   local bound = 1000
   self.x = math.clamp(self.x, -bound, bound)
   self.y = math.clamp(self.y, -bound, bound)
+  
+  -- Check for collision with player
+  local distanceToPlayer = math.sqrt(dx * dx + dy * dy)
+  
+  if distanceToPlayer < self.damageRadius then
+    if _G.player:takeDamage(self.damageAmount) then
+      -- Optional: knock player back
+      local knockbackForce = 100
+      _G.player.x = _G.player.x + (dx / distanceToPlayer) * knockbackForce * dt
+      _G.player.y = _G.player.y + (dy / distanceToPlayer) * knockbackForce * dt
+    end
+  end
 end
 
 -- Helper function to get distance to another position
@@ -82,6 +95,9 @@ function Enemy:hit(damage)
 end
 
 return Enemy
+
+
+
 
 
 
