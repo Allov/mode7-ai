@@ -1,5 +1,7 @@
 local Constants = require('src.constants')
 local Enemy = require('src.enemy')
+local Rune = require('src.rune')
+local DamageNumber = require('src.damagenumber')
 
 -- Create Boss by inheriting from Enemy
 local Boss = Enemy:new({
@@ -105,5 +107,42 @@ function Boss:update(dt)
   end
 end
 
+function Boss:hit(damage, isCritical)
+  self.health = self.health - (damage or 25)
+  
+  -- Create damage number
+  self.damageNumber = DamageNumber:new({
+    value = damage or 25,
+    x = self.x,
+    y = self.y,
+    z = Constants.CAMERA_HEIGHT - 10,
+    baseScale = isCritical and 1.5 or 1.0,
+    isCritical = isCritical
+  })
+  
+  local isDead = self.health <= 0
+  
+  if isDead then
+    -- Always drop experience
+    self.shouldDropExp = true
+    
+    -- Drop a random rune
+    local runeTypes = {}
+    for runeType, _ in pairs(Rune.TYPES) do
+      table.insert(runeTypes, runeType)
+    end
+    
+    self.shouldDropRune = {
+      type = runeTypes[math.random(#runeTypes)],
+      x = self.x,
+      y = self.y
+    }
+  end
+  
+  return isDead
+end
+
 return Boss
+
+
 

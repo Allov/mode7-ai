@@ -1,4 +1,5 @@
 local Constants = require('src.constants')
+local Rune = require('src.rune')
 
 local Player = {
   -- Position and movement
@@ -40,6 +41,16 @@ local Player = {
   baseDamage = 25,
   basePickupRange = 50,
   pickupRange = 50,     -- Current pickup range
+  
+  -- Add rune system
+  runes = {},
+  runeEffects = {
+    experienceMultiplier = 1.0,
+    powerDurationMultiplier = 1.0,
+    moveSpeedMultiplier = 1.0,
+    damageMultiplier = 1.0,
+    critChanceBonus = 0
+  }
 }
 
 function Player:new(o)
@@ -179,9 +190,10 @@ function Player:getDirectionVector()
 end
 
 function Player:gainExperience(amount)
+  -- Apply experience multiplier from runes
+  amount = amount * self.runeEffects.experienceMultiplier
   self.experience = self.experience + amount
   
-  -- Check for level up
   while self.experience >= self.experienceToNextLevel do
     self:levelUp()
   end
@@ -199,17 +211,16 @@ function Player:levelUp()
 end
 
 function Player:addPowerUp(type, multiplier, duration)
-  -- Debug print to verify power-up is being added
-  print("Adding power-up:", type, multiplier, duration)
+  -- Apply power-up duration multiplier from runes
+  duration = duration * self.runeEffects.powerDurationMultiplier
   
   table.insert(self.activePowerUps, {
     type = type,
     multiplier = multiplier,
     timeLeft = duration,
-    duration = duration  -- Store initial duration for UI
+    duration = duration
   })
   
-  -- Immediately apply effects
   self:updatePowerUpEffects()
 end
 
@@ -231,7 +242,37 @@ function Player:updatePowerUpEffects()
   end
 end
 
+function Player:addRune(runeType)
+  -- Add rune to collection
+  table.insert(self.runes, runeType)
+  
+  -- Apply rune effects
+  local effects = Rune.TYPES[runeType].effects
+  for stat, multiplier in pairs(effects) do
+    if self.runeEffects[stat] then
+      if string.find(stat, "Multiplier") then
+        -- Multiply effect for multipliers
+        self.runeEffects[stat] = self.runeEffects[stat] * multiplier
+      else
+        -- Add effect for flat bonuses
+        self.runeEffects[stat] = self.runeEffects[stat] + multiplier
+      end
+    end
+  end
+  
+  -- Update player stats
+  self:updateStats()
+end
+
+function Player:updateStats()
+  -- Apply rune effects to base stats
+  self.moveSpeed = 200 * self.runeEffects.moveSpeedMultiplier
+  self.critChance = 0.05 + self.runeEffects.critChanceBonus -- Base 5% + rune bonus
+end
+
 return Player
+
+
 
 
 

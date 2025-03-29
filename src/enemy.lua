@@ -1,4 +1,5 @@
 local Constants = require('src.constants')
+local DamageNumber = require('src.damagenumber')
 
 local Enemy = {
   x = 0,
@@ -24,26 +25,6 @@ local Enemy = {
   eliteScale = 1.5,       -- Elite enemies are 50% larger
   eliteColor = {1, 0.5, 0, 1}  -- Orange color for elite enemies
 }
-
--- Add new DamageNumber class with isCritical flag
-local DamageNumber = {
-  value = 0,
-  x = 0,
-  y = 0,
-  z = 0,
-  age = 0,
-  lifetime = 1.0,
-  floatSpeed = 50,
-  baseScale = 1.0,
-  isCritical = false  -- New flag for critical hits
-}
-
-function DamageNumber:new(o)
-  o = o or {}
-  setmetatable(o, self)
-  self.__index = self
-  return o
-end
 
 function Enemy:new(o)
   o = o or {}
@@ -166,6 +147,7 @@ function Enemy:hit(damage, isCritical)
 end
 
 return Enemy
+
 
 
 

@@ -9,6 +9,8 @@ local Chest = require('src.chest')
 local PowerUp = require('src.powerup')
 local GameData = require('src.gamedata')
 local Boss = require('src.boss')
+local Rune = require('src.rune')
+local Console = require('src.console')
 
 -- Declare all global variables at the top
 local camera
@@ -20,6 +22,8 @@ local experienceOrbs = {}
 local gameFont
 local chests = {}  -- Add chests to global variables
 local powerUps = {}
+local runes = {}
+local console
 
 -- Add spawn control variables
 local spawnTimer = 0
@@ -164,6 +168,7 @@ function initializeGame()
   experienceOrbs = {}
   chests = {}  -- Clear chests array
   powerUps = {}
+  runes = {}
   
   -- Enable texture filtering
   love.graphics.setDefaultFilter('linear', 'linear')
@@ -171,6 +176,12 @@ function initializeGame()
   -- Reset spawn control
   spawnTimer = 0
   spawnInterval = 3.0
+  
+  -- Initialize console
+  console = Console:new()
+
+  -- Initialize pause state
+  _G.isPaused = false
 end
 
 function spawnEnemy()
@@ -211,6 +222,11 @@ function spawnBoss()
 end
 
 function love.update(dt)
+  -- Return early if game is paused (but not if player is dead)
+  if _G.isPaused and not player.isDead then
+    return
+  end
+
   if player.isDead and player.deathTimer <= 0 then
     -- Only handle restart input when death animation is complete
     if love.keyboard.isDown('r') then
@@ -248,6 +264,17 @@ function love.update(dt)
               local expOrb = ExperienceOrb:new():init(enemy.x, enemy.y, enemy.experienceValue)
               table.insert(experienceOrbs, expOrb)
             end
+            
+            -- Handle rune drop from boss
+            if enemy.shouldDropRune then
+              local rune = Rune:new():init(
+                enemy.shouldDropRune.x,
+                enemy.shouldDropRune.y,
+                enemy.shouldDropRune.type
+              )
+              table.insert(runes, rune)
+            end
+            
             table.remove(enemies, i)
             break
           end
@@ -296,6 +323,13 @@ function love.update(dt)
     for i = #powerUps, 1, -1 do
       if powerUps[i]:update(dt) then
         table.remove(powerUps, i)
+      end
+    end
+
+    -- Update runes
+    for i = #runes, 1, -1 do
+      if runes[i]:update(dt) then
+        table.remove(runes, i)
       end
     end
   end
@@ -435,6 +469,29 @@ function love.draw()
       angle = powerUp.angle
     })
   end
+
+  -- Draw runes
+  for _, rune in ipairs(runes) do
+    local runeData = Rune.TYPES[rune.type]  -- Change GameData.RUNE_TYPES to Rune.TYPES
+    local scale = 1.0 + (runeData.rarity * 0.2)  -- Bigger scale for rarer items
+    
+    -- Add glow effect based on rarity
+    if runeData.rarity > 1 then
+      -- Draw glow
+      mode7:drawSprite(rune, camera, {
+        color = {runeData.color[1], runeData.color[2], runeData.color[3], 0.3},
+        scale = scale * 1.5,
+        angle = rune.angle
+      })
+    end
+    
+    -- Draw rune
+    mode7:drawSprite(rune, camera, {
+      color = runeData.color,
+      scale = scale,
+      angle = rune.angle
+    })
+  end
   
   -- Flash screen red when taking damage
   if player.invulnerableTimer > 0 then
@@ -471,11 +528,29 @@ function love.draw()
       Constants.SCREEN_WIDTH, "center")
     love.graphics.setColor(1, 1, 1)
   end
+
+  -- Draw console last so it appears on top
+  console:draw()
 end
 
 function love.keypressed(key)
+  if key == '`' then
+    console:toggle()
+    return
+  end
+  
+  if console:handleInput(key) then
+    return
+  end
+  
   if key == 'escape' then
     love.event.quit()
+  end
+end
+
+function love.textinput(text)
+  if console:textinput(text) then
+    return
   end
 end
 
@@ -512,12 +587,9 @@ function love.mousepressed(x, y, button)
   end
 end
 
-
-
-
-
-
-
-
-
-
+-- Make these global for console access
+_G.spawnEnemy = spawnEnemy
+_G.spawnBoss = spawnBoss
+_G.initializeGame = initializeGame
+_G.enemies = enemies
+_G.projectiles = projectiles
