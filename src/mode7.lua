@@ -92,6 +92,8 @@ end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
   -- Add parameter validation with default empty tables
+  enemies = enemies or {}
+  projectiles = projectiles or {}
   experienceOrbs = experienceOrbs or {}
   chests = chests or {}
   runes = runes or {}
@@ -120,40 +122,59 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   
   -- Add enemies
   for _, enemy in ipairs(enemies) do
-    table.insert(allObjects, {
-      type = "enemy",
-      object = enemy,
-      distance = enemy:distanceTo(camera.x, camera.y),
-      isBoss = enemy.chargeSpeed ~= nil,
-      isElite = enemy.isElite
-    })
+    if enemy.distanceTo then  -- Check if method exists
+      table.insert(allObjects, {
+        type = "enemy",
+        object = enemy,
+        distance = enemy:distanceTo(camera.x, camera.y),
+        isBoss = enemy.chargeSpeed ~= nil,
+        isElite = enemy.isElite
+      })
+    end
   end
   
   -- Add projectiles
   for _, proj in ipairs(projectiles) do
-    table.insert(allObjects, {
-      type = "projectile",
-      object = proj,
-      distance = proj:distanceTo(camera.x, camera.y)
-    })
+    if proj.distanceTo then  -- Check if method exists
+      table.insert(allObjects, {
+        type = "projectile",
+        object = proj,
+        distance = proj:distanceTo(camera.x, camera.y)
+      })
+    end
   end
   
   -- Add experience orbs
   for _, orb in ipairs(experienceOrbs) do
-    table.insert(allObjects, {
-      type = "orb",
-      object = orb,
-      distance = orb:distanceTo(camera.x, camera.y)
-    })
+    if orb.distanceTo then  -- Check if method exists
+      table.insert(allObjects, {
+        type = "experienceOrb",
+        object = orb,
+        distance = orb:distanceTo(camera.x, camera.y)
+      })
+    end
   end
   
   -- Add chests
   for _, chest in ipairs(chests) do
-    table.insert(allObjects, {
-      type = "chest",
-      object = chest,
-      distance = chest:distanceTo(camera.x, camera.y)
-    })
+    if chest.distanceTo then  -- Check if method exists
+      table.insert(allObjects, {
+        type = "chest",
+        object = chest,
+        distance = chest:distanceTo(camera.x, camera.y)
+      })
+    end
+  end
+  
+  -- Add runes
+  for _, rune in ipairs(runes) do
+    if rune.distanceTo then  -- Check if method exists
+      table.insert(allObjects, {
+        type = "rune",
+        object = rune,
+        distance = rune:distanceTo(camera.x, camera.y)
+      })
+    end
   end
   
   -- Sort objects by distance (furthest first)
@@ -171,9 +192,11 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(1, 1, 1, 1)
       end
       
+      -- Scale down by 50% (200 instead of 400 for regular enemies)
       self:drawSprite(obj.object, camera, {
         texture = obj.isBoss and self.bossTexture or self.enemyTexture,
-        scale = (obj.isBoss and 1200.0) or (obj.isElite and 900.0) or 600.0,
+        scale = (obj.isBoss and 400.0) or (obj.isElite and 300.0) or 200.0,  -- 50% reduction
+        heightScale = 1.5,  -- Keep the tall appearance
         useAngleScaling = true
       })
       
@@ -202,12 +225,29 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       })
     end
   end
+
+  -- After drawing all objects but before HUD, add damage effect
+  if _G.player.invulnerableTimer > 0 then
+    -- Calculate alpha based on invulnerability timer
+    local alpha = math.min(0.4, _G.player.invulnerableTimer / _G.player.invulnerableTime)
+    
+    -- Draw red overlay
+    love.graphics.setColor(1, 0, 0, alpha)
+    love.graphics.rectangle('fill', 0, 0, 
+      love.graphics.getWidth(), 
+      love.graphics.getHeight()
+    )
+    
+    -- Reset color
+    love.graphics.setColor(1, 1, 1, 1)
+  end
 end
 
 function Mode7:drawSprite(entity, camera, options)
   options = options or {}
   local texture = options.texture or self.enemyTexture
   local scale = options.scale or 6.0
+  local heightScale = options.heightScale or 1.0  -- New height scale parameter
   local useAngleScaling = options.useAngleScaling or false
   local color = options.color or {1, 1, 1, 1}
   local heightOffset = options.heightOffset or 0
@@ -225,7 +265,7 @@ function Mode7:drawSprite(entity, camera, options)
   -- Don't render if behind camera or too far
   if ry <= 0 or ry > Constants.DRAW_DISTANCE then return end
   
-  -- Calculate perspective scale
+  -- Calculate perspective scale with separate height scaling
   local perspectiveScale = Constants.SCREEN_HEIGHT / (2.0 * ry)
   local spriteScale = perspectiveScale * scale * 0.01
   
@@ -237,8 +277,8 @@ function Mode7:drawSprite(entity, camera, options)
                  (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
                  (Constants.CAMERA_HEIGHT / ry)
   
-  -- Position sprite above ground position by half its height, plus any offset
-  local screenY = groundY - (texture:getHeight() * spriteScale / 2) - heightOffset
+  -- Position sprite above ground position, applying height scale
+  local screenY = groundY - (texture:getHeight() * spriteScale * heightScale / 2) - heightOffset
   
   -- Draw crosshair if this is the player's current target
   if _G.player and _G.player.currentTarget == entity then
@@ -286,13 +326,15 @@ function Mode7:drawSprite(entity, camera, options)
   -- Apply color if specified
   love.graphics.setColor(unpack(color))
   
-  -- Draw the sprite
+  -- Draw the sprite with separate width and height scaling
   love.graphics.draw(
     texture,
     screenX, screenY,
-    0,
-    spriteScale, spriteScale,
-    texture:getWidth() / 2, texture:getHeight() / 2
+    0,  -- rotation
+    spriteScale,  -- width scale
+    spriteScale * heightScale,  -- height scale with multiplier
+    texture:getWidth() / 2,
+    texture:getHeight() / 2
   )
   
   -- Reset color

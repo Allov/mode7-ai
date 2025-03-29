@@ -30,6 +30,14 @@ local GameData = {
       multiplier = 1.5,   -- 50% increase
       description = "Max Health +",
       rarity = 3
+    },
+    -- Add new power-up type
+    FIRE_RATE = {
+      name = "fire_rate",
+      color = {1, 0.5, 0},  -- Orange
+      multiplier = 1.3,     -- 30% faster firing
+      description = "Fire Rate +",
+      rarity = 2
     }
   },
 
@@ -52,12 +60,26 @@ local GameData = {
       effects = {
         damageMultiplier = 1.10,        -- 10% more damage
         critChanceBonus = 0.02,         -- 2% more crit chance
-        powerDurationMultiplier = 1.25   -- 25% longer power-ups
+        powerDurationMultiplier = 1.25,  -- 25% longer power-ups
+        fireRateMultiplier = 1.10       -- 10% faster firing
       },
-      description = "Damage +10%, Crit +2%, Power Duration +25%",
+      description = "Damage +10%, Crit +2%, Power Duration +25%, Fire Rate +10%",
+      rarity = 2
+    },
+    -- Add new rune type
+    SWIFTNESS = {
+      name = "Rune of Swiftness",
+      color = {1, 0.7, 0}, -- Golden orange
+      effects = {
+        fireRateMultiplier = 1.15,     -- 15% faster firing
+        moveSpeedMultiplier = 1.10,    -- 10% more speed
+        powerDurationMultiplier = 1.15  -- 15% longer power-ups
+      },
+      description = "Fire Rate +15%, Speed +10%, Power Duration +15%",
       rarity = 2
     }
   }
 }
 
 return GameData
+

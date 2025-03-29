@@ -7,7 +7,7 @@ local Enemy = {
   angle = 0,
   speed = 50,
   turnSpeed = 1,
-  radius = 25,  -- Base radius before scaling
+  radius = 8,  -- Reduced from 15 to match new 50% smaller size
   isMoving = true,
   thinkTime = 0,
   thinkInterval = 2,
@@ -147,6 +147,9 @@ function Enemy:hit(damage, isCritical)
 end
 
 return Enemy
+
+
+
 
 
 

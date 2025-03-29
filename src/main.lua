@@ -348,7 +348,7 @@ function love.update(dt)
 
   -- Add mouse shooting handling
   if love.mouse.isDown(1) then  -- Left click
-    if mouseShootTimer <= 0 then
+    if player.shootTimer <= 0 then  -- Use player's shoot timer
       -- Get normalized mouse coordinates (-1 to 1, with center being 0,0)
       local mouseX = -(love.mouse.getX() / love.graphics.getWidth() * 2 - 1) * 0.75
       
@@ -364,14 +364,11 @@ function love.update(dt)
       local finalDirY = dirVector.y + (rightVector.y * mouseX)
       
       spawnProjectile(finalDirX, finalDirY)
-      mouseShootTimer = mouseShootCooldown
+      player.shootTimer = player.shootCooldown  -- Use player's cooldown
     end
   end
   
-  -- Update shoot timer
-  if mouseShootTimer > 0 then
-    mouseShootTimer = mouseShootTimer - dt
-  end
+  -- Remove the separate mouseShootTimer update since we're using player's timer
 end
 
 function love.draw()

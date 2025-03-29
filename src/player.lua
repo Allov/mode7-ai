@@ -50,7 +50,8 @@ local Player = {
     powerDurationMultiplier = 1.0,
     moveSpeedMultiplier = 1.0,
     damageMultiplier = 1.0,
-    critChanceBonus = 0
+    critChanceBonus = 0,
+    fireRateMultiplier = 1.0  -- New effect
   },
   
   -- Add dash properties
@@ -63,8 +64,9 @@ local Player = {
   dashDirection = {x = 0, y = 0}, -- Store dash direction
 
   -- Add shooting properties
-  shootCooldown = 0.2,  -- Time between shots
-  shootTimer = 0,       -- Current cooldown timer
+  baseShootCooldown = 1.2,  -- Significantly increased base cooldown (much slower fire rate)
+  shootCooldown = 1.2,      -- Current cooldown (affected by power-ups/runes)
+  shootTimer = 0,
 
   -- Add targeting properties
   currentTarget = nil,
@@ -434,8 +436,9 @@ end
 
 function Player:updateStats()
   -- Apply rune effects to base stats
-  self.moveSpeed = 200 * self.runeEffects.moveSpeedMultiplier
-  self.critChance = 0.05 + self.runeEffects.critChanceBonus -- Base 5% + rune bonus
+  self.moveSpeed = self.baseMoveSpeed * self.runeEffects.moveSpeedMultiplier
+  self.critChance = 0.05 + self.runeEffects.critChanceBonus
+  self.shootCooldown = self.baseShootCooldown / self.runeEffects.fireRateMultiplier  -- Lower cooldown = faster firing
 end
 
 function Player:shoot()
@@ -444,6 +447,8 @@ function Player:shoot()
 end
 
 return Player
+
+
 
 
 
