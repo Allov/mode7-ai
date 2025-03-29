@@ -1,5 +1,6 @@
 local Constants = require('src.constants')
 local Rune = require('src.rune')
+local Projectile = require('src.projectile')
 
 local Player = {
   -- Position and movement
@@ -7,7 +8,7 @@ local Player = {
   y = 0,
   angle = 0,
   moveSpeed = 200,
-  strafeSpeed = 500,
+  strafeSpeed = 300,
   turnSpeed = 3.0,
   
   -- Combat properties
@@ -60,6 +61,10 @@ local Player = {
   dashTimer = 0,          -- Current dash duration
   dashCooldownTimer = 0,  -- Current cooldown timer
   dashDirection = {x = 0, y = 0}, -- Store dash direction
+
+  -- Add shooting properties
+  shootCooldown = 0.2,  -- Time between shots
+  shootTimer = 0,       -- Current cooldown timer
 }
 
 function Player:new(o)
@@ -154,9 +159,19 @@ function Player:update(dt)
     self.invulnerableTimer = math.max(0, self.invulnerableTimer - dt)
   end
   
-  -- Update dash cooldown
-  if self.dashCooldownTimer > 0 then
-    self.dashCooldownTimer = self.dashCooldownTimer - dt
+  -- Update shoot cooldown
+  if self.shootTimer > 0 then
+    self.shootTimer = self.shootTimer - dt
+  end
+
+  -- Handle shooting with debug prints
+  if love.keyboard.isDown('space') then
+    print("Space pressed!")  -- Debug print
+    if self.shootTimer <= 0 then
+      print("Shooting!")  -- Debug print
+      self:shoot()
+      self.shootTimer = self.shootCooldown
+    end
   end
 
   -- Store previous position
@@ -318,7 +333,24 @@ function Player:updateStats()
   self.critChance = 0.05 + self.runeEffects.critChanceBonus -- Base 5% + rune bonus
 end
 
+function Player:shoot()
+  local dirVector = _G.camera:getDirectionVector()
+  _G.spawnProjectile(dirVector.x, dirVector.y)
+end
+
 return Player
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

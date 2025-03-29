@@ -33,6 +33,10 @@ local spawnIntervalDecay = 0.95  -- Reduce interval by 5% each spawn
 local spawnDistance = 500  -- How far from player to spawn enemies
 local minEnemyDistance = 150  -- Minimum distance between enemies
 
+-- Add mouse shooting variables
+local mouseShootTimer = 0
+local mouseShootCooldown = 0.2  -- Match player's shootCooldown
+
 function getDistanceToNearestEnemy(x, y)
   if #enemies == 0 then return math.huge end  -- Return huge distance if no enemies
   
@@ -341,6 +345,33 @@ function love.update(dt)
       bossSpawnTimer = nil
     end
   end
+
+  -- Add mouse shooting handling
+  if love.mouse.isDown(1) then  -- Left click
+    if mouseShootTimer <= 0 then
+      -- Get normalized mouse coordinates (-1 to 1, with center being 0,0)
+      local mouseX = -(love.mouse.getX() / love.graphics.getWidth() * 2 - 1) * 0.75
+      
+      -- Get base direction and right vectors
+      local dirVector = camera:getDirectionVector()
+      local rightVector = {
+        x = -dirVector.y,  -- Perpendicular to direction vector
+        y = dirVector.x
+      }
+      
+      -- Calculate final direction
+      local finalDirX = dirVector.x + (rightVector.x * mouseX)
+      local finalDirY = dirVector.y + (rightVector.y * mouseX)
+      
+      spawnProjectile(finalDirX, finalDirY)
+      mouseShootTimer = mouseShootCooldown
+    end
+  end
+  
+  -- Update shoot timer
+  if mouseShootTimer > 0 then
+    mouseShootTimer = mouseShootTimer - dt
+  end
 end
 
 function love.draw()
@@ -515,38 +546,30 @@ function love.textinput(text)
   end
 end
 
-function love.mousepressed(x, y, button)
-  if button == 1 then  -- Left click
-    -- Get normalized mouse coordinates (-1 to 1, with center being 0,0)
-    local mouseX = -(x / love.graphics.getWidth() * 2 - 1) * 0.75  -- Added negative sign to fix inversion
-    
-    -- Get base direction and right vectors
-    local dirVector = camera:getDirectionVector()
-    local rightVector = {
-      x = -dirVector.y,  -- Perpendicular to direction vector
-      y = dirVector.x
-    }
-    
-    -- Calculate final direction by adding mouse offset
-    local finalDirX = dirVector.x + (rightVector.x * mouseX)
-    local finalDirY = dirVector.y + (rightVector.y * mouseX)
-    
-    -- Normalize the final direction
-    local length = math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY)
-    finalDirX = finalDirX / length
-    finalDirY = finalDirY / length
-    
-    -- Calculate spawn position and angle
-    local spawnDistance = 40
-    local proj = Projectile:new():init(
-      camera.x + finalDirX * spawnDistance,
-      camera.y + finalDirY * spawnDistance,
-      math.atan2(finalDirX, finalDirY),
-      camera.z - 5
-    )
-    table.insert(projectiles, proj)
-  end
+function spawnProjectile(dirX, dirY)
+  -- Normalize the direction
+  local length = math.sqrt(dirX * dirX + dirY * dirY)
+  local finalDirX = dirX / length
+  local finalDirY = dirY / length
+  
+  -- Calculate spawn position and angle
+  local spawnDistance = 40
+  local proj = Projectile:new():init(
+    camera.x + finalDirX * spawnDistance,
+    camera.y + finalDirY * spawnDistance,
+    math.atan2(finalDirX, finalDirY),
+    camera.z - 5
+  )
+  table.insert(projectiles, proj)
 end
+
+-- Remove or comment out the old mousepressed function since we're handling it in update now
+--[[
+function love.mousepressed(x, y, button)
+  -- Old click handling code...
+end
+--]]
+
 
 -- Make these global for console access
 _G.spawnEnemy = spawnEnemy
