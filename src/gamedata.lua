@@ -77,9 +77,22 @@ local GameData = {
       },
       description = "Fire Rate +15%, Speed +10%, Power Duration +15%",
       rarity = 2
+    },
+    -- Add new rune type
+    MULTISHOT = {
+      name = "Rune of Multishot",
+      color = {0.7, 0.3, 1.0}, -- Purple
+      effects = {
+        projectileCount = 1,        -- Adds 1 additional projectile
+        fireRateMultiplier = 0.85,  -- 15% slower fire rate to balance
+        damageMultiplier = 0.9      -- 10% less damage per projectile
+      },
+      description = "Extra Projectile, Fire Rate -15%, Damage -10%",
+      rarity = 3  -- Slightly rarer than other runes
     }
   }
 }
 
 return GameData
+
 

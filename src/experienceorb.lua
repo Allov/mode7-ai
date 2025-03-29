@@ -3,7 +3,7 @@ local Constants = require('src.constants')
 local ExperienceOrb = {
   x = 0,
   y = 0,
-  z = 20,  -- Fixed height above ground
+  z = 20,  -- Float above ground
   value = 10,
   radius = 15,
   magnetRadius = 150,     -- Distance at which orbs start flying to player
@@ -38,6 +38,7 @@ function ExperienceOrb:update(dt)
   
   -- Check if expired
   if self.age >= self.lifetime then
+    print("Exp orb expired") -- Debug print
     return true
   end
   
@@ -46,22 +47,20 @@ function ExperienceOrb:update(dt)
   local dy = _G.player.y - self.y
   local distance = math.sqrt(dx * dx + dy * dy)
   
-  -- Check for pickup using player's pickup range
+  -- Check for pickup
   if distance < _G.player.pickupRange then
     _G.player:gainExperience(self.value)
+    print("Exp orb collected, value: " .. self.value) -- Debug print
     return true
   end
   
-  -- Magnetic effect when within range
+  -- Move towards player when in range
   if distance < self.magnetRadius then
-    -- Calculate direction to player
-    local dirX = dx / distance
-    local dirY = dy / distance
+    local angle = math.atan2(dy, dx)
+    local acceleration = self.acceleration * dt
     
-    -- Accelerate toward player
-    local acceleration = self.acceleration * (1 - distance / self.magnetRadius)
-    self.velocityX = self.velocityX + dirX * acceleration * dt
-    self.velocityY = self.velocityY + dirY * acceleration * dt
+    self.velocityX = self.velocityX + math.cos(angle) * acceleration
+    self.velocityY = self.velocityY + math.sin(angle) * acceleration
     
     -- Limit speed
     local currentSpeed = math.sqrt(self.velocityX * self.velocityX + self.velocityY * self.velocityY)
@@ -70,10 +69,6 @@ function ExperienceOrb:update(dt)
       self.velocityX = self.velocityX * scale
       self.velocityY = self.velocityY * scale
     end
-  else
-    -- Slow down when out of range
-    self.velocityX = self.velocityX * 0.95
-    self.velocityY = self.velocityY * 0.95
   end
   
   -- Update position
@@ -91,6 +86,7 @@ function ExperienceOrb:distanceTo(x, y)
 end
 
 return ExperienceOrb
+
 
 
 

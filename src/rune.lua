@@ -23,7 +23,7 @@ Rune.TYPES = {
       moveSpeedMultiplier = 1.05      -- 5% more speed
     },
     description = "XP +25%, Power Duration +50%, Speed +5%",
-    rarity = 2  -- Add rarity field
+    rarity = 2
   },
   POWER = {
     name = "Rune of Power",
@@ -31,10 +31,33 @@ Rune.TYPES = {
     effects = {
       damageMultiplier = 1.10,        -- 10% more damage
       critChanceBonus = 0.02,         -- 2% more crit chance
-      powerDurationMultiplier = 1.25   -- 25% longer power-ups
+      powerDurationMultiplier = 1.25,  -- 25% longer power-ups
+      fireRateMultiplier = 1.10       -- 10% faster firing
     },
-    description = "Damage +10%, Crit +2%, Power Duration +25%",
-    rarity = 2  -- Add rarity field
+    description = "Damage +10%, Crit +2%, Power Duration +25%, Fire Rate +10%",
+    rarity = 2
+  },
+  SWIFTNESS = {
+    name = "Rune of Swiftness",
+    color = {1, 0.7, 0}, -- Golden orange
+    effects = {
+      fireRateMultiplier = 1.15,     -- 15% faster firing
+      moveSpeedMultiplier = 1.10,    -- 10% more speed
+      powerDurationMultiplier = 1.15  -- 15% longer power-ups
+    },
+    description = "Fire Rate +15%, Speed +10%, Power Duration +15%",
+    rarity = 2
+  },
+  MULTISHOT = {
+    name = "Rune of Multishot",
+    color = {0.7, 0.3, 1.0}, -- Purple
+    effects = {
+      projectileCount = 1,        -- Adds 1 additional projectile
+      fireRateMultiplier = 0.85,  -- 15% slower fire rate to balance
+      damageMultiplier = 0.9      -- 10% less damage per projectile
+    },
+    description = "Extra Projectile, Fire Rate -15%, Damage -10%",
+    rarity = 3  -- Slightly rarer than other runes
   }
 }
 
@@ -51,6 +74,8 @@ function Rune:init(x, y, type)
   self.type = type
   self.angle = 0
   self.glowPhase = 0
+  -- Add z initialization
+  self.z = 100  -- Match the default z value
   return self
 end
 
@@ -81,6 +106,8 @@ function Rune:update(dt)
 end
 
 return Rune
+
+
 
 
 

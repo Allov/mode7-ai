@@ -51,7 +51,8 @@ local Player = {
     moveSpeedMultiplier = 1.0,
     damageMultiplier = 1.0,
     critChanceBonus = 0,
-    fireRateMultiplier = 1.0  -- New effect
+    fireRateMultiplier = 1.0,
+    projectileCount = 0  -- New effect: additional projectiles
   },
   
   -- Add dash properties
@@ -72,7 +73,7 @@ local Player = {
   currentTarget = nil,
   targetLockRange = 400,  -- Range to acquire targets
   orbitDistance = 200,    -- Preferred distance to orbit target
-  orbitSpeed = 3.0,       -- Base orbit rotation speed
+  orbitSpeed = 0.8,       -- Base orbit rotation speed
 }
 
 function Player:new(o)
@@ -98,6 +99,9 @@ function Player:reset()
   self.rotation = 0
   self.lastX = 0  -- Reset last position
   self.lastY = 0
+  self.targetLockRange = 400
+  self.orbitDistance = 200
+  self.orbitSpeed = 0.8  -- Significantly reduced orbit speed
 end
 
 function Player:findTarget()
@@ -177,25 +181,27 @@ function Player:handleInput()
       if dist > self.targetLockRange then
         self.currentTarget = nil
       else
-        -- Calculate desired angle to target
-        local targetAngle = math.atan2(dy, dx)  -- Changed order to dy, dx
-        self.angle = targetAngle
+        -- Calculate current angle relative to target
+        local currentAngle = math.atan2(dy, dx)
         
         -- Handle orbital movement
         if love.keyboard.isDown('a') or love.keyboard.isDown('q') then
           self.rotation = -1
           -- Orbit counterclockwise
-          local targetDist = math.max(dist, self.orbitDistance)
-          local orbitAngle = targetAngle - self.orbitSpeed * love.timer.getDelta()
-          self.x = self.currentTarget.x + math.cos(orbitAngle) * targetDist  -- Use cos for x
-          self.y = self.currentTarget.y + math.sin(orbitAngle) * targetDist  -- Use sin for y
+          local orbitAngle = currentAngle - self.orbitSpeed * love.timer.getDelta()
+          
+          -- Calculate new position maintaining exact orbit distance
+          self.x = self.currentTarget.x - math.cos(orbitAngle) * self.orbitDistance
+          self.y = self.currentTarget.y - math.sin(orbitAngle) * self.orbitDistance
+          
         elseif love.keyboard.isDown('d') or love.keyboard.isDown('e') then
           self.rotation = 1
           -- Orbit clockwise
-          local targetDist = math.max(dist, self.orbitDistance)
-          local orbitAngle = targetAngle + self.orbitSpeed * love.timer.getDelta()
-          self.x = self.currentTarget.x + math.cos(orbitAngle) * targetDist  -- Use cos for x
-          self.y = self.currentTarget.y + math.sin(orbitAngle) * targetDist  -- Use sin for y
+          local orbitAngle = currentAngle + self.orbitSpeed * love.timer.getDelta()
+          
+          -- Calculate new position maintaining exact orbit distance
+          self.x = self.currentTarget.x - math.cos(orbitAngle) * self.orbitDistance
+          self.y = self.currentTarget.y - math.sin(orbitAngle) * self.orbitDistance
         end
       end
     else
@@ -443,7 +449,26 @@ end
 
 function Player:shoot()
   local dirVector = _G.camera:getDirectionVector()
+  
+  -- Base projectile
   _G.spawnProjectile(dirVector.x, dirVector.y)
+  
+  -- Additional projectiles from runes
+  if self.runeEffects.projectileCount > 0 then
+    local spreadAngle = math.pi / 8  -- 22.5 degrees spread
+    for i = 1, self.runeEffects.projectileCount do
+      -- Alternate left and right spread
+      local angle = spreadAngle * (i % 2 == 0 and 1 or -1) * math.ceil(i/2)
+      local cos = math.cos(angle)
+      local sin = math.sin(angle)
+      
+      -- Rotate the direction vector
+      local newDirX = dirVector.x * cos - dirVector.y * sin
+      local newDirY = dirVector.x * sin + dirVector.y * cos
+      
+      _G.spawnProjectile(newDirX, newDirY)
+    end
+  end
 end
 
 return Player

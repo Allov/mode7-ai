@@ -31,9 +31,11 @@ end
 function Projectile:init(x, y, angle, height)
   self.x = x
   self.y = y
-  self.z = height or Constants.CAMERA_HEIGHT  -- Use passed height or default
+  self.z = height or Constants.CAMERA_HEIGHT
   self.angle = angle
   self.age = 0
+  -- Apply player's damage multiplier from runes
+  self.damage = self.damage * _G.player.runeEffects.damageMultiplier
   return self
 end
 
@@ -76,6 +78,7 @@ function Projectile:update(dt)
 end
 
 return Projectile
+
 
 
 

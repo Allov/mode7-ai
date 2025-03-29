@@ -20,6 +20,13 @@ function Camera:new(o)
   return o
 end
 
+-- Add distanceTo method
+function Camera:distanceTo(x, y)
+  local dx = self.x - x
+  local dy = self.y - y
+  return math.sqrt(dx * dx + dy * dy)
+end
+
 function Camera:reset()
   self.x = 0
   self.y = 0

@@ -37,14 +37,66 @@ function Mode7:load()
   self.shader:send('textureDimensions', {w, h})
   
   -- Create temporary textures
+  -- Regular enemy texture (triangle shape)
   local enemyCanvas = love.graphics.newCanvas(32, 32)
   love.graphics.setCanvas(enemyCanvas)
   love.graphics.clear()
-  love.graphics.setColor(1, 0, 0, 1)  -- Red for enemy
-  love.graphics.rectangle('fill', 0, 0, 32, 32)
+  love.graphics.setColor(0.8, 0.2, 0.2, 1)  -- Dark red
+  love.graphics.polygon('fill', 16, 0, 32, 32, 0, 32)  -- Triangle
+  -- Add white border
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.setLineWidth(2)
+  love.graphics.polygon('line', 16, 0, 32, 32, 0, 32)
   love.graphics.setCanvas()
   self.enemyTexture = enemyCanvas
-  
+
+  -- Elite enemy texture (diamond shape)
+  local eliteCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(eliteCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(1, 0.5, 0, 1)  -- Orange
+  love.graphics.polygon('fill', 16, 0, 32, 16, 16, 32, 0, 16)  -- Diamond
+  -- Add glowing border
+  love.graphics.setColor(1, 0.8, 0, 1)  -- Golden
+  love.graphics.setLineWidth(2)
+  love.graphics.polygon('line', 16, 0, 32, 16, 16, 32, 0, 16)
+  love.graphics.setCanvas()
+  self.eliteTexture = eliteCanvas
+
+  -- Boss texture (pentagonal shape with details)
+  local bossCanvas = love.graphics.newCanvas(64, 64)  -- Larger canvas for more detail
+  love.graphics.setCanvas(bossCanvas)
+  love.graphics.clear()
+  -- Main body
+  love.graphics.setColor(0.7, 0, 0.7, 1)  -- Purple
+  love.graphics.polygon('fill', 
+    32, 0,   -- top
+    64, 24,  -- right top
+    52, 64,  -- right bottom
+    12, 64,  -- left bottom
+    0, 24    -- left top
+  )
+  -- Inner details
+  love.graphics.setColor(1, 0, 1, 0.5)  -- Lighter purple
+  love.graphics.polygon('fill',
+    32, 10,  -- top
+    52, 24,  -- right
+    32, 54,  -- bottom
+    12, 24   -- left
+  )
+  -- Glowing border
+  love.graphics.setColor(1, 0.5, 1, 1)  -- Pink glow
+  love.graphics.setLineWidth(3)
+  love.graphics.polygon('line',
+    32, 0,
+    64, 24,
+    52, 64,
+    12, 64,
+    0, 24
+  )
+  love.graphics.setCanvas()
+  self.bossTexture = bossCanvas
+
   local projectileCanvas = love.graphics.newCanvas(16, 16)
   love.graphics.setCanvas(projectileCanvas)
   love.graphics.clear()
@@ -54,21 +106,28 @@ function Mode7:load()
   self.projectileTexture = projectileCanvas
   
   -- Create experience orb texture
-  local orbCanvas = love.graphics.newCanvas(16, 16)
+  local orbCanvas = love.graphics.newCanvas(32, 32)
   love.graphics.setCanvas(orbCanvas)
   love.graphics.clear()
-  love.graphics.setColor(0, 1, 1, 1)  -- Cyan for experience orbs
-  love.graphics.circle('fill', 8, 8, 8)
-  love.graphics.setColor(1, 1, 1, 1)  -- White inner glow
-  love.graphics.circle('fill', 8, 8, 4)
+  
+  -- Outer glow
+  love.graphics.setColor(0, 1, 1, 0.5)  -- Cyan glow
+  love.graphics.circle('fill', 16, 16, 14)
+  
+  -- Inner orb
+  love.graphics.setColor(1, 1, 1, 1)  -- White core
+  love.graphics.circle('fill', 16, 16, 8)
+  
+  -- Sparkle effect
+  love.graphics.setColor(0, 1, 1, 1)  -- Bright cyan
+  love.graphics.line(16, 4, 16, 28)   -- Vertical line
+  love.graphics.line(4, 16, 28, 16)   -- Horizontal line
+  
   love.graphics.setCanvas()
   self.orbTexture = orbCanvas
 
   -- Load chest texture
   self.chestTexture = love.graphics.newImage("assets/images/chest.png")
-
-  -- Load boss texture
-  self.bossTexture = love.graphics.newImage('assets/images/boss.png')
 
   -- Create glow texture
   local glowCanvas = love.graphics.newCanvas(32, 32)
@@ -79,79 +138,124 @@ function Mode7:load()
   love.graphics.setCanvas()
   self.glowTexture = glowCanvas
 
-  -- Create rune texture
+  -- Create more visible rune texture
   local runeCanvas = love.graphics.newCanvas(32, 32)
   love.graphics.setCanvas(runeCanvas)
   love.graphics.clear()
   love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.circle('line', 16, 16, 14)
-  love.graphics.line(8, 16, 24, 16)  -- Simple rune symbol
+  love.graphics.circle('fill', 16, 16, 14)  -- Filled circle as base
+  love.graphics.setColor(0, 0, 0, 1)
+  love.graphics.circle('line', 16, 16, 14)  -- Outline
+  love.graphics.setLineWidth(2)
+  love.graphics.line(8, 16, 24, 16)  -- Thicker rune symbols
   love.graphics.line(16, 8, 16, 24)
   love.graphics.setCanvas()
   self.runeTexture = runeCanvas
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
+  -- First render the sky
+  love.graphics.setColor(1, 1, 1, 1)
+  local skyScale = love.graphics.getHeight() / self.skyTexture:getHeight()
+  love.graphics.draw(self.skyTexture, 0, 0, 0, 
+    love.graphics.getWidth() / self.skyTexture:getWidth(), 
+    skyScale
+  )
+
+  -- Setup and render the ground using the shader
+  love.graphics.setShader(self.shader)
+  
+  -- Update shader uniforms
+  self.shader:send('cameraPos', {camera.x, camera.y})
+  self.shader:send('cameraAngle', camera.angle)
+  self.shader:send('cameraHeight', Constants.CAMERA_HEIGHT)
+  
+  -- Draw the ground quad
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(self.texture, 
+    0, 0, 0, 
+    love.graphics.getWidth() / self.texture:getWidth(), 
+    love.graphics.getHeight() / self.texture:getHeight()
+  )
+  
+  -- Reset shader
+  love.graphics.setShader()
+
   -- Add parameter validation with default empty tables
   enemies = enemies or {}
   projectiles = projectiles or {}
   experienceOrbs = experienceOrbs or {}
   chests = chests or {}
   runes = runes or {}
-  
-  -- Update shader with current camera height including bob
-  self.shader:send('cameraHeight', camera.z)
-  self.shader:send('cameraPos', {camera.x, camera.y})
-  self.shader:send('cameraAngle', camera.angle)
-  
-  -- Draw sky first
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.draw(self.skyTexture, 0, 0, 0, 
-    love.graphics.getWidth() / self.skyTexture:getWidth(),
-    love.graphics.getHeight() / self.skyTexture:getHeight())
-  
-  -- Draw ground with shader - using screen dimensions
-  love.graphics.setShader(self.shader)
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.draw(self.texture, 0, 0, 0, 
-    love.graphics.getWidth() / self.texture:getWidth(),
-    love.graphics.getHeight() / self.texture:getHeight())
-  love.graphics.setShader()
-  
+
   -- Create a table of all objects to sort
   local allObjects = {}
 
-  -- Add enemies
+  -- Add enemies to render list
   for _, enemy in ipairs(enemies) do
-    if enemy.distanceTo then  -- Check if method exists
+    local dx = enemy.x - camera.x
+    local dy = enemy.y - camera.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    table.insert(allObjects, {
+      type = "enemy",
+      object = enemy,
+      distance = distance
+    })
+  end
+
+  -- Add projectiles to render list
+  for _, projectile in ipairs(projectiles) do
+    local dx = projectile.x - camera.x
+    local dy = projectile.y - camera.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    table.insert(allObjects, {
+      type = "projectile",
+      object = projectile,
+      distance = distance
+    })
+  end
+
+  -- Add experience orbs to render list
+  for _, orb in ipairs(experienceOrbs) do
+    if orb.x and orb.y then
+      local dx = orb.x - camera.x
+      local dy = orb.y - camera.y
+      local distance = math.sqrt(dx * dx + dy * dy)
+      
       table.insert(allObjects, {
-        type = "enemy",
-        object = enemy,
-        distance = enemy:distanceTo(camera.x, camera.y)
+        type = "experienceOrb",
+        object = orb,
+        distance = distance
       })
     end
   end
 
-  -- Add projectiles
-  for _, proj in ipairs(projectiles) do
-    if proj.distanceTo then  -- Check if method exists
-      table.insert(allObjects, {
-        type = "projectile",
-        object = proj,
-        distance = proj:distanceTo(camera.x, camera.y)
-      })
-    end
+  -- Add chests to render list
+  for _, chest in ipairs(chests) do
+    local dx = chest.x - camera.x
+    local dy = chest.y - camera.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    table.insert(allObjects, {
+      type = "chest",
+      object = chest,
+      distance = distance
+    })
   end
 
-  -- Add runes
+  -- Add runes to render list
   for _, rune in ipairs(runes) do
-    if rune.distanceTo then  -- Check if method exists
-      table.insert(allObjects, {
-        type = "rune",
-        object = rune,
-        distance = rune:distanceTo(camera.x, camera.y)
-      })
-    end
+    local dx = rune.x - camera.x
+    local dy = rune.y - camera.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    table.insert(allObjects, {
+      type = "rune",
+      object = rune,
+      distance = distance
+    })
   end
 
   -- Sort objects by distance (furthest first)
@@ -162,79 +266,66 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   -- Draw all objects in sorted order
   for _, obj in ipairs(allObjects) do
     if obj.type == "enemy" then
-      -- Set color for elite enemies
-      if obj.isElite then
-        love.graphics.setColor(obj.object.eliteColor)
+      local enemy = obj.object
+      if enemy.isBoss then
+        love.graphics.setColor(1, 1, 1, 1)
+        self:drawSprite(enemy, camera, {
+          texture = self.bossTexture,
+          scale = 400.0,
+          heightScale = 2.0,
+          useAngleScaling = true
+        })
+      elseif enemy.isElite then
+        love.graphics.setColor(1, 1, 1, 1)
+        self:drawSprite(enemy, camera, {
+          texture = self.eliteTexture,
+          scale = 300.0,
+          heightScale = 1.5,
+          useAngleScaling = true
+        })
       else
         love.graphics.setColor(1, 1, 1, 1)
+        self:drawSprite(enemy, camera, {
+          texture = self.enemyTexture,
+          scale = 200.0,
+          heightScale = 1.0,
+          useAngleScaling = true
+        })
       end
-      
-      -- Scale down by 50% (200 instead of 400 for regular enemies)
-      self:drawSprite(obj.object, camera, {
-        texture = obj.isBoss and self.bossTexture or self.enemyTexture,
-        scale = (obj.isBoss and 400.0) or (obj.isElite and 300.0) or 200.0,  -- 50% reduction
-        heightScale = 1.5,  -- Keep the tall appearance
-        useAngleScaling = true
-      })
-      
-      -- Reset color
-      love.graphics.setColor(1, 1, 1, 1)
-      
     elseif obj.type == "projectile" then
+      love.graphics.setColor(1, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.projectileTexture,
         scale = 200.0,
         useAngleScaling = false
       })
-      
     elseif obj.type == "experienceOrb" then
-      -- Set color for experience orbs
-      love.graphics.setColor(0, 1, 1, 1)  -- Cyan color
-      
+      love.graphics.setColor(0, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.orbTexture,
-        scale = 100.0,  -- Smaller scale for orbs
+        scale = 150.0,
+        heightScale = 1.0,
+        useAngleScaling = false
+      })
+    elseif obj.type == "chest" then
+      love.graphics.setColor(1, 1, 1, 1)
+      self:drawSprite(obj.object, camera, {
+        texture = self.chestTexture,
+        scale = 250.0,
         heightScale = 1.0,
         useAngleScaling = false
       })
       
-      -- Reset color
-      love.graphics.setColor(1, 1, 1, 1)
-      
-    elseif obj.type == "chest" then
-      self:drawSprite(obj.object, camera, {
-        texture = self.chestTexture,
-        scale = 30.0,
-        useAngleScaling = false
-      })
-    elseif obj.type == "rune" then
-      -- Get rune data for color
-      local runeData = GameData.RUNE_TYPES[obj.object.type]
-      if runeData then
-        -- Set the rune's color
-        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 1)
-        
-        -- Draw the rune
-        self:drawSprite(obj.object, camera, {
-          texture = self.runeTexture,
-          scale = 100.0,  -- Much smaller now
-          heightScale = 1.0,
-          useAngleScaling = false
-        })
-        
-        -- Draw glow effect
-        local glowSize = 1.0 + math.sin(obj.object.glowPhase) * 0.2
-        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 0.5)
+      -- Add glow effect for unopened chests
+      if not obj.object.isOpen then
+        love.graphics.setColor(1, 1, 0, 0.5) -- Yellow glow
         self:drawSprite(obj.object, camera, {
           texture = self.glowTexture,
-          scale = 150.0 * glowSize,  -- Much smaller glow
+          scale = 300.0,
           heightScale = 1.0,
           useAngleScaling = false
         })
       end
-      
-      -- Reset color
-      love.graphics.setColor(1, 1, 1, 1)
     end
   end
 

@@ -1,7 +1,8 @@
 local Constants = require('src.constants')
-local Camera = require('src.camera')
 local Player = require('src.player')
+local Camera = require('src.camera')
 local Mode7 = require('src.mode7')
+local Rune = require('src.rune')
 local Enemy = require('src.enemy')
 local Projectile = require('src.projectile')
 local ExperienceOrb = require('src.experienceorb')
@@ -9,7 +10,6 @@ local Chest = require('src.chest')
 local PowerUp = require('src.powerup')
 local GameData = require('src.gamedata')
 local Boss = require('src.boss')
-local Rune = require('src.rune')
 local Console = require('src.console')
 
 -- Declare all global variables at the top
@@ -23,6 +23,7 @@ local gameFont
 local chests = {}  -- Add chests to global variables
 local powerUps = {}
 local runes = {}
+_G.runes = runes  -- Set global reference once
 local console
 
 -- Add to the global declarations section
@@ -101,11 +102,14 @@ function findValidChestPosition()
       end
       
       if not tooClose then
+        -- Debug print to verify function is being called and returning valid positions
+        print(string.format("Found valid chest position at X:%.1f Y:%.1f", x, y))
         return x, y
       end
     end
   end
   
+  print("Failed to find valid chest position") -- Debug print
   return nil, nil
 end
 
@@ -114,10 +118,11 @@ function spawnChest()
   if x and y then
     local chest = Chest:new():init(x, y)
     table.insert(chests, chest)
+    print(string.format("Spawned chest at X:%.1f Y:%.1f", x, y)) -- Debug print
   end
 end
 
--- Modify the player's levelUp function to spawn a chest
+-- Modify the player's levelUp function to ensure chest spawning
 function Player:levelUp()
   self.level = self.level + 1
   self.experience = self.experience - self.experienceToNextLevel
@@ -127,8 +132,14 @@ function Player:levelUp()
   self.maxHealth = self.maxHealth + 10
   self.health = self.maxHealth
   
+  -- Debug print before spawning chest
+  print("Level up! Attempting to spawn chest...")
+  
   -- Spawn a chest to celebrate level up
   spawnChest()
+  
+  -- Debug print chest count
+  print("Current chest count: " .. #chests)
   
   -- Spawn boss every 5 levels
   if self.level % 5 == 0 then
@@ -170,17 +181,15 @@ function initializeGame()
   mode7 = Mode7:new()
   mode7:load()
   
-  -- Clear arrays and make them globally accessible
-  _G.enemies = {}
-  _G.projectiles = {}
-  _G.experienceOrbs = {}
-  _G.chests = {}
-  _G.powerUps = {}
-  _G.runes = {}  -- Make runes table globally accessible
-  _G.Rune = require('src.rune')  -- Make Rune class globally accessible
+  -- Clear arrays but maintain the same table reference
+  runes = {}  -- Clear local table
+  _G.runes = runes  -- Update global reference
   
-  -- Spawn more random runes
-  spawnRandomRunes(8)  -- Increased from 4 to 8
+  -- Make Rune class globally accessible
+  _G.Rune = require('src.rune')
+  
+  -- Spawn random runes
+  spawnRandomRunes(8)
   
   -- Enable texture filtering
   love.graphics.setDefaultFilter('linear', 'linear')
@@ -191,6 +200,7 @@ function initializeGame()
   
   -- Initialize console
   console = Console:new()
+  console.runes = runes  -- Give console access to the local runes table
 
   -- Initialize pause state
   _G.isPaused = false
@@ -271,21 +281,11 @@ function love.update(dt)
         if projectile:checkCollision(enemy, camera) then
           table.remove(projectiles, j)
           if enemy:hit(25) then
-            -- Check if should drop experience
-            if enemy.shouldDropExp then
-              local expOrb = ExperienceOrb:new():init(enemy.x, enemy.y, enemy.experienceValue)
-              table.insert(experienceOrbs, expOrb)
-            end
-            
-            -- Handle rune drop from boss
-            if enemy.shouldDropRune then
-              local rune = Rune:new():init(
-                enemy.shouldDropRune.x,
-                enemy.shouldDropRune.y,
-                enemy.shouldDropRune.type
-              )
-              table.insert(runes, rune)
-            end
+            -- Create experience orb when enemy dies
+            local expValue = enemy.isElite and (enemy.experienceValue * 2) or enemy.experienceValue
+            local expOrb = ExperienceOrb:new():init(enemy.x, enemy.y, expValue)
+            table.insert(experienceOrbs, expOrb)
+            print("Spawned exp orb worth: " .. expValue) -- Debug print
             
             table.remove(enemies, i)
             break
@@ -305,6 +305,7 @@ function love.update(dt)
     -- Update experience orbs
     for i = #experienceOrbs, 1, -1 do
       if experienceOrbs[i]:update(dt) then
+        print("Experience orb collected") -- Debug print
         table.remove(experienceOrbs, i)
       end
     end
@@ -695,23 +696,20 @@ function spawnRandomRunes(count)
     table.insert(availableRuneTypes, runeType)
   end
   
-  -- Parameters for spawn distance - increased dramatically
-  local minDistance = 15000  -- Increased from 4000
-  local maxDistance = 20000  -- Increased from 5000
-  local minAngleDiff = math.pi/2  -- Minimum 90 degrees between runes
+  -- Parameters for spawn distance
+  local minDistance = 15000
+  local maxDistance = 20000
+  local minAngleDiff = math.pi/2
   
-  -- Keep track of used angles to spread runes apart
   local usedAngles = {}
   
   for i = 1, count do
-    local attempts = 20  -- Maximum attempts to find valid position
+    local attempts = 20
     local validPosition = false
     
     while attempts > 0 and not validPosition do
-      -- Generate random angle and distance
       local angle = math.random() * math.pi * 2
       
-      -- Check if angle is far enough from other runes
       local validAngle = true
       for _, usedAngle in ipairs(usedAngles) do
         local angleDiff = math.abs(angle - usedAngle)
@@ -727,16 +725,14 @@ function spawnRandomRunes(count)
         local x = math.cos(angle) * distance
         local y = math.sin(angle) * distance
         
-        -- Choose random rune type
         local runeType = availableRuneTypes[math.random(#availableRuneTypes)]
         
-        -- Create and add new rune
-        local rune = Rune:new():init(x, y, runeType)
-        table.insert(runes, rune)
+        -- Make sure to use _G.runes here
+        local rune = _G.Rune:new():init(x, y, runeType)
+        table.insert(_G.runes, rune)  -- Use global table
         table.insert(usedAngles, angle)
         validPosition = true
         
-        -- Debug print
         print(string.format("Spawned %s rune at X:%.1f Y:%.1f", runeType, x, y))
       end
       

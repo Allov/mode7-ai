@@ -110,31 +110,36 @@ local Console = {
       func = function(self, args)
         if not args[1] or args[1] == "list" then
           self:print("Available rune types:")
-          for runeType, data in pairs(GameData.RUNE_TYPES) do
+          for runeType, data in pairs(_G.Rune.TYPES) do
             self:print(string.format("  %s: %s", runeType, data.description))
           end
           return
         end
         
         local runeType = string.upper(args[1])
-        if not GameData.RUNE_TYPES[runeType] then
+        if not _G.Rune.TYPES[runeType] then
           self:print("Invalid rune type: " .. args[1])
           self:print("Type 'rune list' to see available types")
           return
-        end  -- Changed from } to end
+        end
         
         -- Find spawn position in front of player
         local dirVector = _G.camera:getDirectionVector()
-        local spawnDistance = 200  -- Spawn 200 units in front of player
+        local spawnDistance = 50
         local spawnX = _G.player.x + dirVector.x * spawnDistance
         local spawnY = _G.player.y + dirVector.y * spawnDistance
         
         -- Create and add new rune
-        local rune = _G.Rune:new():init(spawnX, spawnY, runeType)
-        table.insert(_G.runes, rune)
+        local rune = _G.Rune:new()
+        rune:init(spawnX, spawnY, runeType)
+        table.insert(_G.runes, rune)  -- Use global runes table
+        
+        -- Debug print after spawn
+        print(string.format("DEBUG: Spawned %s rune at X:%.1f Y:%.1f (Runes table size: %d)", 
+          runeType, spawnX, spawnY, #_G.runes))
         
         self:print(string.format("Spawned %s rune at X:%.1f Y:%.1f", 
-          GameData.RUNE_TYPES[runeType].name, spawnX, spawnY))
+          _G.Rune.TYPES[runeType].name, spawnX, spawnY))
       end
     }
   }
@@ -145,6 +150,7 @@ function Console:new()
   setmetatable(o, self)
   self.__index = self
   o.font = love.graphics.newFont(14)
+  o.runes = {}  -- Will be set from main.lua
   return o
 end
 
@@ -256,6 +262,15 @@ function Console:draw()
 end
 
 return Console
+
+
+
+
+
+
+
+
+
 
 
 
