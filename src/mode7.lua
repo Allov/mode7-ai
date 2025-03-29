@@ -293,7 +293,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(1, 1, 1, 1)
         self:drawSprite(enemy, camera, {
           texture = self.bossTexture,
-          scale = 400.0,
+          scale = 400.0 * Constants.SPRITE_SCALE,
           heightScale = 2.0,
           useAngleScaling = true
         })
@@ -301,7 +301,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(1, 1, 1, 1)
         self:drawSprite(enemy, camera, {
           texture = self.eliteTexture,
-          scale = 300.0,
+          scale = 300.0 * Constants.SPRITE_SCALE,
           heightScale = 1.5,
           useAngleScaling = true
         })
@@ -309,7 +309,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(1, 1, 1, 1)
         self:drawSprite(enemy, camera, {
           texture = self.enemyTexture,
-          scale = 200.0,
+          scale = 200.0 * Constants.SPRITE_SCALE,
           heightScale = 1.0,
           useAngleScaling = true
         })
@@ -318,14 +318,14 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       love.graphics.setColor(1, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.projectileTexture,
-        scale = 200.0,
+        scale = 200.0 * Constants.SPRITE_SCALE,
         useAngleScaling = false
       })
     elseif obj.type == "experienceOrb" then
       love.graphics.setColor(0, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.orbTexture,
-        scale = 150.0,
+        scale = 150.0 * Constants.SPRITE_SCALE,
         heightScale = 1.0,
         useAngleScaling = false
       })
@@ -334,7 +334,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       love.graphics.setColor(1, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.chestTexture,
-        scale = 75.0,  -- Reduced from 100.0 to 75.0
+        scale = 75.0 * Constants.SPRITE_SCALE,
         heightScale = 1.0,
         useAngleScaling = false
       })
@@ -344,7 +344,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(1, 1, 0, 0.5) -- Yellow glow
         self:drawSprite(obj.object, camera, {
           texture = self.glowTexture,
-          scale = 100.0,  -- Reduced from 150.0 to 100.0
+          scale = 100.0 * Constants.SPRITE_SCALE,
           heightScale = 1.0,
           useAngleScaling = false
         })
@@ -357,7 +357,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 1)
         self:drawSprite(obj.object, camera, {
           texture = self.runeTexture,  -- Use runeTexture instead of chestTexture
-          scale = 150.0,
+          scale = 150.0 * Constants.SPRITE_SCALE,
           heightScale = 1.0,
           useAngleScaling = false
         })
@@ -367,7 +367,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], glowAlpha)
         self:drawSprite(obj.object, camera, {
           texture = self.glowTexture,
-          scale = 200.0,
+          scale = 200.0 * Constants.SPRITE_SCALE,
           heightScale = 1.0,
           useAngleScaling = false
         })
@@ -426,13 +426,22 @@ function Mode7:drawSprite(entity, camera, options)
   local perspectiveScale = (Constants.SCREEN_HEIGHT) / (ry * tanHalfFOV)
   local spriteScale = perspectiveScale * scale * 0.01
   
-  -- Calculate ground position for proper Y placement
+  -- Calculate ground position using the same projection as the shader
   local groundY = Constants.HORIZON_LINE + 
                  (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
                  (Constants.CAMERA_HEIGHT / ry)
   
-  -- Position sprite above ground position, applying height scale
-  local screenY = groundY - (texture:getHeight() * spriteScale * heightScale / 2) - heightOffset
+  -- Position sprite directly at ground level
+  local screenY = groundY
+  
+  if heightOffset ~= 0 then
+    -- Apply height offset after ground plane calculation
+    screenY = screenY - (heightOffset * perspectiveScale)
+  end
+
+  -- Debug: Draw ground reference point
+  love.graphics.setColor(1, 0, 0, 1)
+  love.graphics.circle('fill', screenX, groundY, 2)
   
   -- Draw crosshair if this is the player's current target
   if _G.player and _G.player.currentTarget == entity then
@@ -480,15 +489,15 @@ function Mode7:drawSprite(entity, camera, options)
   -- Apply color if specified
   love.graphics.setColor(unpack(color))
   
-  -- Draw the sprite with separate width and height scaling
+  -- Draw the sprite with bottom aligned to ground
   love.graphics.draw(
     texture,
     screenX, screenY,
     0,  -- rotation
     spriteScale,  -- width scale
     spriteScale * heightScale,  -- height scale with multiplier
-    texture:getWidth() / 2,
-    texture:getHeight() / 2
+    texture:getWidth() / 2,     -- center horizontally
+    texture:getHeight()         -- align bottom with ground
   )
   
   -- Reset color

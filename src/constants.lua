@@ -7,6 +7,7 @@ return {
   HORIZON_LINE = 100,
   FOV = 75,  -- Keep the 75 degree FOV, remove CAMERA_FOV
   DRAW_DISTANCE = 1500,  -- This now controls the fog distance
+  SPRITE_SCALE = 0.5,    -- Global sprite scale multiplier
 
   -- Camera settings
   CAMERA_MOVE_SPEED = 200,    -- Base movement speed
