@@ -1,14 +1,13 @@
 return {
-  SCREEN_WIDTH = 800,
-  SCREEN_HEIGHT = 600,
+  SCREEN_WIDTH = 1280,
+  SCREEN_HEIGHT = 720,
   SCALE = 2,
   
   -- Mode 7 specific constants
   HORIZON_LINE = 100,
   FOV = 75,
   DRAW_DISTANCE = 1500,  -- This now controls the fog distance
-  CAMERA_HEIGHT = 100,
-  
+
   -- Camera settings
   CAMERA_MOVE_SPEED = 200,    -- Base movement speed
   CAMERA_STRAFE_SPEED = 150,  -- Sideways movement speed
