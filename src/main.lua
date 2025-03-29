@@ -5,12 +5,54 @@ local Mode7 = require('src.mode7')
 local Enemy = require('src.enemy')
 local Projectile = require('src.projectile')
 
+-- Declare all global variables at the top
 local camera
 local player
 local mode7
-local enemies = {}
-local projectiles = {}  -- Add projectiles table
+local enemies = {}  -- Initialize empty table here
+local projectiles = {}  -- Initialize empty table here
 local gameFont
+
+-- Add spawn control variables
+local spawnTimer = 0
+local spawnInterval = 3.0  -- Start with 3 seconds between spawns
+local minSpawnInterval = 0.5  -- Fastest spawn rate
+local spawnIntervalDecay = 0.95  -- Reduce interval by 5% each spawn
+local spawnDistance = 500  -- How far from player to spawn enemies
+local minEnemyDistance = 150  -- Minimum distance between enemies
+
+function getDistanceToNearestEnemy(x, y)
+  if #enemies == 0 then return math.huge end  -- Return huge distance if no enemies
+  
+  local minDist = math.huge
+  for _, enemy in ipairs(enemies) do
+    local dx = enemy.x - x
+    local dy = enemy.y - y
+    local dist = math.sqrt(dx * dx + dy * dy)
+    minDist = math.min(minDist, dist)
+  end
+  return minDist
+end
+
+function findValidSpawnPosition()
+  -- Try up to 10 different positions
+  for _ = 1, 10 do
+    -- Generate random angle around player
+    local angle = math.random() * math.pi * 2
+    
+    -- Calculate spawn position
+    local spawnX = player.x + math.cos(angle) * spawnDistance
+    local spawnY = player.y + math.sin(angle) * spawnDistance
+    
+    -- Check distance to nearest enemy
+    if getDistanceToNearestEnemy(spawnX, spawnY) >= minEnemyDistance then
+      return spawnX, spawnY
+    end
+  end
+  
+  -- If no valid position found after 10 tries, return nil
+  return nil, nil
+end
 
 function love.load()
   -- Load font for game over screen
@@ -45,22 +87,31 @@ function initializeGame()
   mode7 = Mode7:new()
   mode7:load()
   
-  -- Reset enemies array
+  -- Clear arrays
   enemies = {}
   projectiles = {}
   
-  -- Add moving enemies
-  for i = 1, 3 do
-    local enemy = Enemy:new():init(
-      math.random(-500, 500),
-      math.random(-500, 500),
-      true  -- true = moving
-    )
-    table.insert(enemies, enemy)
-  end
-  
   -- Enable texture filtering
   love.graphics.setDefaultFilter('linear', 'linear')
+  
+  -- Reset spawn control
+  spawnTimer = 0
+  spawnInterval = 3.0
+end
+
+function spawnEnemy()
+  -- Find valid spawn position
+  local spawnX, spawnY = findValidSpawnPosition()
+  
+  -- Only spawn if valid position found
+  if spawnX and spawnY then
+    -- Create and add new enemy
+    local enemy = Enemy:new():init(spawnX, spawnY, true)
+    table.insert(enemies, enemy)
+    
+    -- Reduce spawn interval, but not below minimum
+    spawnInterval = math.max(minSpawnInterval, spawnInterval * spawnIntervalDecay)
+  end
 end
 
 function love.update(dt)
@@ -78,6 +129,13 @@ function love.update(dt)
   
   -- Only update game objects if player is alive
   if not player.isDead then
+    -- Update spawn timer
+    spawnTimer = spawnTimer + dt
+    if spawnTimer >= spawnInterval then
+      spawnTimer = 0
+      spawnEnemy()
+    end
+    
     -- Update enemies
     for i = #enemies, 1, -1 do
       local enemy = enemies[i]
@@ -120,13 +178,15 @@ function love.draw()
   love.graphics.print(string.format("Camera: X: %.1f Y: %.1f A: %.1f°", 
     camera.x, camera.y, math.deg(camera.angle)), 10, 30)
   love.graphics.print("Projectiles: " .. #projectiles, 10, 50)
+  love.graphics.print("Enemies: " .. #enemies, 10, 70)
+  love.graphics.print(string.format("Spawn Rate: %.1fs", spawnInterval), 10, 90)
   
   -- Draw health bar
   love.graphics.setColor(1, 0, 0)
-  love.graphics.rectangle('fill', 10, 70, (player.health / player.maxHealth) * 200, 20)
+  love.graphics.rectangle('fill', 10, 110, (player.health / player.maxHealth) * 200, 20)
   love.graphics.setColor(1, 1, 1)
-  love.graphics.rectangle('line', 10, 70, 200, 20)
-  love.graphics.print("Health: " .. math.floor(player.health), 10, 95)
+  love.graphics.rectangle('line', 10, 110, 200, 20)
+  love.graphics.print("Health: " .. math.floor(player.health), 10, 135)
   
   -- Flash screen red when taking damage
   if player.invulnerableTimer > 0 then
