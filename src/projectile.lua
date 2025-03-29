@@ -9,8 +9,8 @@ local Projectile = {
   lifetime = 2.0,
   age = 0,
   radius = 5,
-  damage = 25,
-  critChance = 0.2,    -- 20% chance to crit
+  baseDamage = 50,    -- Doubled from 25
+  critChance = 0.2,   -- 20% chance to crit
   critMultiplier = 2.0 -- Double damage on crit
 }
 
@@ -34,8 +34,7 @@ function Projectile:init(x, y, angle, height)
   self.z = height or Constants.CAMERA_HEIGHT
   self.angle = angle
   self.age = 0
-  -- Apply player's damage multiplier from runes
-  self.damage = self.damage * _G.player.runeEffects.damageMultiplier
+  -- Remove damage multiplier here as we'll calculate it during collision
   return self
 end
 
@@ -52,11 +51,13 @@ function Projectile:checkCollision(enemy, camera)
   local scaledEnemyRadius = enemy.radius * scaleMultiplier * 6.0
   
   if distance < (self.radius + scaledEnemyRadius) then
-    -- Calculate crit
+    -- Let the player calculate final damage with all modifiers
+    local finalDamage = _G.player:calculateDamage(self.baseDamage)
     local isCritical = math.random() < self.critChance
-    local finalDamage = isCritical and (self.damage * self.critMultiplier) or self.damage
+    if isCritical then
+      finalDamage = finalDamage * self.critMultiplier
+    end
     
-    -- Apply damage with crit info
     enemy:hit(finalDamage, isCritical)
     return true
   end
@@ -78,6 +79,9 @@ function Projectile:update(dt)
 end
 
 return Projectile
+
+
+
 
 
 

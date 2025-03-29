@@ -123,11 +123,11 @@ end
 
 -- Add hit method with damage numbers
 function Enemy:hit(damage, isCritical)
-  self.health = self.health - (damage or 25)
+  self.health = self.health - damage
   
   -- Create damage number
   self.damageNumber = DamageNumber:new({
-    value = damage or 25,
+    value = damage,
     x = self.x,
     y = self.y,
     z = Constants.CAMERA_HEIGHT - 10,
@@ -137,9 +137,7 @@ function Enemy:hit(damage, isCritical)
   
   local isDead = self.health <= 0
   
-  -- Drop experience orb if enemy dies
   if isDead and math.random() < self.dropChance then
-    -- We'll need to handle this in main.lua
     self.shouldDropExp = true
   end
   
@@ -147,6 +145,8 @@ function Enemy:hit(damage, isCritical)
 end
 
 return Enemy
+
+
 
 
 

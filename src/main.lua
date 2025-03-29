@@ -280,8 +280,8 @@ function love.update(dt)
         local projectile = projectiles[j]
         if projectile:checkCollision(enemy, camera) then
           table.remove(projectiles, j)
-          if enemy:hit(25) then
-            -- Create experience orb when enemy dies
+          -- If enemy died, spawn experience orb
+          if enemy.shouldDropExp then
             local expValue = enemy.isElite and (enemy.experienceValue * 2) or enemy.experienceValue
             local expOrb = ExperienceOrb:new():init(enemy.x, enemy.y, expValue)
             table.insert(experienceOrbs, expOrb)

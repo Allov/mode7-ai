@@ -39,7 +39,6 @@ local Player = {
   -- Add power-up related properties
   activePowerUps = {},  -- Stores active power-ups
   baseMoveSpeed = 150,  -- Reduced from 200
-  baseDamage = 25,
   basePickupRange = 50,
   pickupRange = 50,     -- Current pickup range
   
@@ -75,6 +74,9 @@ local Player = {
   targetLockRange = 400,  -- Range to acquire targets
   orbitDistance = 200,    -- Preferred distance to orbit target
   orbitSpeed = 0.8,       -- Base orbit rotation speed
+
+  -- Combat modifiers
+  damageMultiplier = 1.0,  -- Base multiplier
 }
 
 function Player:new(o)
@@ -405,6 +407,7 @@ function Player:updatePowerUpEffects()
   -- Reset to base values
   self.moveSpeed = self.baseMoveSpeed
   self.pickupRange = self.basePickupRange
+  self.damageMultiplier = 1.0  -- Reset to base
   
   -- Apply all active power-ups
   for _, powerUp in ipairs(self.activePowerUps) do
@@ -413,8 +416,7 @@ function Player:updatePowerUpEffects()
     elseif powerUp.type == "range" then
       self.pickupRange = self.pickupRange * powerUp.multiplier
     elseif powerUp.type == "damage" then
-      -- Update damage
-      self.baseDamage = self.baseDamage * powerUp.multiplier
+      self.damageMultiplier = self.damageMultiplier * powerUp.multiplier
     end
   end
 end
@@ -470,6 +472,23 @@ function Player:shoot()
       _G.spawnProjectile(newDirX, newDirY)
     end
   end
+end
+
+-- Add new method to calculate final damage with all modifiers
+function Player:calculateDamage(baseDamage)
+  local finalMultiplier = self.damageMultiplier
+  
+  -- Apply rune effects
+  finalMultiplier = finalMultiplier * self.runeEffects.damageMultiplier
+  
+  -- Apply active power-up effects
+  for _, powerUp in ipairs(self.activePowerUps) do
+    if powerUp.type == "damage" then
+      finalMultiplier = finalMultiplier * powerUp.multiplier
+    end
+  end
+  
+  return baseDamage * finalMultiplier
 end
 
 return Player
