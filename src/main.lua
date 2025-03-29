@@ -347,8 +347,8 @@ function love.draw()
   -- Clear screen
   love.graphics.clear(0.5, 0.7, 1.0)
   
-  -- Render Mode 7 ground with enemies and projectiles
-  mode7:render(camera, enemies, projectiles)
+  -- Render Mode 7 ground with all game objects
+  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
   
   -- Draw HUD with hudFont
   love.graphics.setFont(hudFont)
@@ -449,6 +449,43 @@ function love.draw()
     end
   end
 
+  -- Draw active runes in top right
+  love.graphics.setFont(hudFont)
+  local runeX = Constants.SCREEN_WIDTH - 210  -- Start 210 pixels from right edge
+  local runeY = 10  -- Start 10 pixels from top
+  local runeWidth = 200  -- Width of rune display area
+  
+  love.graphics.print("Active Runes:", runeX, runeY)
+  runeY = runeY + 25
+  
+  for _, runeType in ipairs(player.runes) do
+    local runeData = Rune.TYPES[runeType]
+    if runeData then
+      -- Draw rune background
+      love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 0.3)
+      
+      -- Calculate height needed for wrapped text
+      local _, descriptionWrapped = hudFont:getWrap(runeData.description, runeWidth - 10)
+      local textHeight = #descriptionWrapped * hudFont:getHeight()
+      local totalHeight = textHeight + hudFont:getHeight() + 10  -- Name + description + padding
+      
+      love.graphics.rectangle('fill', runeX, runeY, runeWidth, totalHeight)
+      
+      -- Draw rune name and effects
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.print(runeData.name, runeX + 5, runeY + 2)
+      
+      love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 0.8)
+      love.graphics.printf(runeData.description, 
+        runeX + 5, 
+        runeY + hudFont:getHeight() + 5, 
+        runeWidth - 10, 
+        "left")
+      
+      runeY = runeY + totalHeight + 5  -- Add small gap between runes
+    end
+  end
+
   -- Reset color and font
   love.graphics.setColor(1, 1, 1)
   love.graphics.setFont(hudFont)
@@ -514,6 +551,9 @@ end
 -- Make these global for console access
 _G.spawnEnemy = spawnEnemy
 _G.spawnBoss = spawnBoss
+_G.spawnChest = spawnChest
+_G.findValidSpawnPosition = findValidSpawnPosition
 _G.initializeGame = initializeGame
 _G.enemies = enemies
 _G.projectiles = projectiles
+_G.Enemy = Enemy  -- Add Enemy class to globals

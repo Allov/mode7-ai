@@ -1,9 +1,10 @@
 local Constants = require('src.constants')
+local Rune = require('src.rune')
 
 local Mode7 = {
   texture = nil,
   shader = nil,
-  skyTexture = nil,  -- Add sky texture
+  skyTexture = nil,
   enemyTexture = nil,
   projectileTexture = nil,
   fogColor = {0.1, 0.2, 0.25}
@@ -67,9 +68,34 @@ function Mode7:load()
 
   -- Load boss texture
   self.bossTexture = love.graphics.newImage('assets/images/boss.png')
+
+  -- Create glow texture
+  local glowCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(glowCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.circle('fill', 16, 16, 16)
+  love.graphics.setCanvas()
+  self.glowTexture = glowCanvas
+  
+  -- Create rune texture
+  local runeCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(runeCanvas)
+  love.graphics.clear()
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.circle('line', 16, 16, 14)
+  love.graphics.line(8, 16, 24, 16)  -- Simple rune symbol
+  love.graphics.line(16, 8, 16, 24)
+  love.graphics.setCanvas()
+  self.runeTexture = runeCanvas
 end
 
-function Mode7:render(camera, enemies, projectiles)
+function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
+  -- Add parameter validation with default empty tables
+  experienceOrbs = experienceOrbs or {}
+  chests = chests or {}
+  runes = runes or {}
+  
   -- Update shader with current camera height including bob
   self.shader:send('cameraHeight', camera.z)
   
@@ -169,6 +195,47 @@ function Mode7:render(camera, enemies, projectiles)
       })
     end
   end
+
+  -- Render experience orbs
+  for _, orb in ipairs(experienceOrbs) do
+    self:drawSprite(orb, camera, {
+      texture = self.orbTexture,
+      scale = 3.0,
+      useAngleScaling = false
+    })
+  end
+
+  -- Render chests
+  for _, chest in ipairs(chests) do
+    self:drawSprite(chest, camera, {
+      texture = self.chestTexture,
+      scale = 3.0,  -- Changed from 6.0 to 3.0 (50% smaller)
+      useAngleScaling = false
+    })
+  end
+
+  -- Render runes
+  for _, rune in ipairs(runes) do
+    local runeData = Rune.TYPES[rune.type]
+    if runeData then
+      -- Draw glow effect first
+      self:drawSprite(rune, camera, {
+        texture = self.glowTexture,  -- We'll need to create this
+        scale = 8.0,
+        useAngleScaling = false,
+        color = {runeData.color[1], runeData.color[2], runeData.color[3], 
+                 0.5 + math.sin(rune.glowPhase) * 0.2}
+      })
+      
+      -- Draw rune symbol
+      self:drawSprite(rune, camera, {
+        texture = self.runeTexture,  -- We'll need to create this
+        scale = 6.0,
+        useAngleScaling = false,
+        heightOffset = math.sin(rune.glowPhase) * 10  -- Float effect
+      })
+    end
+  end
 end
 
 function Mode7:drawSprite(entity, camera, options)
@@ -176,6 +243,8 @@ function Mode7:drawSprite(entity, camera, options)
   local texture = options.texture or self.enemyTexture
   local scale = options.scale or 6.0
   local useAngleScaling = options.useAngleScaling or false
+  local color = options.color or {1, 1, 1, 1}
+  local heightOffset = options.heightOffset or 0
   
   -- Adjust camera offset for X axis
   local dx = entity.x - camera.x
@@ -206,8 +275,11 @@ function Mode7:drawSprite(entity, camera, options)
                   (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
                   (Constants.CAMERA_HEIGHT / ry)
   
-  -- Position sprite above ground position by half its height
-  local screenY = groundY - (texture:getHeight() * spriteScale / 2)
+  -- Position sprite above ground position by half its height, plus any offset
+  local screenY = groundY - (texture:getHeight() * spriteScale / 2) - heightOffset
+  
+  -- Apply color if specified
+  love.graphics.setColor(unpack(color))
   
   -- Draw the sprite
   love.graphics.draw(
@@ -217,6 +289,9 @@ function Mode7:drawSprite(entity, camera, options)
     spriteScale, spriteScale,
     texture:getWidth() / 2, texture:getHeight() / 2
   )
+  
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
   
   -- Draw damage number if entity has one
   if entity.damageNumber then
@@ -262,9 +337,6 @@ function Mode7:drawSprite(entity, camera, options)
       love.graphics.pop()
     end
   end
-  
-  -- Reset color
-  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return Mode7

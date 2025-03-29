@@ -1,54 +1,33 @@
+local Enemy = require('src.enemy')
+
 local Console = {
   isVisible = false,
-  inputBuffer = "",
-  history = {},
-  historyIndex = 1,
-  maxHistory = 50,
+  inputText = "",
   outputLines = {},
   maxOutputLines = 10,
-  font = nil,
-  padding = 5,
-  lineHeight = 20,
-  backgroundColor = {0, 0, 0, 0.8},
-  textColor = {1, 1, 1, 1},
-  
-  -- Move commands into Console table
+  backgroundColor = {0, 0, 0, 0.8},  -- Semi-transparent black
+  textColor = {1, 1, 1, 1},          -- White text
+  padding = 10,                       -- Padding around text
+  lineHeight = 20,                    -- Height of each line
+  history = {},                       -- Command history
+  maxHistory = 50,                    -- Maximum number of commands to remember
+  historyIndex = 1,                   -- Current position in history
+  inputBuffer = "",                   -- Current input text
   commands = {
     help = {
       desc = "Show available commands",
       func = function(self)
         self:print("Available commands:")
         for cmd, info in pairs(self.commands) do
-          self:print(string.format("  %-20s %s", cmd, info.desc))
+          self:print(string.format("  %s: %s", cmd, info.desc))
         end
       end
     },
     
-    spawn = {
-      desc = "Spawn enemies: spawn <count>",
-      func = function(self, args)
-        local count = tonumber(args[1]) or 1
-        for i = 1, count do
-          _G.spawnEnemy()
-        end
-        self:print(string.format("Spawned %d enemies", count))
-      end
-    },
-    
-    killall = {
-      desc = "Kill all enemies",
+    clear = {
+      desc = "Clear console output",
       func = function(self)
-        local count = #_G.enemies
-        _G.enemies = {}
-        self:print(string.format("Killed %d enemies", count))
-      end
-    },
-    
-    boss = {
-      desc = "Spawn a boss",
-      func = function(self)
-        _G.spawnBoss()
-        self:print("Spawned boss")
+        self.outputLines = {}
       end
     },
     
@@ -60,16 +39,70 @@ local Console = {
       end
     },
     
-    stats = {
-      desc = "Show game statistics",
+    boss = {
+      desc = "Spawn a boss",
       func = function(self)
-        local stats = love.graphics.getStats()
-        self:print(string.format("FPS: %d", love.timer.getFPS()))
-        self:print(string.format("Memory: %.2f MB", collectgarbage("count") / 1024))
-        self:print(string.format("Drawcalls: %d", stats.drawcalls))
-        self:print(string.format("Entities: %d enemies, %d projectiles", #_G.enemies, #_G.projectiles))
+        _G.spawnBoss()
+        self:print("Boss spawned")
       end
     },
+    
+    chest = {
+      desc = "Spawn a chest",
+      func = function(self)
+        _G.spawnChest()
+        self:print("Spawned chest")
+      end
+    },
+    
+    mobs = {
+      desc = "Spawn N enemies (with elite chance): mobs <count>",
+      func = function(self, args)
+        local count = tonumber(args[1]) or 1
+        local spawned = 0
+        local elites = 0
+        
+        for i = 1, count do
+          -- Find valid spawn position
+          local spawnX, spawnY = _G.findValidSpawnPosition()
+          
+          -- Only spawn if valid position found
+          if spawnX and spawnY then
+            -- 10% chance to spawn an elite enemy
+            local isElite = math.random() < 0.10
+            
+            -- Create new enemy with proper initialization
+            local enemy = Enemy:new()
+            enemy.x = spawnX
+            enemy.y = spawnY
+            enemy.isElite = isElite
+            
+            -- Apply elite properties if needed
+            if isElite then
+              enemy.health = enemy.health * enemy.eliteMultiplier
+              enemy.radius = enemy.radius * enemy.eliteScale
+              enemy.damageAmount = enemy.damageAmount * enemy.eliteMultiplier
+            end
+            
+            -- Add to global enemies table
+            table.insert(_G.enemies, enemy)
+            
+            -- Debug print to verify spawn
+            print(string.format("Spawned enemy at X:%.1f Y:%.1f Elite:%s", 
+                              spawnX, spawnY, tostring(isElite)))
+            
+            spawned = spawned + 1
+            if isElite then
+              elites = elites + 1
+            end
+          end
+        end
+        
+        self:print(string.format("Spawned %d enemies (%d elites)", spawned, elites))
+        -- Debug print total enemies
+        print("Total enemies: " .. #_G.enemies)
+      end
+    }
   }
 }
 
@@ -189,5 +222,11 @@ function Console:draw()
 end
 
 return Console
+
+
+
+
+
+
 
 
