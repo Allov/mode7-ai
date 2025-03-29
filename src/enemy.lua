@@ -13,8 +13,28 @@ local Enemy = {
   targetAngle = 0,
   health = 100,
   damageAmount = 20,
-  damageRadius = 50  -- How close enemy needs to be to damage player
+  damageRadius = 50,  -- How close enemy needs to be to damage player
+  damageNumber = nil  -- Single damage number instead of array
 }
+
+-- Add new DamageNumber class
+local DamageNumber = {
+  value = 0,
+  x = 0,
+  y = 0,
+  z = 0,
+  age = 0,
+  lifetime = 1.0,
+  floatSpeed = 50,  -- Reduced from 100
+  baseScale = 1.0   -- Base scale for the number
+}
+
+function DamageNumber:new(o)
+  o = o or {}
+  setmetatable(o, self)
+  self.__index = self
+  return o
+end
 
 function Enemy:new(o)
   o = o or {}
@@ -34,6 +54,20 @@ end
 
 function Enemy:update(dt)
   if not self.isMoving then return end  -- Skip movement logic if standing still
+  
+  -- Update damage number if it exists
+  if self.damageNumber then
+    self.damageNumber.age = self.damageNumber.age + dt
+    
+    -- Float upward
+    self.damageNumber.z = Constants.CAMERA_HEIGHT - 10 + 
+                         (self.damageNumber.floatSpeed * self.damageNumber.age)
+    
+    -- Remove old damage number
+    if self.damageNumber.age >= self.damageNumber.lifetime then
+      self.damageNumber = nil
+    end
+  end
   
   -- Get direction to player
   local dx = _G.player.x - self.x
@@ -88,13 +122,28 @@ function math.clamp(x, min, max)
   return math.min(math.max(x, min), max)
 end
 
--- Add hit method
+-- Add hit method with damage numbers
 function Enemy:hit(damage)
   self.health = self.health - (damage or 25)
+  
+  -- Create new damage number, starting in front of enemy
+  self.damageNumber = DamageNumber:new({
+    value = damage or 25,
+    x = self.x,
+    y = self.y,
+    z = Constants.CAMERA_HEIGHT - 10, -- Start slightly in front of enemy
+    baseScale = 1.0
+  })
+  
   return self.health <= 0  -- Return true if enemy is defeated
 end
 
 return Enemy
+
+
+
+
+
 
 
 

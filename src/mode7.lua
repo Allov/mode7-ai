@@ -171,31 +171,55 @@ function Mode7:drawSprite(entity, camera, options)
   -- Position sprite above ground position by half its height
   local screenY = groundY - (texture:getHeight() * spriteScale / 2)
   
-  -- Apply fog
-  local distance = math.sqrt(rx * rx + ry * ry)
-  local fogFactor = math.min(distance / Constants.DRAW_DISTANCE, 1)
-  love.graphics.setColor(1, 1, 1, 1 - fogFactor * 0.8)
-  
-  -- Calculate width scaling based on viewing angle if needed
-  local widthScale = spriteScale
-  local heightScale = spriteScale
-  
-  if useAngleScaling then
-    local relativeAngle = math.atan2(dx, dy) - camera.angle
-    local angleScale = math.abs(math.cos(relativeAngle))
-    widthScale = spriteScale * (0.2 + 0.8 * angleScale)  -- Keep minimum width of 20%
-  end
-  
+  -- Draw the sprite
   love.graphics.draw(
     texture,
-    screenX,
-    screenY,
-    0,  -- Keep sprite upright
-    widthScale,
-    heightScale,
-    texture:getWidth()/2,
-    texture:getHeight()/2
+    screenX, screenY,
+    0,
+    spriteScale, spriteScale,
+    texture:getWidth() / 2, texture:getHeight() / 2
   )
+  
+  -- Draw damage number if entity has one
+  if entity.damageNumber then
+    local num = entity.damageNumber
+    -- Calculate damage number position
+    local numDx = entity.x - camera.x
+    local numDy = entity.y - camera.y
+    local numRx = numDx * cosA - numDy * sinA
+    local numRy = numDx * sinA + numDy * cosA
+    
+    -- Skip if behind camera
+    if numRy > 0 then
+      -- Calculate screen position with perspective
+      local numScreenX = Constants.SCREEN_WIDTH/2 + 
+                        (numRx * Constants.SCREEN_HEIGHT * 0.5) / numRy
+      
+      -- Adjust Y position based on floating height (INVERTED)
+      local groundY = Constants.HORIZON_LINE + 
+                     (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
+                     (Constants.CAMERA_HEIGHT / numRy)
+      
+      -- Calculate screen Y with NEGATIVE offset for upward movement
+      local numScreenY = groundY - (num.age * 100) -- Move UP by using subtraction
+      
+      -- Draw damage number with yellow color
+      love.graphics.setColor(1, 1, 0, 1)
+      love.graphics.push()
+      love.graphics.translate(numScreenX, numScreenY)
+      love.graphics.scale(1.5, 1.5)
+      love.graphics.printf(
+        tostring(num.value),
+        -50, -10,
+        100,
+        "center"
+      )
+      love.graphics.pop()
+    end
+  end
+  
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return Mode7

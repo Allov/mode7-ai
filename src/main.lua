@@ -49,18 +49,7 @@ function initializeGame()
   enemies = {}
   projectiles = {}
   
-  -- Add standing enemies in a circle formation
-  local radius = 300
-  for i = 1, 8 do
-    local angle = (i - 1) * (2 * math.pi / 8)
-    local x = math.cos(angle) * radius
-    local y = math.sin(angle) * radius
-    local enemy = Enemy:new():init(x, y, false)  -- false = standing still
-    enemy.angle = angle + math.pi  -- Face outward
-    table.insert(enemies, enemy)
-  end
-  
-  -- Add some moving enemies
+  -- Add moving enemies
   for i = 1, 3 do
     local enemy = Enemy:new():init(
       math.random(-500, 500),
