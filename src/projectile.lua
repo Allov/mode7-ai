@@ -6,9 +6,12 @@ local Projectile = {
   z = 0,
   angle = 0,
   speed = 500,
-  lifetime = 2,
+  lifetime = 2.0,
   age = 0,
-  radius = 20  -- Increased from 10 to 20
+  radius = 5,
+  damage = 25,
+  critChance = 0.2,    -- 20% chance to crit
+  critMultiplier = 2.0 -- Double damage on crit
 }
 
 -- Helper function to get distance to another position
@@ -44,9 +47,19 @@ function Projectile:checkCollision(enemy, camera)
   local MIN_RENDER_DISTANCE = 50
   local distanceFromCamera = math.max(enemy:distanceTo(camera.x, camera.y), MIN_RENDER_DISTANCE)
   local scaleMultiplier = Constants.CAMERA_HEIGHT / distanceFromCamera
-  local scaledEnemyRadius = enemy.radius * scaleMultiplier * 6.0  -- Match the sprite scale in Mode7:drawSprite
+  local scaledEnemyRadius = enemy.radius * scaleMultiplier * 6.0
   
-  return distance < (self.radius + scaledEnemyRadius)
+  if distance < (self.radius + scaledEnemyRadius) then
+    -- Calculate crit
+    local isCritical = math.random() < self.critChance
+    local finalDamage = isCritical and (self.damage * self.critMultiplier) or self.damage
+    
+    -- Apply damage with crit info
+    enemy:hit(finalDamage, isCritical)
+    return true
+  end
+  
+  return false
 end
 
 function Projectile:update(dt)
@@ -63,6 +76,7 @@ function Projectile:update(dt)
 end
 
 return Projectile
+
 
 
 

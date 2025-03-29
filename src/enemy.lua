@@ -17,7 +17,7 @@ local Enemy = {
   damageNumber = nil  -- Single damage number instead of array
 }
 
--- Add new DamageNumber class
+-- Add new DamageNumber class with isCritical flag
 local DamageNumber = {
   value = 0,
   x = 0,
@@ -25,8 +25,9 @@ local DamageNumber = {
   z = 0,
   age = 0,
   lifetime = 1.0,
-  floatSpeed = 50,  -- Reduced from 100
-  baseScale = 1.0   -- Base scale for the number
+  floatSpeed = 50,
+  baseScale = 1.0,
+  isCritical = false  -- New flag for critical hits
 }
 
 function DamageNumber:new(o)
@@ -123,7 +124,7 @@ function math.clamp(x, min, max)
 end
 
 -- Add hit method with damage numbers
-function Enemy:hit(damage)
+function Enemy:hit(damage, isCritical)
   self.health = self.health - (damage or 25)
   
   -- Create new damage number, starting in front of enemy
@@ -131,14 +132,16 @@ function Enemy:hit(damage)
     value = damage or 25,
     x = self.x,
     y = self.y,
-    z = Constants.CAMERA_HEIGHT - 10, -- Start slightly in front of enemy
-    baseScale = 1.0
+    z = Constants.CAMERA_HEIGHT - 10,
+    baseScale = isCritical and 1.5 or 1.0,  -- Bigger scale for crits
+    isCritical = isCritical
   })
   
-  return self.health <= 0  -- Return true if enemy is defeated
+  return self.health <= 0
 end
 
 return Enemy
+
 
 
 

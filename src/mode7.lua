@@ -203,11 +203,18 @@ function Mode7:drawSprite(entity, camera, options)
       -- Calculate screen Y with NEGATIVE offset for upward movement
       local numScreenY = groundY - (num.age * 100) -- Move UP by using subtraction
       
-      -- Draw damage number with yellow color
-      love.graphics.setColor(1, 1, 0, 1)
+      -- Draw damage number with color based on critical
+      if num.isCritical then
+        love.graphics.setColor(1, 0.5, 0, 1)  -- Orange-yellow for crits
+      else
+        love.graphics.setColor(1, 1, 0, 1)    -- Yellow for normal hits
+      end
+      
       love.graphics.push()
       love.graphics.translate(numScreenX, numScreenY)
-      love.graphics.scale(1.5, 1.5)
+      -- Bigger scale for crits
+      local baseScale = num.isCritical and 2.0 or 1.5
+      love.graphics.scale(baseScale, baseScale)
       love.graphics.printf(
         tostring(num.value),
         -50, -10,
