@@ -1,51 +1,47 @@
-uniform vec2 cameraPos;
-uniform float cameraAngle;
-uniform float cameraHeight;  // This will now receive the bobbing height
-uniform float horizonLine;
-uniform vec2 textureDimensions;
-uniform float maxDistance;
-uniform vec3 fogColor;
+extern vec2 cameraPos;
+extern float cameraAngle;
+extern float cameraHeight;
+extern float horizonLine;
+extern float maxDistance;
+extern vec3 fogColor;
+extern vec2 lightPos;
+extern vec3 lightColor;
+extern float lightRadius;
+extern vec2 textureDimensions;
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
-    // Skip shader for pixels above horizon - sky is drawn separately
     if (screen_coords.y < horizonLine) {
-        discard;  // Let the sky texture show through
+        discard;
     }
     
-    // Use dynamic camera height for perspective calculation
+    // Calculate distance based on vertical position
     float distance = (cameraHeight * (love_ScreenSize.y - horizonLine)) 
                     / (screen_coords.y - horizonLine);
     
-    // Calculate world position
-    vec2 worldPos;
-    float aspectRatio = love_ScreenSize.x / love_ScreenSize.y;
-    // Convert screen space to world space
-    worldPos.x = (screen_coords.x - love_ScreenSize.x * 0.5) * distance / (love_ScreenSize.y * 0.5);
-    worldPos.y = distance;
+    // Calculate horizontal position relative to center of screen
+    float screenX = screen_coords.x - love_ScreenSize.x/2;
     
-    // Rotate world position
-    float cosA = cos(-cameraAngle);  // Note: Positive angle
-    float sinA = sin(-cameraAngle);
-    vec2 rotated = vec2(
-        worldPos.x * cosA - worldPos.y * sinA,
-        worldPos.x * sinA + worldPos.y * cosA
-    );
+    // Calculate world offset using both X and Y
+    float scale = distance / love_ScreenSize.y;
+    float dx = screenX * scale * sin(cameraAngle + 3.14159/2) + distance * sin(cameraAngle);
+    float dy = screenX * scale * cos(cameraAngle + 3.14159/2) + distance * cos(cameraAngle);
+    vec2 worldPos = cameraPos + vec2(dx, dy);
     
-    // Add camera position
-    rotated += cameraPos;
+    // Calculate texture coordinates
+    vec2 texCoords = mod(worldPos, textureDimensions) / textureDimensions;
+    vec4 texColor = Texel(tex, texCoords);
     
-    // Sample texture with wrapping
-    vec2 texCoord = rotated / textureDimensions;
-    vec4 texColor = Texel(tex, mod(texCoord, 1.0)) * color;
+    // Calculate lighting
+    float lightDist = length(worldPos - lightPos);
+    float lightFactor = 1.0 - smoothstep(0.0, lightRadius, lightDist);
     
-    // Apply fog
-    float fogStart = maxDistance * 0.6;
-    float fogFactor = smoothstep(fogStart, maxDistance, distance);
+    // Apply lighting and fog
+    vec3 litColor = texColor.rgb * vec3(0.3, 0.3, 0.4);
+    litColor += texColor.rgb * lightColor * lightFactor;
     
-    return mix(texColor, vec4(fogColor, 1.0), fogFactor);
+    float fogFactor = smoothstep(maxDistance * 0.5, maxDistance, distance);
+    vec3 finalColor = mix(litColor, fogColor, fogFactor);
+    
+    return vec4(finalColor, 1.0);
 }
-
-
-
-
