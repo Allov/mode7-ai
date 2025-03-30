@@ -1,174 +1,72 @@
-# Planned Features
+# Feature Implementation Schedule
 
-## MVP Plan (3 Weeks)
+## Week 1: Core Mechanics
+- [x] Basic movement and controls
+- [x] Mode 7 rendering
+- [x] Basic enemy (grunt)
+- [ ] Shooter (ranged enemy)
+- [ ] Cycler (trail enemy)
+- [x] Basic collision detection
+- [x] Camera controls
+- [x] Player targeting system
+- [x] Basic orb system
+- [x] Experience orbs
+- [x] Debug console
 
-### Week 1: Core Mechanics
-- [x] Implement basic Mode 7 rendering
-- [x] Add camera controls
-- [x] Controller support
-- [x] Add targeting system
-- [ ] Implement basic enemy types
-  - [x] Grunt (basic enemy)
-  - [ ] Shooter (ranged enemy)
-  - [ ] Cycler (trail enemy)
-- [x] Basic combat system
-  - [x] Player projectiles
-  - [x] Enemy damage
-  - [x] Health system
-  - [x] Death/respawn
-
-### Week 2: Progression Systems
+## Week 2: Progression Systems
 - [x] Experience system
-  - [x] Orb collection
-  - [x] Level progression
-  - [x] Basic stats increase
-- [ ] First two realms
-  - [ ] Crystal Plains (starter)
-  - [ ] Ember Wastes
+- [x] Orb collection and management
+- [x] Basic power-up system
+- [x] Elite enemies
+- [x] Boss encounters
+- [ ] First realm: Crystal Plains
+- [ ] Second realm: Ember Wastes
 - [ ] Basic events
-  - [ ] Time-based enemy waves
-  - [ ] Simple collection quests
+  - [ ] Time-based waves
+  - [ ] Collection quests
   - [ ] Defense missions
-- [x] First boss: The Pursuer
 
-### Week 3: Polish and Essential Features
-- [ ] UI implementation
+## Week 3: Polish and Essential Features
+- [ ] UI Implementation
+  - [x] Compass system
   - [ ] Health bar
   - [ ] Experience bar
-  - [ ] Event notifications
-  - [ ] Basic HUD
+  - [ ] Notifications
+  - [ ] HUD elements
 - [ ] Sound effects
-  - [ ] Combat sounds
-  - [ ] Movement sounds
-  - [ ] Ambient music
+  - [ ] Player actions
+  - [ ] Enemy sounds
+  - [ ] Ambient effects
 - [ ] Basic safe zones
-  - [ ] Healing areas
-  - [ ] Enemy-free boundaries
 - [ ] Testing and balancing
-  - [ ] Difficulty curve
-  - [ ] Enemy spawns
+  - [ ] Enemy difficulty
   - [ ] Experience gains
-  - [ ] Player progression
+  - [ ] Power-up effectiveness
 
 ## Post-MVP Features
 
 ### High Priority
-- [x] Implement basic Mode 7 rendering
-  - [x] Ground plane transformation
-  - [x] Texture mapping
-  - [x] Perspective correction
-- [x] Add camera controls
-  - [x] Forward/backward movement
-  - [x] Left/right rotation
-  - [x] Height adjustment
+- [x] Enhanced Mode 7 effects
+- [x] Advanced camera controls
 - [x] Controller support
-  - [x] Movement with left stick
-  - [x] Camera rotation with right stick X-axis
-  - [x] Action buttons
-- [x] Add targeting system
-  - [x] Auto-targeting
-  - [x] Target lock-on
-  - [x] Orbit behavior
+- [x] Advanced targeting system
+- [x] Orb combination system
 
 ### Medium Priority
-- [x] Add sprites/objects
-  - [x] Sprite scaling
-  - [x] Depth sorting
-- [x] Implement collision detection
-- [x] Add simple shading/fog
-- [x] Add power-up system
-  - [x] Experience orbs
-  - [x] Rune system
-  - [x] Power-up combinations
-- [ ] Enhance controller support
-  - [ ] Controller remapping
-  - [ ] Multiple controller profiles
-  - [ ] Vibration feedback
-- [ ] Add audio system
-  - [ ] Background music
-  - [ ] Sound effects
-  - [ ] 3D audio positioning
-- [ ] Implement dynamic lighting system
-  - [ ] Light manager class
-  - [ ] Projectile lights
-  - [ ] Enemy/Boss lights
-  - [ ] Static torch lights
-  - [ ] Light flickering effects
-  - [ ] Performance optimization
-  - [ ] Light pooling system
-- [ ] Implement scene management
-  - [ ] Scene manager class
-  - [ ] Scene state handling
-  - [ ] Resource loading/unloading
-  - [ ] Scene transitions
-    - [ ] Fade in/out
-    - [ ] Cross-fade between scenes
-    - [ ] Slide transitions
-    - [ ] Custom shader transitions
-  - [ ] Scene types
-    - [ ] Title screen
-    - [ ] Main menu
-    - [ ] Game scene
-    - [ ] Pause menu
-    - [ ] Options menu
-    - [ ] Game over screen
-    - [ ] Victory screen
-  - [ ] Scene stack system
-    - [ ] Push/pop functionality
-    - [ ] Scene persistence
-    - [ ] Background scene updating
-- [ ] Implement safe zones system
-  - [ ] Safe zone generation
-    - [ ] Procedural layout
-    - [ ] Fixed checkpoints
-    - [ ] Enemy-free boundaries
-  - [ ] Store system
-    - [ ] Store UI
-    - [ ] Currency system
-    - [ ] Inventory management
-    - [ ] Item categories
-      - [ ] Weapons/upgrades
-      - [ ] Consumables
-      - [ ] Rune fragments
-      - [ ] Special items
-    - [ ] Merchant NPCs
-      - [ ] Different merchant types
-      - [ ] Dynamic inventory
-      - [ ] Price fluctuation
-  - [ ] Safe zone features
-    - [ ] Auto-healing
-    - [ ] Save points
-    - [ ] Fast travel between zones
-    - [ ] Quest givers
-    - [ ] Training dummies
-  - [ ] Visual indicators
-    - [ ] Zone boundaries
-    - [ ] Entry/exit notifications
-    - [ ] Minimap markers
-  - [ ] Progression system
-    - [ ] Zone difficulty scaling
-    - [ ] Store inventory progression
-    - [ ] Unlock mechanics
+- [x] Enhanced sprites/objects
+- [x] Advanced collision detection
+- [x] Shading and fog effects
+- [x] Enhanced power-up system
+- [ ] Enhanced controller support
+- [ ] Complete audio system
+- [ ] Dynamic lighting system
+- [ ] Scene management
+- [ ] Safe zones system
 
 ### Low Priority
-- [x] Add skybox
-- [x] Add boss system
-  - [x] Special attacks
-  - [x] Enrage mechanics
-  - [x] Guaranteed drops
-- [ ] Implement sprite animations
-- [ ] Add particle effects
-- [ ] Enhanced visual effects
-  - [ ] Screen shake
-  - [ ] Hit flashes
-  - [ ] Weather effects
-- [ ] Save/Load system
-  - [ ] Player progress
-  - [ ] Settings persistence
-
-
-
-
-
-
+- [ ] Additional realms
+- [ ] Advanced events
+- [ ] Achievement system
+- [ ] Leaderboards
+- [ ] Multiplayer support
 
