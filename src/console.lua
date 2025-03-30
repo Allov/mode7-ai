@@ -64,44 +64,16 @@ local Console = {
         local elites = 0
         
         for i = 1, count do
-          -- Find valid spawn position
-          local spawnX, spawnY = _G.findValidSpawnPosition()
-          
-          -- Only spawn if valid position found
-          if spawnX and spawnY then
-            -- 10% chance to spawn an elite enemy
-            local isElite = math.random() < 0.10
-            
-            -- Create new enemy with proper initialization
-            local enemy = Enemy:new()
-            enemy.x = spawnX
-            enemy.y = spawnY
-            enemy.isElite = isElite
-            
-            -- Apply elite properties if needed
-            if isElite then
-              enemy.health = enemy.health * enemy.eliteMultiplier
-              enemy.radius = enemy.radius * enemy.eliteScale
-              enemy.damageAmount = enemy.damageAmount * enemy.eliteMultiplier
-            end
-            
-            -- Add to global enemies table
-            table.insert(_G.enemies, enemy)
-            
-            -- Debug print to verify spawn
-            print(string.format("Spawned enemy at X:%.1f Y:%.1f Elite:%s", 
-                              spawnX, spawnY, tostring(isElite)))
-            
+          local enemy = _G.spawnEnemy()
+          if enemy then
             spawned = spawned + 1
-            if isElite then
+            if enemy.isElite then
               elites = elites + 1
             end
           end
         end
         
         self:print(string.format("Spawned %d enemies (%d elites)", spawned, elites))
-        -- Debug print total enemies
-        print("Total enemies: " .. #_G.enemies)
       end
     },
     

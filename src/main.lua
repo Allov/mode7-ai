@@ -11,6 +11,7 @@ local PowerUp = require('src.powerup')
 local GameData = require('src.gamedata')
 local Boss = require('src.boss')
 local Console = require('src.console')
+local MobSpawner = require('src.mobspawner')
 
 -- Declare all global variables at the top
 local camera
@@ -19,27 +20,15 @@ local mode7
 local enemies = {}  -- Initialize empty table here
 local projectiles = {}  -- Initialize empty table here
 local experienceOrbs = {}
-local gameFont
 local chests = {}  -- Add chests to global variables
 local powerUps = {}
 local runes = {}
 _G.runes = runes  -- Set global reference once
 local console
+local mobSpawner
 
 -- Add to the global declarations section
 _G.Rune = Rune  -- Make Rune class available to console
-
--- Add spawn control variables
-local spawnTimer = 0
-local minSpawnInterval = 2.0  -- Increased from 1.0 to 2.0 seconds minimum
-local spawnIntervalDecay = 0.99  -- Changed from 0.98 to 0.99 (1% reduction instead of 2%)
-local spawnDistance = 800  -- Keeping the same spawn distance
-local minEnemyDistance = 200  -- Keeping the same minimum enemy distance
-local spawnInterval = 24.0  -- Initial spawn interval
-
--- Add mouse shooting variables
-local mouseShootTimer = 0
-local mouseShootCooldown = 0.2  -- Match player's shootCooldown
 
 function getDistanceToNearestEnemy(x, y)
   if #enemies == 0 then return math.huge end  -- Return huge distance if no enemies
@@ -194,9 +183,8 @@ function initializeGame()
   -- Enable texture filtering
   love.graphics.setDefaultFilter('nearest', 'nearest')
   
-  -- Reset spawn control
-  spawnTimer = 0
-  spawnInterval = 12.0
+  -- Initialize mobSpawner after player and enemies table
+  mobSpawner = MobSpawner:new():init(enemies, player)
   
   -- Initialize console
   console = Console:new()
@@ -205,45 +193,6 @@ function initializeGame()
   -- Initialize pause state
   _G.isPaused = false
 
-  -- Spawn initial enemy
-  spawnEnemy()
-end
-
-function spawnEnemy()
-  -- Find valid spawn position
-  local spawnX, spawnY = findValidSpawnPosition()
-  
-  -- Only spawn if valid position found
-  if spawnX and spawnY then
-    -- 10% chance to spawn an elite enemy
-    local isElite = math.random() < 0.10
-    
-    -- Create and add new enemy
-    local enemy = Enemy:new():init(spawnX, spawnY, isElite)
-    table.insert(enemies, enemy)
-    
-    -- Reduce spawn interval, but not below minimum
-    spawnInterval = math.max(minSpawnInterval, spawnInterval * spawnIntervalDecay)
-  end
-end
-
-function spawnBoss()
-  -- Find valid spawn position (similar to enemy spawn)
-  local angle = math.random() * math.pi * 2
-  local spawnDistance = 1200  -- Increased from 800 to 1200
-  
-  local spawnX = player.x + math.cos(angle) * spawnDistance
-  local spawnY = player.y + math.sin(angle) * spawnDistance
-  
-  -- Create and add new boss
-  local boss = Boss:new():init(spawnX, spawnY)
-  table.insert(enemies, boss)  -- Add to enemies table
-  
-  -- Debug print to confirm spawn
-  print(string.format("Boss spawned at: X=%.1f, Y=%.1f", spawnX, spawnY))
-  
-  -- Show announcement
-  bossSpawnTimer = 3  -- Show announcement for 3 seconds
 end
 
 function love.update(dt)
@@ -266,12 +215,7 @@ function love.update(dt)
   
   -- Only update game objects if player is alive
   if not player.isDead then
-    -- Update spawn timer
-    spawnTimer = spawnTimer + dt
-    if spawnTimer >= spawnInterval then
-      spawnTimer = 0
-      spawnEnemy()
-    end
+    mobSpawner:update(dt)
     
     -- Update enemies
     for i = #enemies, 1, -1 do
@@ -497,7 +441,7 @@ function love.draw()
   love.graphics.print(string.format("Facing: %s (%.1f°)", direction, degrees), 10, 50)
   love.graphics.print("Projectiles: " .. #projectiles, 10, 70)
   love.graphics.print("Enemies: " .. #enemies, 10, 90)
-  love.graphics.print(string.format("Spawn Rate: %.1fs", spawnInterval), 10, 110)
+  love.graphics.print(string.format("Spawn Rate: %.1fs", mobSpawner.spawnInterval), 10, 110)
   
   -- Draw health bar
   love.graphics.setColor(1, 0, 0)
@@ -683,8 +627,8 @@ end
 
 
 -- Make these global for console access
-_G.spawnEnemy = spawnEnemy
-_G.spawnBoss = spawnBoss
+_G.spawnEnemy = function() mobSpawner:spawnEnemy() end
+_G.spawnBoss = function() mobSpawner:spawnBoss() end
 _G.spawnChest = spawnChest
 _G.findValidSpawnPosition = findValidSpawnPosition
 _G.initializeGame = initializeGame
