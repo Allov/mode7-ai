@@ -31,11 +31,11 @@ _G.Rune = Rune  -- Make Rune class available to console
 
 -- Add spawn control variables
 local spawnTimer = 0
-local spawnInterval = 4.0  -- Start with 4 seconds between spawns
-local minSpawnInterval = 1.0  -- Slowest spawn rate is 1 per second
-local spawnIntervalDecay = 0.98  -- Reduce interval by 2% each spawn
-local spawnDistance = 800  -- Increased from 500 to 800 units
-local minEnemyDistance = 200  -- Increased from 150 to 200 units
+local minSpawnInterval = 2.0  -- Increased from 1.0 to 2.0 seconds minimum
+local spawnIntervalDecay = 0.99  -- Changed from 0.98 to 0.99 (1% reduction instead of 2%)
+local spawnDistance = 800  -- Keeping the same spawn distance
+local minEnemyDistance = 200  -- Keeping the same minimum enemy distance
+local spawnInterval = 24.0  -- Initial spawn interval
 
 -- Add mouse shooting variables
 local mouseShootTimer = 0
@@ -196,7 +196,7 @@ function initializeGame()
   
   -- Reset spawn control
   spawnTimer = 0
-  spawnInterval = 3.0
+  spawnInterval = 24.0
   
   -- Initialize console
   console = Console:new()
@@ -204,6 +204,9 @@ function initializeGame()
 
   -- Initialize pause state
   _G.isPaused = false
+
+  -- Spawn initial enemy
+  spawnEnemy()
 end
 
 function spawnEnemy()
