@@ -383,11 +383,11 @@ function love.update(dt)
   end
 end
 
-function drawCompass(player, runeSpawner)  -- Change parameter from runes to runeSpawner
+function drawCompass(player, runeSpawner)
   -- Position compass bar at top of screen
   local barY = 30
-  local barHeight = 20  -- Reduced from 30
-  local barWidth = Constants.SCREEN_WIDTH * 0.5  -- Reduced from 0.8 to 0.5 (50% of screen width)
+  local barHeight = 20
+  local barWidth = Constants.SCREEN_WIDTH * 0.5
   local barX = (Constants.SCREEN_WIDTH - barWidth) / 2
   
   -- Draw compass bar background
@@ -401,62 +401,78 @@ function drawCompass(player, runeSpawner)  -- Change parameter from runes to run
   local dirVector = camera:getDirectionVector()
   local playerAngle = math.atan2(dirVector.x, dirVector.y)
   
-  -- Get runes from spawner
+  -- Get runes from runeSpawner
   local runes = runeSpawner:getRunes()
   
-  -- Calculate positions for cardinal points
-  local cardinalPoints = {
-    {text = "N", angle = 0},
-    {text = "E", angle = math.pi/2},
-    {text = "S", angle = math.pi},
-    {text = "W", angle = -math.pi/2}
-  }
-  
-  for _, point in ipairs(cardinalPoints) do
-    local relativeAngle = point.angle - playerAngle
-    while relativeAngle > math.pi do relativeAngle = relativeAngle - 2 * math.pi end
-    while relativeAngle < -math.pi do relativeAngle = relativeAngle + 2 * math.pi end
-    
-    local x = barX + barWidth/2 + (relativeAngle / math.pi) * (barWidth/2)
-    if x >= barX and x <= barX + barWidth then
-      love.graphics.print(point.text, x - 5, barY - 15)  -- Adjusted Y position
-    end
-  end
-  
-  -- Draw rune markers
+  -- Draw rune indicators
   for _, rune in ipairs(runes) do
+    -- Calculate angle and distance to rune
     local dx = rune.x - player.x
     local dy = rune.y - player.y
+    local angleToRune = math.atan2(dx, dy)
     local distance = math.sqrt(dx * dx + dy * dy)
-    local angle = math.atan2(dx, dy)
+    local relativeAngle = angleToRune - playerAngle
     
-    local relativeAngle = angle - playerAngle
+    -- Normalize angle to [-π, π]
     while relativeAngle > math.pi do relativeAngle = relativeAngle - 2 * math.pi end
     while relativeAngle < -math.pi do relativeAngle = relativeAngle + 2 * math.pi end
     
-    local x = barX + barWidth/2 + (relativeAngle / math.pi) * (barWidth/2)
+    -- Map angle to compass bar position
+    local runeX = barX + barWidth * (0.5 + relativeAngle / (math.pi))
     
-    if x >= barX and x <= barX + barWidth then
-      local runeData = Rune.TYPES[rune.type]
-      if runeData then
-        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 1)
-        love.graphics.circle('fill', x, barY + barHeight/2, 4)  -- Reduced circle size from 6 to 4
-        
-        local distText = string.format("%.0fm", distance)
-        love.graphics.print(distText, x - 15, barY + barHeight + 2)  -- Adjusted position
-      end
+    -- Only draw if within compass bounds
+    if runeX >= barX and runeX <= barX + barWidth then
+      -- Draw rune indicator (triangle)
+      love.graphics.setColor(1, 0.8, 0, 0.8)  -- Golden color for runes
+      love.graphics.polygon('fill', 
+        runeX, barY + 2,  -- Top point
+        runeX - 5, barY + 8,  -- Bottom left
+        runeX + 5, barY + 8   -- Bottom right
+      )
+      
+      -- Draw distance above the compass bar
+      love.graphics.setColor(1, 1, 1, 0.8)
+      love.graphics.printf(math.floor(distance), runeX - 20, barY - 15, 40, "center")
     end
   end
   
-  -- Draw player direction indicator (triangle at center)
+  -- Get GameData for orb colors
+  local GameData = require('src.gamedata')
+  
+  -- Draw orb indicators
+  for _, orbItem in ipairs(orbItems) do
+    -- Calculate angle and distance to orb
+    local dx = orbItem.x - player.x
+    local dy = orbItem.y - player.y
+    local angleToOrb = math.atan2(dx, dy)
+    local distance = math.sqrt(dx * dx + dy * dy)
+    local relativeAngle = angleToOrb - playerAngle
+    
+    -- Normalize angle to [-π, π]
+    while relativeAngle > math.pi do relativeAngle = relativeAngle - 2 * math.pi end
+    while relativeAngle < -math.pi do relativeAngle = relativeAngle + 2 * math.pi end
+    
+    -- Map angle to compass bar position
+    local orbX = barX + barWidth * (0.5 + relativeAngle / (math.pi))
+    
+    -- Only draw if within compass bounds
+    if orbX >= barX and orbX <= barX + barWidth then
+      -- Get orb color from GameData
+      local orbColor = GameData.ORBS[orbItem.type] and GameData.ORBS[orbItem.type].color or {1, 1, 1}
+      love.graphics.setColor(orbColor[1], orbColor[2], orbColor[3], 0.8)
+      
+      -- Draw orb indicator (circle)
+      love.graphics.circle('fill', orbX, barY + barHeight - 8, 4)
+      love.graphics.setColor(1, 1, 1, 0.8)
+      love.graphics.circle('line', orbX, barY + barHeight - 8, 4)
+      
+      -- Draw distance below the compass bar
+      love.graphics.printf(math.floor(distance), orbX - 20, barY + barHeight + 5, 40, "center")
+    end
+  end
+  
+  -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
-  local triangleSize = 8  -- Reduced from 10
-  local centerX = barX + barWidth/2
-  love.graphics.polygon('fill',
-    centerX, barY - 4,  -- Adjusted Y position
-    centerX - triangleSize/2, barY + 4,
-    centerX + triangleSize/2, barY + 4
-  )
 end
 
 function love.draw()
