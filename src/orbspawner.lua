@@ -71,7 +71,6 @@ function OrbSpawner:addOrb(orbType)
     -- Try to add the orb
     local success = self.player.orbManager:addOrb(orbType)
     if success then
-        print(string.format("Added %s orb to player", orbType))
         return true, nil
     end
     

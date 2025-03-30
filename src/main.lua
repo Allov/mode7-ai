@@ -240,19 +240,20 @@ function initializeGame()
   -- Initialize orb spawner
   player.orbSpawner = require('src.orbspawner'):new():init(player)
   
-  -- Spawn initial orb item near player with random type
-  local orbAngle = math.random() * math.pi * 2
+  -- Initialize orb item spawner
+  orbItemSpawner = require('src.orbitemspawner'):new():init(player)
+  _G.orbItemSpawner = orbItemSpawner
+  
+  -- Spawn initial orb item near player
   local orbDist = 100 + math.random() * 100  -- Between 100 and 200 units
+  local orbAngle = math.random() * math.pi * 2
   local orbX = player.x + math.cos(orbAngle) * orbDist
   local orbY = player.y + math.sin(orbAngle) * orbDist
   
-  -- Get random orb type from available types
+  -- Get random orb type and spawn the initial orb item
   local availableTypes = player.orbSpawner.orbTypes
   local randomOrbType = availableTypes[math.random(#availableTypes)]
-  
-  local orbItem = OrbItem:new():init(orbX, orbY, randomOrbType)
-  table.insert(orbItems, orbItem)
-  print(string.format("Spawned %s orb at X:%.1f Y:%.1f", randomOrbType, orbX, orbY))
+  orbItemSpawner:spawnOrbItem(randomOrbType, orbX, orbY)
 
   _G.effects = {} -- Global effects table
 
@@ -285,7 +286,8 @@ function love.update(dt)
   -- Only update game objects if player is alive
   if not player.isDead then
     mobSpawner:update(dt)
-    runeSpawner:update(dt)  -- Add runeSpawner update
+    runeSpawner:update(dt)
+    orbItemSpawner:update(dt)  -- Add this line
     
     -- Update enemies
     for i = #enemies, 1, -1 do
@@ -564,7 +566,7 @@ function love.draw()
   local runesToRender = runeSpawner:getRunes()
   
   -- Render Mode 7 ground with all game objects
-  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItems)
+  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItemSpawner:getOrbItems())
   
   -- Draw player arms if it exists
   if playerArms then

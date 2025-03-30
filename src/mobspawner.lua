@@ -123,11 +123,22 @@ function MobSpawner:processDeathQueue()
         -- Find and remove enemy from main list
         for j = #self.enemies, 1, -1 do
             if self.enemies[j] == deadEnemy then
+                -- Handle experience drops
                 if deadEnemy.shouldDropExp then
                     local expValue = deadEnemy.isElite and (deadEnemy.experienceValue * 2) or deadEnemy.experienceValue
                     local expOrb = ExperienceOrb:new():init(deadEnemy.x, deadEnemy.y, expValue)
                     table.insert(self.experienceOrbs, expOrb)
                 end
+                
+                -- Handle orb drops from elites
+                if deadEnemy.shouldDropOrb then
+                    _G.orbItemSpawner:spawnOrbItem(
+                        deadEnemy.shouldDropOrb.type,
+                        deadEnemy.shouldDropOrb.x,
+                        deadEnemy.shouldDropOrb.y
+                    )
+                end
+                
                 table.remove(self.enemies, j)
                 break
             end

@@ -7,7 +7,8 @@ local OrbItem = {
     pickupRange = 50,
     age = 0,
     lifetime = 30,
-    color = nil
+    color = nil,
+    player = nil  -- Add player reference
 }
 
 function OrbItem:new(o)
@@ -17,11 +18,12 @@ function OrbItem:new(o)
     return o
 end
 
-function OrbItem:init(x, y, orbType)
+function OrbItem:init(x, y, orbType, player)  -- Add player parameter
     self.x = x
     self.y = y
     self.type = orbType
     self.age = 0
+    self.player = player
     
     -- Set color from GameData
     if GameData.ORBS[orbType] then
@@ -42,16 +44,15 @@ function OrbItem:update(dt)
     end
     
     -- Calculate distance to player
-    local dx = _G.player.x - self.x
-    local dy = _G.player.y - self.y
+    local dx = self.player.x - self.x
+    local dy = self.player.y - self.y
     local distance = math.sqrt(dx * dx + dy * dy)
     
     -- Check for pickup
     if distance < self.pickupRange then
-        -- Add orb to player
-        local success = _G.player.orbSpawner:addOrb(self.type)
+        local success = self.player.orbSpawner:addOrb(self.type)
         if success then
-            print("Collected " .. self.type .. " orb")
+            print("Picked up " .. self.type .. " orb")  -- Only log successful pickups
             return true
         end
     end
