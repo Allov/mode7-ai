@@ -122,9 +122,10 @@ function Boss:hit(damage, isCritical)
     isCritical = isCritical
   })
   
-  local isDead = self.health <= 0
-  
-  if isDead then
+  -- Check for death
+  if self.health <= 0 and not self.isDead then
+    self.isDead = true
+    
     -- Always drop experience
     self.shouldDropExp = true
     
@@ -139,12 +140,16 @@ function Boss:hit(damage, isCritical)
       x = self.x,
       y = self.y
     }
+    
+    -- Queue death for processing
+    _G.mobSpawner:queueEnemyDeath(self)
   end
   
-  return isDead
+  return self.health <= 0
 end
 
 return Boss
+
 
 
 
