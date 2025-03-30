@@ -11,10 +11,10 @@ local Mode7 = {
   fogColor = {0.1, 0.2, 0.25},
   fogDampening = 0.9,
   fogAlpha = 0.93,
-  -- lightPositions 4 corners
-  lightPositions = {{300, 300}, {300, -300}, {-300, 300}, {-300, -300}},  -- Array of light positions
-  lightColors = {{1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}},  -- Array of light colors
-  lightRadii = {300, 300, 300, 300},  -- Array of light radii
+  -- Add camera light as first light, followed by static lights
+  lightPositions = {{0, 0}, {300, 300}, {-300, -300}},  -- Camera light + static lights
+  lightColors = {{1.0, 0.9, 0.7}, {1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}},  -- Brighter white-ish for camera light
+  lightRadii = {500, 300, 300},  -- Smaller radius for camera light
   ambientLight = {0.1, 0.1, 0.1},
 }
 
@@ -178,11 +178,13 @@ function Mode7:load()
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
-  -- Single shader setup and draw call
+  -- Update first light position to match camera
+  self.lightPositions[1] = {camera.x, camera.y}
+  
   love.graphics.setShader(self.shader)
   self.shader:send('cameraPos', {camera.x, camera.y})
   self.shader:send('cameraAngle', camera.angle)
-  self.shader:send('lightPositions', unpack(self.lightPositions))  -- Update light positions
+  self.shader:send('lightPositions', unpack(self.lightPositions))
   self.shader:send('skyTexture', self.skyTexture)
   
   love.graphics.setColor(1, 1, 1, 1)
