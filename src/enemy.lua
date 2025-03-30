@@ -1,5 +1,5 @@
 local Constants = require('src.constants')
-local DamageNumber = require('src.damagenumber')
+local DamageNumber = require('src.damagenumber')  -- Make sure path is correct
 
 local Enemy = {
   x = 0,
@@ -18,6 +18,8 @@ local Enemy = {
   damageNumber = nil,  -- Single damage number instead of array
   experienceValue = 25,
   dropChance = 0.75,  -- 75% chance to drop exp orb
+  isDead = false,  -- Add this flag
+  shouldDropExp = true,  -- Add this flag
   
   -- Elite properties
   isElite = false,
@@ -117,29 +119,33 @@ function math.clamp(x, min, max)
 end
 
 -- Add hit method with damage numbers
-function Enemy:hit(damage, isCritical)
+function Enemy:hit(damage)
   self.health = self.health - damage
   
-  -- Create damage number
-  self.damageNumber = DamageNumber:new({
-    value = damage,
-    x = self.x,
-    y = self.y,
-    z = Constants.CAMERA_HEIGHT - 10,
-    baseScale = isCritical and 1.5 or 1.0,
-    isCritical = isCritical
-  })
-  
-  local isDead = self.health <= 0
-  
-  if isDead and math.random() < self.dropChance then
-    self.shouldDropExp = true
+  -- Create damage number with proper initialization
+  if DamageNumber then
+    self.damageNumber = DamageNumber:new({
+      value = damage,
+      x = self.x,
+      y = self.y,
+      z = Constants.CAMERA_HEIGHT - 10,
+      isCritical = false,
+      baseScale = 1.0
+    })
   end
   
-  return isDead
+  if self.health <= 0 and not self.isDead then
+    self.isDead = true
+    _G.mobSpawner:queueEnemyDeath(self)
+    return true
+  end
+  return false
 end
 
 return Enemy
+
+
+
 
 
 

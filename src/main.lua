@@ -230,6 +230,9 @@ function initializeGame()
   print(string.format("Spawned lightning orb at X:%.1f Y:%.1f", orbX, orbY))
 
   _G.effects = {} -- Global effects table
+
+  -- After creating mobSpawner
+  _G.mobSpawner = mobSpawner
 end
 
 function love.update(dt)

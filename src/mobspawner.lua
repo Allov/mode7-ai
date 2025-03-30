@@ -1,5 +1,6 @@
 local Enemy = require('src.enemy')
 local Boss = require('src.boss')
+local ExperienceOrb = require('src.experienceorb')
 
 local MobSpawner = {
     -- Spawn control variables
@@ -12,7 +13,9 @@ local MobSpawner = {
     
     -- References to game state
     enemies = nil,
-    player = nil
+    player = nil,
+    experienceOrbs = nil,
+    recentDeaths = {}  -- Queue for recently dead enemies
 }
 
 function MobSpawner:new(o)
@@ -22,11 +25,13 @@ function MobSpawner:new(o)
     return o
 end
 
-function MobSpawner:init(enemies, player)
+function MobSpawner:init(enemies, player, experienceOrbs)
     self.enemies = enemies
     self.player = player
+    self.experienceOrbs = experienceOrbs
     self.spawnTimer = 0
     self.spawnInterval = 12.0
+    self.recentDeaths = {}
     return self
 end
 
@@ -97,12 +102,43 @@ function MobSpawner:spawnBoss()
     return boss
 end
 
+-- Add enemy to death queue
+function MobSpawner:queueEnemyDeath(enemy)
+    table.insert(self.recentDeaths, enemy)
+end
+
+-- Process death queue
+function MobSpawner:processDeathQueue()
+    for i = #self.recentDeaths, 1, -1 do
+        local deadEnemy = self.recentDeaths[i]
+        
+        -- Find and remove enemy from main list
+        for j = #self.enemies, 1, -1 do
+            if self.enemies[j] == deadEnemy then
+                if deadEnemy.shouldDropExp then
+                    local expValue = deadEnemy.isElite and (deadEnemy.experienceValue * 2) or deadEnemy.experienceValue
+                    local expOrb = ExperienceOrb:new():init(deadEnemy.x, deadEnemy.y, expValue)
+                    table.insert(self.experienceOrbs, expOrb)
+                end
+                table.remove(self.enemies, j)
+                break
+            end
+        end
+        
+        -- Remove from death queue
+        table.remove(self.recentDeaths, i)
+    end
+end
+
 function MobSpawner:update(dt)
     self.spawnTimer = self.spawnTimer + dt
     if self.spawnTimer >= self.spawnInterval then
         self.spawnTimer = 0
         self:spawnEnemy()
     end
+    
+    -- Process any queued deaths
+    self:processDeathQueue()
 end
 
 return MobSpawner
