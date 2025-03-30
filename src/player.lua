@@ -7,9 +7,9 @@ local Player = {
   x = 0,
   y = 0,
   angle = 0,
-  moveSpeed = 150,    -- Reduced from 200
-  strafeSpeed = 150,  -- Reduced from 300
-  turnSpeed = 2.5,
+  moveSpeed = 220,
+  strafeSpeed = 220,  -- Reduced from 300
+  turnSpeed = 2.7,
   
   -- Combat properties
   health = 100,
@@ -55,8 +55,8 @@ local Player = {
   },
   
   -- Add dash properties
-  dashSpeed = 400,         -- Reduced from 800 to 400
-  dashDuration = 0.25,     -- Increased from 0.15 to 0.25 seconds
+  dashSpeed = 800,         -- Reduced from 800 to 400
+  dashDuration = 0.15,     -- Increased from 0.15 to 0.25 seconds
   dashCooldown = 0.6,      -- Increased from 0.5 to 1.2 seconds
   isDashing = false,       -- Current dash state
   dashTimer = 0,          -- Current dash duration
