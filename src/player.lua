@@ -157,82 +157,71 @@ function Player:handleInput()
   self.strafe = 0
   self.rotation = 0
   
-  -- Forward/Backward (W/S)
-  if love.keyboard.isDown('w') then
+  -- Get gamepad (using first connected gamepad)
+  local joystick = love.joystick.getJoysticks()[1]
+  
+  -- Forward/Backward movement (Left stick Y-axis)
+  if love.keyboard.isDown('w') or (joystick and joystick:getAxis(2) < -0.25) then
     self.forward = 1
   end
-  if love.keyboard.isDown('s') then
+  if love.keyboard.isDown('s') or (joystick and joystick:getAxis(2) > 0.25) then
     self.forward = -1
   end
   
-  -- Check if shooting
-  local isShooting = love.keyboard.isDown('space') or love.mouse.isDown(1)
+  -- Strafe movement (Left stick X-axis)
+  if love.keyboard.isDown('a') or (joystick and joystick:getAxis(1) < -0.25) then
+    self.strafe = -1
+  end
+  if love.keyboard.isDown('d') or (joystick and joystick:getAxis(1) > 0.25) then
+    self.strafe = 1
+  end
+  
+  -- Keyboard rotation with Q and E
+  if love.keyboard.isDown('q') then
+    self.rotation = -1
+  elseif love.keyboard.isDown('e') then
+    self.rotation = 1
+  end
+  
+  -- Camera rotation (right stick X-axis only)
+  if joystick then
+    local rightStickX = joystick:getAxis(4)  -- Right stick X axis
+    if math.abs(rightStickX) > 0.25 then
+      self.rotation = rightStickX
+    end
+  end
+  
+  -- Check if shooting (keyboard/mouse or controller)
+  local isShooting = love.keyboard.isDown('space') or 
+                     love.mouse.isDown(1) or 
+                     (joystick and (joystick:isDown(5) or joystick:isDown(6)))  -- RB/RT buttons
   
   if isShooting then
-    -- Try to acquire target when shooting starts
-    if not self.currentTarget then
-      self.currentTarget = self:findTarget()
+    if self.shootTimer <= 0 then
+      self:shoot()
+      self.shootTimer = self.shootCooldown
+    end
+  end
+  
+  -- Dash (keyboard or controller)
+  if (love.mouse.isDown(2) or (joystick and joystick:isDown(1))) and  -- B button
+     self.dashCooldownTimer <= 0 then
+    -- Normalize direction for dash
+    local moveX = math.sin(self.angle) * self.forward
+    local moveY = math.cos(self.angle) * self.forward
+    
+    -- Add strafe component
+    if self.strafe ~= 0 then
+      moveX = moveX + math.sin(self.angle + math.pi/2) * self.strafe
+      moveY = moveY + math.cos(self.angle + math.pi/2) * self.strafe
     end
     
-    if self.currentTarget then
-      -- Calculate vector to target
-      local dx = self.currentTarget.x - self.x
-      local dy = self.currentTarget.y - self.y
-      local dist = math.sqrt(dx * dx + dy * dy)
-      
-      -- If target gets too far, lose lock
-      if dist > self.targetLockRange then
-        self.currentTarget = nil
-      else
-        -- Calculate current angle relative to target
-        local currentAngle = math.atan2(dy, dx)
-        
-        -- Handle orbital movement
-        if love.keyboard.isDown('a') or love.keyboard.isDown('q') then
-          self.rotation = -1
-          -- Orbit counterclockwise
-          local orbitAngle = currentAngle - self.orbitSpeed * love.timer.getDelta()
-          
-          -- Calculate new position maintaining exact orbit distance
-          self.x = self.currentTarget.x - math.cos(orbitAngle) * self.orbitDistance
-          self.y = self.currentTarget.y - math.sin(orbitAngle) * self.orbitDistance
-          
-        elseif love.keyboard.isDown('d') or love.keyboard.isDown('e') then
-          self.rotation = 1
-          -- Orbit clockwise
-          local orbitAngle = currentAngle + self.orbitSpeed * love.timer.getDelta()
-          
-          -- Calculate new position maintaining exact orbit distance
-          self.x = self.currentTarget.x - math.cos(orbitAngle) * self.orbitDistance
-          self.y = self.currentTarget.y - math.sin(orbitAngle) * self.orbitDistance
-        end
-      end
-    else
-      -- No target locked, handle normal rotation
-      if love.keyboard.isDown('a') or love.keyboard.isDown('q') then
-        self.rotation = -1
-      elseif love.keyboard.isDown('d') or love.keyboard.isDown('e') then
-        self.rotation = 1
-      end
-    end
-  else
-    -- Reset target when not shooting
-    self.currentTarget = nil
-    
-    -- Normal strafing movement when not shooting
-    if love.keyboard.isDown('a') then
-      self.strafe = -1
-    end
-    if love.keyboard.isDown('d') then
-      self.strafe = 1
-    end
-    
-    -- Normal rotation for Q/E
-    if love.keyboard.isDown('q') or love.keyboard.isDown('left') then
-      self.rotation = -1
-    end
-    if love.keyboard.isDown('e') or love.keyboard.isDown('right') then
-      self.rotation = 1
+    local length = math.sqrt(moveX * moveX + moveY * moveY)
+    if length > 0 then
+      self.dashDirection.x = moveX / length
+      self.dashDirection.y = moveY / length
+      self.isDashing = true
+      self.dashTimer = self.dashDuration
     end
   end
 end
