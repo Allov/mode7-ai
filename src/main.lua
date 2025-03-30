@@ -159,19 +159,28 @@ function love.load()
   
   -- Initialize game objects
   initializeGame()
+  
+  -- Initialize mouse state
+  _G.mouseGrabbed = true
+  love.mouse.setVisible(false)
 end
 
 function initializeGame()
   -- Initialize global effects table if it doesn't exist
   _G.effects = _G.effects or {}
   
-  -- Set up window with vsync enabled
-  love.window.setMode(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT, {
-    resizable = false,
+  -- Set up window in fullscreen mode
+  love.window.setMode(0, 0, {
+    fullscreen = true,
     vsync = true,
+    resizable = false,
     minwidth = 400,
     minheight = 300
   })
+  
+  -- Update Constants with actual screen dimensions
+  Constants.SCREEN_WIDTH = love.graphics.getWidth()
+  Constants.SCREEN_HEIGHT = love.graphics.getHeight()
   
   -- Initialize player first
   player = Player:new()
@@ -836,6 +845,9 @@ end
 function love.keypressed(key)
   if key == '`' then
     console:toggle()
+    -- When console is active, disable mouse capture
+    _G.mouseGrabbed = not console.active
+    love.mouse.setVisible(not _G.mouseGrabbed)
     return
   end
   
@@ -844,6 +856,14 @@ function love.keypressed(key)
   end
   
   if key == 'escape' then
+    -- Toggle mouse capture when pressing escape
+    _G.mouseGrabbed = not _G.mouseGrabbed
+    love.mouse.setVisible(not _G.mouseGrabbed)
+    
+    -- Only quit if escape is pressed twice while mouse is visible
+    if _G.mouseGrabbed then
+      return
+    end
     love.event.quit()
   end
 end
@@ -957,6 +977,20 @@ function spawnRandomRunes(count)
       end
       
       attempts = attempts - 1
+    end
+  end
+end
+
+function love.focus(focused)
+  -- Release mouse when window loses focus
+  if not focused then
+    _G.mouseGrabbed = false
+    love.mouse.setVisible(true)
+  else
+    -- Recapture mouse when window regains focus (if not in console)
+    if not console.active then
+      _G.mouseGrabbed = true
+      love.mouse.setVisible(false)
     end
   end
 end

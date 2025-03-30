@@ -154,9 +154,11 @@ function Enemy:hit(damage)
   if self.health <= 0 and not self.isDead then
     self.isDead = true
     
-    -- Elite enemies drop orbs (no runes)
+    -- Elite enemies drop orbs
     if self.isElite then
-      local orbDropChance = 0.25  -- 25% chance to drop an orb
+      -- Check if Elite Harvest power-up is active
+      local orbDropChance = _G.player.hasEliteHarvest and 1.0 or 0.75  -- Increased from 0.25 to 0.75, 100% with power-up
+      
       if math.random() < orbDropChance then
         local availableOrbs = _G.player.orbSpawner.orbTypes
         local randomOrbType = availableOrbs[math.random(#availableOrbs)]
@@ -166,6 +168,7 @@ function Enemy:hit(damage)
           x = self.x,
           y = self.y
         }
+        print("Elite will drop orb: " .. randomOrbType)  -- Debug print
       end
     end
     
@@ -179,6 +182,7 @@ function Enemy:hit(damage)
 end
 
 return Enemy
+
 
 
 

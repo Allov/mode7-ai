@@ -47,10 +47,12 @@ A modern interpretation of Mode 7-style graphics built with LÖVE (Love2D).
 
 ### Keyboard & Mouse
 - WASD: Movement
-- Q/E: Camera rotation
+- Mouse: Camera rotation
 - Space/Left Mouse: Shoot
 - Right Mouse: Dash
 - `: Debug console
+- Escape: Toggle mouse capture
+- F11/Alt+Enter: Toggle fullscreen
 
 ### Controller
 - Left Stick: Movement
@@ -71,4 +73,5 @@ See [CONTRIB.md](CONTRIB.md) for development setup and guidelines.
 ## License
 
 [MIT License](LICENSE)
+
 

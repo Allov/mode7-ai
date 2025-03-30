@@ -9,7 +9,7 @@ local Player = {
   angle = 0,
   moveSpeed = 220,
   strafeSpeed = 220,  -- Reduced from 300
-  turnSpeed = 2.7,
+  turnSpeed = 27,
   
   -- Combat properties
   health = 100,
@@ -170,22 +170,26 @@ function Player:handleInput()
     self.forward = -1
   end
   
-  -- Check if Alt is being held
-  local altHeld = love.keyboard.isDown('lalt') or love.keyboard.isDown('ralt')
-  
-  -- Strafe movement (AD or Alt + Left/Right arrows)
-  if love.keyboard.isDown('a') or (altHeld and love.keyboard.isDown('left')) then
+  -- Strafe movement (AD)
+  if love.keyboard.isDown('a') then
     self.strafe = -1
   end
-  if love.keyboard.isDown('d') or (altHeld and love.keyboard.isDown('right')) then
+  if love.keyboard.isDown('d') then
     self.strafe = 1
   end
   
-  -- Rotation (QE or Left/Right arrows without Alt)
-  if love.keyboard.isDown('q') or (not altHeld and love.keyboard.isDown('left')) then
-    self.rotation = -1
-  elseif love.keyboard.isDown('e') or (not altHeld and love.keyboard.isDown('right')) then
-    self.rotation = 1
+  -- Mouse rotation
+  if _G.mouseGrabbed then
+    local mouseX = love.mouse.getX()
+    local centerX = love.graphics.getWidth() / 2
+    local mouseDelta = mouseX - centerX
+    
+    -- Adjust sensitivity - lower number = slower rotation
+    local mouseSensitivity = 0.003
+    self.rotation = mouseDelta * mouseSensitivity
+    
+    -- Reset mouse position to center
+    love.mouse.setPosition(centerX, love.graphics.getHeight() / 2)
   end
   
   -- Camera rotation (right stick X-axis only)
