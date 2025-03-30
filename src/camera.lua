@@ -7,9 +7,9 @@ local Camera = {
   angle = 0,
   baseHeight = Constants.CAMERA_HEIGHT,
   bobPhase = 0,
-  bobFrequency = 16,      -- Fast enough to match running/walking
-  bobAmplitude = 4,      -- Larger amplitude for noticeable effect in Mode7
-  bobSideAmount = 3,      -- Side-to-side movement
+  bobFrequency = 8,      -- Fast enough to match running/walking
+  bobAmplitude = 5,      -- Larger amplitude for noticeable effect in Mode7
+  bobSideAmount = 4,      -- Side-to-side movement
   bobActive = false,
   shakeAmount = 0,
   shakeDecay = 5,
@@ -60,7 +60,17 @@ function Camera:update(dt, player)
   local isMoving = math.abs(player.forward) > 0.01 or math.abs(player.strafe) > 0.01
   
   if isMoving then
-    self.bobPhase = (self.bobPhase + dt * self.bobFrequency) % (math.pi * 2)
+    -- Update phase
+    self.bobPhase = self.bobPhase + dt * self.bobFrequency
+    
+    -- Bounce back when reaching end of phase
+    if self.bobPhase > math.pi then
+      self.bobPhase = math.pi - (self.bobPhase - math.pi)
+      self.bobFrequency = -self.bobFrequency
+    elseif self.bobPhase < 0 then
+      self.bobPhase = -self.bobPhase
+      self.bobFrequency = -self.bobFrequency
+    end
     
     -- Update camera height with bobbing
     self.z = self.baseHeight + math.sin(self.bobPhase) * self.bobAmplitude
@@ -73,6 +83,9 @@ function Camera:update(dt, player)
   else
     -- Smoothly return to base height when not moving
     self.z = self.baseHeight
+    -- Reset bobbing
+    self.bobPhase = 0
+    self.bobFrequency = math.abs(self.bobFrequency) -- Ensure positive frequency when starting movement
   end
 
   -- Handle shake effect
