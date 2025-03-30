@@ -16,6 +16,13 @@ local Mode7 = {
   lightColors = {{1.0, 0.9, 0.7}, {1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}},  -- Brighter white-ish for camera light
   lightRadii = {500, 300, 300},  -- Smaller radius for camera light
   ambientLight = {0.1, 0.1, 0.1},
+  postFpgaEnabled = true,
+  postFpgaSettings = {
+    noise_amount = 0.001,
+    scanline_intensity = 0.1,
+    color_depth = 32.0,
+    pixel_size = 1.5
+  }
 }
 
 function Mode7:new(o)
@@ -388,9 +395,25 @@ function Mode7:load()
 
   -- Debug print to verify texture creation
   print("Lightning texture created:", self.lightningTexture ~= nil)
+
+  -- Initialize post-processing shader and canvas
+  self.postFpgaShader = love.graphics.newShader('src/shaders/post_fpga.glsl')
+  self.postCanvas = love.graphics.newCanvas()
+  
+  -- Send initial settings to shader
+  self.postFpgaShader:send('screen_size', {love.graphics.getWidth(), love.graphics.getHeight()})
+  for k, v in pairs(self.postFpgaSettings) do
+      self.postFpgaShader:send(k, v)
+  end
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems)
+  if self.postFpgaEnabled then
+    -- Render everything to post-processing canvas
+    love.graphics.setCanvas(self.postCanvas)
+    love.graphics.clear()
+  end
+
   -- Update first light position to match camera
   self.lightPositions[1] = {camera.x, camera.y}
   
@@ -666,6 +689,16 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
   end
+
+  if self.postFpgaEnabled then
+    -- Apply post-processing effect
+    love.graphics.setCanvas()
+    love.graphics.setShader(self.postFpgaShader)
+    self.postFpgaShader:send('time', love.timer.getTime())
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(self.postCanvas, 0, 0)
+    love.graphics.setShader()
+  end
 end
 
 function Mode7:drawSprite(entity, camera, options)
@@ -867,6 +900,20 @@ function Mode7:update(dt)
     self.lightColor[3] * flickerIntensity
   }
   self.shader:send('lightColor', flickeringColor)
+end
+
+function Mode7:togglePostFpga()
+  self.postFpgaEnabled = not self.postFpgaEnabled
+  return self.postFpgaEnabled
+end
+
+function Mode7:setPostFpgaSetting(setting, value)
+  if self.postFpgaSettings[setting] then
+    self.postFpgaSettings[setting] = value
+    self.postFpgaShader:send(setting, value)
+    return true
+  end
+  return false
 end
 
 return Mode7
