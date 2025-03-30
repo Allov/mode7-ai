@@ -14,6 +14,7 @@ local Console = require('src.console')
 local MobSpawner = require('src.mobspawner')
 local RuneSpawner = require('src.runespawner')
 local OrbItem = require('src.orbitem')
+local Lightning = require('src.effects.lightning')
 
 -- Declare all global variables at the top
 local camera
@@ -154,10 +155,13 @@ function love.load()
 end
 
 function initializeGame()
+  -- Initialize global effects table if it doesn't exist
+  _G.effects = _G.effects or {}
+  
   -- Set up window with vsync enabled
   love.window.setMode(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT, {
     resizable = false,
-    vsync = true,           -- Ensure vsync is enabled
+    vsync = true,
     minwidth = 400,
     minheight = 300
   })
@@ -224,10 +228,11 @@ function initializeGame()
   local orbItem = OrbItem:new():init(orbX, orbY, "lightning")
   table.insert(orbItems, orbItem)
   print(string.format("Spawned lightning orb at X:%.1f Y:%.1f", orbX, orbY))
+
+  _G.effects = {} -- Global effects table
 end
 
 function love.update(dt)
-  -- Return early if game is paused (but not if player is dead)
   if _G.isPaused and not player.isDead then
     return
   end
@@ -363,6 +368,14 @@ function love.update(dt)
   end
   
   -- Remove the separate mouseShootTimer update since we're using player's timer
+
+  -- Update effects
+  for i = #_G.effects, 1, -1 do
+    local effect = _G.effects[i]
+    if effect.object:update(dt) then
+      table.remove(_G.effects, i)
+    end
+  end
 end
 
 function drawCompass(player, runeSpawner)  -- Change parameter from runes to runeSpawner

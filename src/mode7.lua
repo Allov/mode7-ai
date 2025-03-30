@@ -283,6 +283,46 @@ function Mode7:load()
   love.graphics.setCanvas()
   self.orbItemTexture = orbItemCanvas
   self.orbItemTexture:setFilter('nearest', 'nearest')
+
+  -- Create lightning texture
+  local lightningCanvas = love.graphics.newCanvas(64, 128)  -- Taller canvas for lightning bolt
+  love.graphics.setCanvas(lightningCanvas)
+  love.graphics.clear()
+  
+  -- Draw main lightning bolt
+  love.graphics.setColor(1, 1, 1, 0.9)  -- Bright white core
+  local points = {
+    32, 0,    -- Top point
+    24, 30,   -- First zag left
+    36, 50,   -- Zag right
+    28, 80,   -- Zag left
+    40, 100,  -- Zag right
+    32, 128   -- Bottom point
+  }
+  love.graphics.setLineWidth(4)
+  love.graphics.line(points)
+  
+  -- Draw outer glow
+  love.graphics.setColor(0.3, 0.3, 1.0, 0.5)  -- Light blue glow
+  love.graphics.setLineWidth(8)
+  love.graphics.line(points)
+  
+  -- Add some small branches
+  love.graphics.setColor(0.7, 0.7, 1.0, 0.6)
+  love.graphics.setLineWidth(2)
+  -- Branch 1
+  love.graphics.line(24, 30, 16, 40)
+  -- Branch 2
+  love.graphics.line(36, 50, 44, 60)
+  -- Branch 3
+  love.graphics.line(28, 80, 20, 90)
+  
+  love.graphics.setCanvas()
+  self.lightningTexture = lightningCanvas
+  self.lightningTexture:setFilter('nearest', 'nearest')
+  
+  -- Debug print to verify texture creation
+  print("Lightning texture created:", self.lightningTexture ~= nil)
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems)
@@ -492,8 +532,36 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
           useAngleScaling = false,
           color = obj.object.color
       })
+    elseif obj.type == "lightning" then
+      love.graphics.setColor(1, 1, 1, obj.object.alpha or 1)
+      self:drawSprite(obj.object, camera, {
+        texture = self.lightningTexture,
+        scale = 200.0 * Constants.SPRITE_SCALE,
+        heightScale = 2.0,
+        useAngleScaling = false,
+        heightOffset = -100  -- Makes the lightning appear to come from above
+      })
     end
   end
+
+  -- Explicitly render effects
+  if _G.effects then
+    for _, effect in ipairs(_G.effects) do
+      if effect.type == "lightning" then
+        love.graphics.setColor(1, 1, 1, effect.object.alpha or 1)
+        self:drawSprite(effect.object, camera, {
+          texture = self.lightningTexture,
+          scale = 50.0 * Constants.SPRITE_SCALE,
+          heightScale = 1.5,
+          useAngleScaling = false,
+          heightOffset = 0
+        })
+      end
+    end
+  end
+  
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
 
   -- After drawing all objects but before HUD, add damage effect
   if _G.player.invulnerableTimer > 0 then
