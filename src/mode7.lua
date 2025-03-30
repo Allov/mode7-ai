@@ -341,6 +341,51 @@ function Mode7:load()
   self.lightningTexture = lightningCanvas
   self.lightningTexture:setFilter('linear', 'linear')  -- Smooth scaling
   
+  -- Create fire effect texture
+  local fireCanvas = love.graphics.newCanvas(64, 64)
+  love.graphics.setCanvas(fireCanvas)
+  love.graphics.clear()
+  
+  -- Draw outer glow
+  love.graphics.setColor(1, 0.5, 0, 0.3)  -- Semi-transparent orange
+  love.graphics.circle('fill', 32, 32, 30)
+  
+  -- Draw middle layer
+  love.graphics.setColor(1, 0.3, 0, 0.6)  -- More opaque orange-red
+  love.graphics.circle('fill', 32, 32, 24)
+  
+  -- Draw core
+  love.graphics.setColor(1, 0.8, 0, 0.8)  -- Bright yellow-orange
+  love.graphics.circle('fill', 32, 32, 16)
+  
+  -- Draw flame details
+  for i = 1, 8 do
+      local angle = (i * math.pi / 4)
+      local length = 28
+      local width = 12
+      
+      -- Draw flame tongues
+      love.graphics.setColor(1, 0.2, 0, 0.7)
+      local x1 = 32 + math.cos(angle) * 20
+      local y1 = 32 + math.sin(angle) * 20
+      local x2 = 32 + math.cos(angle) * (length + 8)
+      local y2 = 32 + math.sin(angle) * (length + 8)
+      local x3 = 32 + math.cos(angle + 0.2) * length
+      local y3 = 32 + math.sin(angle + 0.2) * length
+      local x4 = 32 + math.cos(angle - 0.2) * length
+      local y4 = 32 + math.sin(angle - 0.2) * length
+      
+      love.graphics.polygon('fill', x1, y1, x3, y3, x2, y2, x4, y4)
+      
+      -- Add bright tips
+      love.graphics.setColor(1, 0.8, 0, 0.9)
+      love.graphics.circle('fill', x1, y1, 3)
+  end
+  
+  love.graphics.setCanvas()
+  self.fireTexture = fireCanvas
+  self.fireTexture:setFilter('linear', 'linear')
+
   -- Debug print to verify texture creation
   print("Lightning texture created:", self.lightningTexture ~= nil)
 end
@@ -564,6 +609,28 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     end
   end
 
+  -- Render effects
+  if _G.effects then
+    for _, effect in ipairs(_G.effects) do
+      if effect.type == "fire" then
+        love.graphics.setColor(1, 1, 1, effect.object.alpha)
+
+        -- Draw multiple fire textures at different scales
+        for i = 1, 3 do
+          self:drawSprite(effect.object, camera, {            
+            texture = self.fireTexture,
+            scale = 2.0 * Constants.SPRITE_SCALE * effect.object.scale * (1 + i * 0.2),
+            heightScale = 1.0,
+            useAngleScaling = false,
+            rotation = effect.object.rotation + i * 0.1,
+            xOffset = math.random(-1, 1),
+            yOffset = math.random(-1, 1),
+          })
+        end
+      end
+    end
+  end
+
   -- Explicitly render effects
   if _G.effects then
     for _, effect in ipairs(_G.effects) do
@@ -607,7 +674,10 @@ function Mode7:drawSprite(entity, camera, options)
     local heightScale = options.heightScale or 1.0
     local useAngleScaling = options.useAngleScaling or false
     local heightOffset = options.heightOffset or 0
-    local color = options.color or {1, 1, 1, 1}  -- Default white
+    local color = options.color or {1, 1, 1, 1}
+    local rotation = options.rotation or 0
+    local xOffset = options.xOffset or 0  -- New x offset option
+    local yOffset = options.yOffset or 0  -- New y offset option
     
     -- Save current color
     local r, g, b, a = love.graphics.getColor()
@@ -616,8 +686,8 @@ function Mode7:drawSprite(entity, camera, options)
     love.graphics.setColor(unpack(color))
     
     -- Calculate screen position
-    local dx = entity.x - camera.x
-    local dy = entity.y - camera.y
+    local dx = (entity.x + xOffset) - camera.x  -- Add xOffset here
+    local dy = (entity.y + yOffset) - camera.y  -- Add yOffset here
     
     -- Transform to camera space
     local cosA = math.cos(camera.angle)
@@ -706,7 +776,7 @@ function Mode7:drawSprite(entity, camera, options)
   love.graphics.draw(
     texture,
     screenX, screenY,
-    0,  -- rotation
+    rotation,  -- Use rotation parameter here
     spriteScale,  -- width scale
     spriteScale * heightScale,  -- height scale with multiplier
     texture:getWidth() / 2,     -- center horizontally

@@ -3,6 +3,7 @@ local OrbSpawner = {
     orbTypes = {
         "lightning",
         "pulse",
+        "fire",
         -- Add more orb types here as they're implemented
     },
     
@@ -134,3 +135,4 @@ function OrbSpawner:listAvailableOrbs()
 end
 
 return OrbSpawner
+

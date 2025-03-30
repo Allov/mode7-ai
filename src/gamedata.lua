@@ -108,11 +108,20 @@ local GameData = {
       cooldown = 2.0,
       damage = 15,
       range = 300
+    },
+    fire = {
+      name = "Fire Orb",
+      color = {1.0, 0.4, 0.0},  -- Orange
+      description = "Creates a damaging area around you",
+      cooldown = 1.5,
+      damage = 8,
+      range = 150
     }
   }
 }
 
 return GameData
+
 
 
 
