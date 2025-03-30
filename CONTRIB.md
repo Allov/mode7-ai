@@ -34,7 +34,9 @@
 │   ├── mode7.lua   # Mode 7 renderer
 │   ├── player.lua  # Player logic
 │   ├── projectile.lua # Projectile system
-│   └── rune.lua    # Power-up system
+│   ├── rune.lua    # Power-up system
+│   ├── boss.lua    # Boss enemy system
+│   └── enemy.lua   # Enemy AI
 ├── test/           # Test files
 └── vendor/         # Third-party dependencies
 ```
@@ -75,3 +77,4 @@ The game includes a debug console (toggle with `) with commands:
 - `chest`: Spawn chest
 - `mobs`: Spawn enemies
 - `rune`: Spawn power-up rune
+

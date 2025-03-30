@@ -5,9 +5,22 @@ A modern interpretation of Mode 7-style graphics built with LÖVE (Love2D).
 ## Features
 
 - Mode 7 perspective rendering
+  - Dynamic lighting system
+  - Fog effects
+  - Skybox integration
 - Dual input support (Keyboard/Mouse + Controller)
 - Advanced targeting and combat system
-- Power-up runes system
+  - Auto-targeting
+  - Target lock-on
+  - Orbital combat
+- Power-up systems
+  - Experience-based leveling
+  - Collectible runes with unique effects
+  - Combinable power-ups
+- Boss encounters
+  - Special attack patterns
+  - Enrage mechanics
+  - Guaranteed rare drops
 - Debug console with commands
 - Comprehensive test suite
 
@@ -58,3 +71,4 @@ See [CONTRIB.md](CONTRIB.md) for development setup and guidelines.
 ## License
 
 [MIT License](LICENSE)
+
