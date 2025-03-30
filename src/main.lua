@@ -13,6 +13,7 @@ local Boss = require('src.boss')
 local Console = require('src.console')
 local MobSpawner = require('src.mobspawner')
 local RuneSpawner = require('src.runespawner')
+local OrbItem = require('src.orbitem')
 
 -- Declare all global variables at the top
 local camera
@@ -25,6 +26,7 @@ local chests = {}  -- Add chests to global variables
 local powerUps = {}
 local runes = {}
 local runeSpawner
+local orbItems = {}  -- Initialize empty table for orb items on ground
 _G.runes = runes  -- Set global reference once
 local console
 local mobSpawner
@@ -211,6 +213,17 @@ function initializeGame()
   -- Initialize pause state
   _G.isPaused = false
 
+  -- Initialize orb spawner
+  player.orbSpawner = require('src.orbspawner'):new():init(player)
+  
+  -- Spawn initial orb item near player
+  local orbAngle = math.random() * math.pi * 2
+  local orbDist = 100 + math.random() * 100  -- Between 100 and 200 units
+  local orbX = player.x + math.cos(orbAngle) * orbDist
+  local orbY = player.y + math.sin(orbAngle) * orbDist
+  local orbItem = OrbItem:new():init(orbX, orbY, "lightning")
+  table.insert(orbItems, orbItem)
+  print(string.format("Spawned lightning orb at X:%.1f Y:%.1f", orbX, orbY))
 end
 
 function love.update(dt)
@@ -309,6 +322,13 @@ function love.update(dt)
     for i = #runes, 1, -1 do
       if runes[i]:update(dt) then
         table.remove(runes, i)
+      end
+    end
+
+    -- Update orb items
+    for i = #orbItems, 1, -1 do
+      if orbItems[i]:update(dt) then
+        table.remove(orbItems, i)
       end
     end
   end
@@ -429,7 +449,7 @@ function love.draw()
   local runesToRender = runeSpawner:getRunes()
   
   -- Render Mode 7 ground with all game objects
-  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender)
+  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItems)
   
   -- Draw HUD with hudFont
   love.graphics.setFont(hudFont)

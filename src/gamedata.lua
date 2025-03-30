@@ -90,9 +90,22 @@ local GameData = {
       description = "Extra Projectile, Fire Rate -15%, Damage -10%",
       rarity = 3  -- Slightly rarer than other runes
     }
+  },
+
+  ORBS = {
+    lightning = {
+      name = "Lightning Orb",
+      color = {0.3, 0.7, 1.0},  -- Light blue
+      description = "Strikes nearby enemies with lightning",
+      cooldown = 2.0,
+      damage = 10,
+      range = 200
+    },
+    -- Add more orb types here as needed
   }
 }
 
 return GameData
+
 
 

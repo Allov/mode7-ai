@@ -53,27 +53,47 @@ function Mode7:load()
   
   -- Create all canvas textures first
   -- Create more visible rune texture
-  local runeCanvas = love.graphics.newCanvas(64, 64)  -- Increased from 32x32 to 64x64
+  local runeCanvas = love.graphics.newCanvas(64, 64)
   love.graphics.setCanvas(runeCanvas)
   love.graphics.clear()
 
-  -- Draw larger glow effect
-  love.graphics.setColor(1, 1, 1, 0.5)
-  love.graphics.circle('fill', 32, 32, 30)  -- Outer glow
+  -- Draw outer glow
+  love.graphics.setColor(1, 1, 1, 0.3)
+  love.graphics.circle('fill', 32, 32, 30)
 
   -- Draw main rune circle
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.circle('fill', 32, 32, 28)  -- Increased from 14 to 28
+  love.graphics.setColor(1, 1, 1, 0.8)
+  love.graphics.circle('fill', 32, 32, 24)
 
-  -- Draw outline
-  love.graphics.setColor(0, 0, 0, 1)
-  love.graphics.setLineWidth(2)
-  love.graphics.circle('line', 32, 32, 28)
+  -- Draw decorative elements
+  love.graphics.setColor(0, 0, 0, 0.9)
+  love.graphics.setLineWidth(3)
+
+  -- Draw octagon
+  for i = 1, 8 do
+      local angle1 = (i - 1) * math.pi / 4
+      local angle2 = i * math.pi / 4
+      local x1 = 32 + math.cos(angle1) * 20
+      local y1 = 32 + math.sin(angle1) * 20
+      local x2 = 32 + math.cos(angle2) * 20
+      local y2 = 32 + math.sin(angle2) * 20
+      love.graphics.line(x1, y1, x2, y2)
+  end
 
   -- Draw rune symbols
-  love.graphics.setLineWidth(4)  -- Thicker lines
-  love.graphics.line(16, 32, 48, 32)  -- Horizontal line
-  love.graphics.line(32, 16, 32, 48)  -- Vertical line
+  love.graphics.setLineWidth(4)
+  -- Central cross
+  love.graphics.line(32, 20, 32, 44)  -- Vertical
+  love.graphics.line(20, 32, 44, 32)  -- Horizontal
+
+  -- Draw diagonal accents
+  love.graphics.setLineWidth(2)
+  for i = 1, 4 do
+      local angle = (i - 1) * math.pi / 2
+      local x = 32 + math.cos(angle) * 16
+      local y = 32 + math.sin(angle) * 16
+      love.graphics.circle('fill', x, y, 3)
+  end
 
   love.graphics.setCanvas()
   self.runeTexture = runeCanvas
@@ -167,29 +187,105 @@ function Mode7:load()
   self.projectileTexture:setFilter('nearest', 'nearest')  -- Add filtering
   
   -- Create experience orb texture
-  local orbCanvas = love.graphics.newCanvas(32, 32)
+  local orbCanvas = love.graphics.newCanvas(32, 32)  -- Reduced from 64x64
   love.graphics.setCanvas(orbCanvas)
   love.graphics.clear()
-  
-  -- Outer glow
-  love.graphics.setColor(0, 1, 1, 0.5)  -- Cyan glow
-  love.graphics.circle('fill', 16, 16, 14)
-  
-  -- Inner orb
-  love.graphics.setColor(1, 1, 1, 1)  -- White core
-  love.graphics.circle('fill', 16, 16, 8)
-  
+
   -- Sparkle effect
-  love.graphics.setColor(0, 1, 1, 1)  -- Bright cyan
-  love.graphics.line(16, 4, 16, 28)   -- Vertical line
-  love.graphics.line(4, 16, 28, 16)   -- Horizontal line
-  
+  for i = 1, 8 do
+      local angle = (i * math.pi / 4)
+      local x = 16 + math.cos(angle) * 12
+      local y = 16 + math.sin(angle) * 12
+      
+      -- Draw sparkle points
+      love.graphics.setColor(1, 1, 1, 0.9)
+      love.graphics.circle('fill', x, y, 2)
+      
+      -- Draw lines connecting to center
+      love.graphics.setColor(0, 1, 1, 0.5)
+      love.graphics.line(16, 16, x, y)
+  end
+
+  -- Inner glow
+  love.graphics.setColor(0, 1, 1, 0.6)
+  love.graphics.circle('fill', 16, 16, 8)
+
+  -- Core
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.circle('fill', 16, 16, 4)
+
+  -- Add pulsing highlight
+  love.graphics.setColor(1, 1, 1, 0.7)
+  love.graphics.arc('fill', 16, 16, 6, 0, math.pi / 2)
+
   love.graphics.setCanvas()
   self.orbTexture = orbCanvas
-  self.orbTexture:setFilter('nearest', 'nearest')  -- Add filtering
+  self.orbTexture:setFilter('nearest', 'nearest')  -- Changed to nearest for pixel-art style
+
+  -- Create experience orb texture (add this near other texture creation code)
+  local expOrbCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(expOrbCanvas)
+  love.graphics.clear()
+
+  -- Sparkle effect
+  for i = 1, 8 do
+      local angle = (i * math.pi / 4)
+      local x = 16 + math.cos(angle) * 12
+      local y = 16 + math.sin(angle) * 12
+      
+      -- Draw sparkle points
+      love.graphics.setColor(1, 1, 1, 0.9)
+      love.graphics.circle('fill', x, y, 2)
+      
+      -- Draw lines connecting to center
+      love.graphics.setColor(0, 1, 1, 0.5)
+      love.graphics.line(16, 16, x, y)
+  end
+
+  -- Inner glow
+  love.graphics.setColor(0, 1, 1, 0.6)
+  love.graphics.circle('fill', 16, 16, 8)
+
+  -- Core
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.circle('fill', 16, 16, 4)
+
+  -- Add pulsing highlight
+  love.graphics.setColor(1, 1, 1, 0.7)
+  love.graphics.arc('fill', 16, 16, 6, 0, math.pi / 2)
+
+  love.graphics.setCanvas()
+  self.expOrbTexture = expOrbCanvas  -- Store as separate texture
+  self.expOrbTexture:setFilter('nearest', 'nearest')
+
+  -- Create orbItem texture
+  local orbItemCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(orbItemCanvas)
+  love.graphics.clear()
+  
+  -- Draw outer ring
+  love.graphics.setColor(1, 1, 1, 0.8)
+  love.graphics.circle('line', 16, 16, 14)
+  
+  -- Draw inner circle
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.circle('fill', 16, 16, 8)
+  
+  -- Draw some decorative lines
+  love.graphics.setColor(1, 1, 1, 0.6)
+  for i = 1, 4 do
+    local angle = (i * math.pi / 2)
+    local x = 16 + math.cos(angle) * 12
+    local y = 16 + math.sin(angle) * 12
+    love.graphics.line(16, 16, x, y)
+  end
+
+  love.graphics.setCanvas()
+  self.orbItemTexture = orbItemCanvas
+  self.orbItemTexture:setFilter('nearest', 'nearest')
 end
 
-function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
+function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems)
   -- Update first light position to match camera
   self.lightPositions[1] = {camera.x, camera.y}
   
@@ -214,6 +310,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   experienceOrbs = experienceOrbs or {}
   chests = chests or {}
   runes = runes or {}
+  orbItems = orbItems or {}
 
   -- Create a table of all objects to sort
   local allObjects = {}
@@ -285,22 +382,19 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     })
   end
 
-  -- Add orbs to render list if player has an orbManager
-  if _G.player and _G.player.orbManager then
-    for _, orb in ipairs(_G.player.orbManager.orbs) do
-      if orb.x and orb.y then  -- Only add if position exists
-        local dx = orb.x - camera.x
-        local dy = orb.y - camera.y
-        local distance = math.sqrt(dx * dx + dy * dy)
-        
-        table.insert(allObjects, {
-          type = "orb",
-          object = orb,
-          distance = distance
-        })
-      end
-    end
+  -- Add orbs to render list
+  for _, orbItem in ipairs(orbItems) do
+    local dx = orbItem.x - camera.x
+    local dy = orbItem.y - camera.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    table.insert(allObjects, {
+      type = "orbItem",
+      object = orbItem,
+      distance = distance
+    })
   end
+
 
   -- Sort objects by distance (furthest first)
   table.sort(allObjects, function(a, b)
@@ -346,8 +440,8 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     elseif obj.type == "experienceOrb" then
       love.graphics.setColor(0, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
-        texture = self.orbTexture,
-        scale = 150.0 * Constants.SPRITE_SCALE,
+        texture = self.expOrbTexture,  -- Use the experience orb specific texture
+        scale = 75.0 * Constants.SPRITE_SCALE,
         heightScale = 1.0,
         useAngleScaling = false
       })
@@ -382,20 +476,21 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         }
         
         self:drawSprite(obj.object, camera, {
-          texture = self.runeTexture,  -- Changed from glowTexture to runeTexture
+          texture = self.runeTexture,
           scale = 50.0 * Constants.SPRITE_SCALE,
           heightScale = 1.0,
           useAngleScaling = false,
           color = color
         })
       end
-    elseif obj.type == "orb" then
-      love.graphics.setColor(0, 1, 1, 1) -- Cyan color
+
+    elseif obj.type == "orbItem" then
       self:drawSprite(obj.object, camera, {
-        texture = self.orbTexture, -- We need to create this texture
-        scale = 100.0 * Constants.SPRITE_SCALE,
-        heightScale = 1.0,
-        useAngleScaling = false
+          texture = self.orbItemTexture,
+          scale = 150.0 * Constants.SPRITE_SCALE,
+          heightScale = 1.0,
+          useAngleScaling = false,
+          color = obj.object.color
       })
     end
   end
