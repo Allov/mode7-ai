@@ -17,6 +17,7 @@ function Camera:new(o)
   o = o or {}
   setmetatable(o, self)
   self.__index = self
+  o.z = self.baseHeight  -- Initialize z to baseHeight
   return o
 end
 

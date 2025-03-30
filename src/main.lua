@@ -49,6 +49,10 @@ function findValidSpawnPosition()
     -- Generate random angle around player
     local angle = math.random() * math.pi * 2
     
+    -- Define spawn parameters
+    local spawnDistance = 300  -- Distance from player
+    local minEnemyDistance = 200  -- Minimum distance between enemies
+    
     -- Calculate spawn position
     local spawnX = player.x + math.cos(angle) * spawnDistance
     local spawnY = player.y + math.sin(angle) * spawnDistance
