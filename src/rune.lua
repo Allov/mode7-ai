@@ -3,13 +3,14 @@ local GameData = require('src.gamedata')
 local Rune = {
   x = 0,
   y = 0,
-  z = 100,  -- Increased from 40 to 100 to float higher above ground
+  z = 150,  -- Increased from 100 to 150 to float higher above ground
   radius = 25,
   pickupRadius = 75,
   type = "none",
   rotationSpeed = 1,
   angle = 0,
   glowPhase = 0,
+  collected = false,  -- New field to track if the rune has been collected
 }
 
 -- Define rune types and their effects
@@ -99,13 +100,16 @@ function Rune:update(dt)
   
   if distance < self.pickupRadius then
     _G.player:addRune(self.type)
-    return true -- Remove rune
+    self.collected = true  -- Mark as collected
+    return true -- Signal for removal
   end
   
   return false
 end
 
 return Rune
+
+
 
 
 

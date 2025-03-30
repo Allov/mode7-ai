@@ -53,16 +53,28 @@ function Mode7:load()
   
   -- Create all canvas textures first
   -- Create more visible rune texture
-  local runeCanvas = love.graphics.newCanvas(32, 32)
+  local runeCanvas = love.graphics.newCanvas(64, 64)  -- Increased from 32x32 to 64x64
   love.graphics.setCanvas(runeCanvas)
   love.graphics.clear()
+
+  -- Draw larger glow effect
+  love.graphics.setColor(1, 1, 1, 0.5)
+  love.graphics.circle('fill', 32, 32, 30)  -- Outer glow
+
+  -- Draw main rune circle
   love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.circle('fill', 16, 16, 14)  -- Filled circle as base
+  love.graphics.circle('fill', 32, 32, 28)  -- Increased from 14 to 28
+
+  -- Draw outline
   love.graphics.setColor(0, 0, 0, 1)
-  love.graphics.circle('line', 16, 16, 14)  -- Outline
   love.graphics.setLineWidth(2)
-  love.graphics.line(8, 16, 24, 16)  -- Thicker rune symbols
-  love.graphics.line(16, 8, 16, 24)
+  love.graphics.circle('line', 32, 32, 28)
+
+  -- Draw rune symbols
+  love.graphics.setLineWidth(4)  -- Thicker lines
+  love.graphics.line(16, 32, 48, 32)  -- Horizontal line
+  love.graphics.line(32, 16, 32, 48)  -- Vertical line
+
   love.graphics.setCanvas()
   self.runeTexture = runeCanvas
   self.runeTexture:setFilter('nearest', 'nearest')
@@ -360,26 +372,21 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         })
       end
     elseif obj.type == "rune" then
-      -- Get the rune data for color
       local runeData = Rune.TYPES[obj.object.type]
       if runeData then
-        -- Draw the rune with its type color
-        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], 1)
-        self:drawSprite(obj.object, camera, {
-          texture = self.runeTexture,  -- Use runeTexture instead of chestTexture
-          scale = 150.0 * Constants.SPRITE_SCALE,
-          heightScale = 1.0,
-          useAngleScaling = false
-        })
+        local color = {
+          runeData.color[1],
+          runeData.color[2],
+          runeData.color[3],
+          1
+        }
         
-        -- Add glow effect
-        local glowAlpha = (math.sin(obj.object.glowPhase) + 1) * 0.3
-        love.graphics.setColor(runeData.color[1], runeData.color[2], runeData.color[3], glowAlpha)
         self:drawSprite(obj.object, camera, {
-          texture = self.glowTexture,
-          scale = 200.0 * Constants.SPRITE_SCALE,
+          texture = self.runeTexture,  -- Changed from glowTexture to runeTexture
+          scale = 50.0 * Constants.SPRITE_SCALE,
           heightScale = 1.0,
-          useAngleScaling = false
+          useAngleScaling = false,
+          color = color
         })
       end
     elseif obj.type == "orb" then
@@ -411,26 +418,34 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
 end
 
 function Mode7:drawSprite(entity, camera, options)
-  options = options or {}
-  local texture = options.texture or self.enemyTexture
-  local scale = options.scale or 6.0
-  local heightScale = options.heightScale or 1.0
-  local useAngleScaling = options.useAngleScaling or false
-  local color = options.color or {1, 1, 1, 1}
-  local heightOffset = options.heightOffset or 0
-  
-  -- Adjust camera offset for X axis
-  local dx = entity.x - camera.x
-  local dy = entity.y - camera.y
-  
-  -- Transform to camera space using same rotation as shader
-  local cosA = math.cos(camera.angle)
-  local sinA = math.sin(camera.angle)
-  local rx = dx * cosA - dy * sinA
-  local ry = dx * sinA + dy * cosA
-  
-  -- Don't render if behind camera or too far
-  if ry <= 0 or ry > Constants.DRAW_DISTANCE then return end
+    options = options or {}
+    local texture = options.texture or self.enemyTexture
+    local scale = options.scale or 6.0
+    local heightScale = options.heightScale or 1.0
+    local useAngleScaling = options.useAngleScaling or false
+    local heightOffset = options.heightOffset or 0
+    local color = options.color or {1, 1, 1, 1}  -- Default white
+    
+    -- Save current color
+    local r, g, b, a = love.graphics.getColor()
+    
+    -- Apply specified color
+    love.graphics.setColor(unpack(color))
+    
+    -- Calculate screen position
+    local dx = entity.x - camera.x
+    local dy = entity.y - camera.y
+    
+    -- Transform to camera space
+    local cosA = math.cos(camera.angle)
+    local sinA = math.sin(camera.angle)
+    local rx = dx * cosA - dy * sinA
+    local ry = dx * sinA + dy * cosA
+    
+    -- Don't render if behind camera or too far
+    if ry <= 0 or ry > Constants.DRAW_DISTANCE then 
+        return 
+    end
   
   -- Calculate screen position using proper FOV projection
   local fovRadians = math.rad(Constants.FOV)
@@ -458,8 +473,8 @@ function Mode7:drawSprite(entity, camera, options)
   end
 
   -- Debug: Draw ground reference point
-  love.graphics.setColor(1, 0, 0, 1)
-  love.graphics.circle('fill', screenX, groundY, 2)
+  -- love.graphics.setColor(1, 0, 0, 1)
+  -- love.graphics.circle('fill', screenX, groundY, 2)
   
   -- Draw crosshair if this is the player's current target
   if _G.player and _G.player.currentTarget == entity then
@@ -503,9 +518,6 @@ function Mode7:drawSprite(entity, camera, options)
     -- Restore original color
     love.graphics.setColor(r, g, b, a)
   end
-  
-  -- Apply color if specified
-  love.graphics.setColor(unpack(color))
   
   -- Draw the sprite with bottom aligned to ground
   love.graphics.draw(

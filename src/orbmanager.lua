@@ -70,6 +70,7 @@ function OrbManager:addOrb(orbType)
     newOrb.x = self.owner.x
     newOrb.y = self.owner.y
     table.insert(self.orbs, newOrb)
+    print("Added new orb: " .. orbType)  -- Debug print
     return true
 end
 
@@ -98,6 +99,7 @@ function OrbManager:draw()
 end
 
 return OrbManager
+
 
 
 

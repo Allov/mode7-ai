@@ -12,6 +12,7 @@ local GameData = require('src.gamedata')
 local Boss = require('src.boss')
 local Console = require('src.console')
 local MobSpawner = require('src.mobspawner')
+local RuneSpawner = require('src.runespawner')
 
 -- Declare all global variables at the top
 local camera
@@ -23,6 +24,7 @@ local experienceOrbs = {}
 local chests = {}  -- Add chests to global variables
 local powerUps = {}
 local runes = {}
+local runeSpawner
 _G.runes = runes  -- Set global reference once
 local console
 local mobSpawner
@@ -174,25 +176,37 @@ function initializeGame()
   mode7 = Mode7:new()
   mode7:load()
   
-  -- Clear arrays but maintain the same table reference
-  runes = {}  -- Clear local table
-  _G.runes = runes  -- Update global reference
+  -- Initialize rune spawner
+  runeSpawner = RuneSpawner:new():init(player)
+  _G.runeSpawner = runeSpawner  -- Make globally accessible
+  _G.runes = runeSpawner:getRunes()  -- Update global reference
+  
+  -- Spawn initial runes
+  -- Spawn one close rune
+  local nearAngle = math.random() * math.pi * 2
+  local nearDist = 200 + math.random() * 300  -- Between 200 and 500 units
+  local nearX = player.x + math.cos(nearAngle) * nearDist
+  local nearY = player.y + math.sin(nearAngle) * nearDist
+  runeSpawner:spawnRune(nil, nearX, nearY)  -- nil for random rune type
+  
+  -- Spawn a few distant runes
+  for i = 1, 3 do
+    local farAngle = math.random() * math.pi * 2
+    local farDist = 15000 + math.random() * 5000  -- Between 15000 and 20000 units
+    local farX = player.x + math.cos(farAngle) * farDist
+    local farY = player.y + math.sin(farAngle) * farDist
+    runeSpawner:spawnRune(nil, farX, farY)
+  end
   
   -- Make Rune class globally accessible
   _G.Rune = require('src.rune')
-  
-  -- Spawn random runes
-  spawnRandomRunes(8)
-  
-  -- Enable texture filtering
-  love.graphics.setDefaultFilter('nearest', 'nearest')
   
   -- Initialize mobSpawner after player and enemies table
   mobSpawner = MobSpawner:new():init(enemies, player)
   
   -- Initialize console
   console = Console:new()
-  console.runes = runes  -- Give console access to the local runes table
+  console.runes = runeSpawner:getRunes()  -- Give console access to runes table
 
   -- Initialize pause state
   _G.isPaused = false
@@ -220,6 +234,7 @@ function love.update(dt)
   -- Only update game objects if player is alive
   if not player.isDead then
     mobSpawner:update(dt)
+    runeSpawner:update(dt)  -- Add runeSpawner update
     
     -- Update enemies
     for i = #enemies, 1, -1 do
@@ -330,7 +345,7 @@ function love.update(dt)
   -- Remove the separate mouseShootTimer update since we're using player's timer
 end
 
-function drawCompass(player, runes)
+function drawCompass(player, runeSpawner)  -- Change parameter from runes to runeSpawner
   -- Position compass bar at top of screen
   local barY = 30
   local barHeight = 20  -- Reduced from 30
@@ -347,6 +362,9 @@ function drawCompass(player, runes)
   love.graphics.setColor(1, 1, 1, 0.8)
   local dirVector = camera:getDirectionVector()
   local playerAngle = math.atan2(dirVector.x, dirVector.y)
+  
+  -- Get runes from spawner
+  local runes = runeSpawner:getRunes()
   
   -- Calculate positions for cardinal points
   local cardinalPoints = {
@@ -407,8 +425,11 @@ function love.draw()
   -- Clear screen with pure blue
   love.graphics.clear(0, 0, 1)
   
+  -- Get runes directly from runeSpawner instead of global table
+  local runesToRender = runeSpawner:getRunes()
+  
   -- Render Mode 7 ground with all game objects
-  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
+  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender)
   
   -- Draw HUD with hudFont
   love.graphics.setFont(hudFont)
@@ -617,7 +638,7 @@ function love.draw()
   love.graphics.setFont(hudFont)
 
   -- Draw compass after other HUD elements
-  drawCompass(player, runes)
+  drawCompass(player, runeSpawner)
 
   -- Draw console last
   console:draw()

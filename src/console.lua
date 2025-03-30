@@ -107,17 +107,11 @@ local Console = {
         local spawnX = _G.player.x + dirVector.x * spawnDistance
         local spawnY = _G.player.y + dirVector.y * spawnDistance
         
-        -- Create and add new rune
-        local rune = _G.Rune:new()
-        rune:init(spawnX, spawnY, runeType)
-        table.insert(_G.runes, rune)  -- Use global runes table
-        
-        -- Debug print after spawn
-        print(string.format("DEBUG: Spawned %s rune at X:%.1f Y:%.1f (Runes table size: %d)", 
-          runeType, spawnX, spawnY, #_G.runes))
-        
-        self:print(string.format("Spawned %s rune at X:%.1f Y:%.1f", 
-          _G.Rune.TYPES[runeType].name, spawnX, spawnY))
+        -- Use RuneSpawner to spawn the rune
+        local rune = _G.runeSpawner:spawnRune(runeType, spawnX, spawnY)
+        if not rune then
+          self:print("Failed to spawn rune (maximum runes reached)")
+        end
       end
     },
     
