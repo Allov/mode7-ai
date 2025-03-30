@@ -8,8 +8,8 @@ local Player = {
   y = 0,
   angle = 0,
   moveSpeed = 150,    -- Reduced from 200
-  strafeSpeed = 200,  -- Reduced from 300
-  turnSpeed = 3.0,
+  strafeSpeed = 150,  -- Reduced from 300
+  turnSpeed = 2.5,
   
   -- Combat properties
   health = 100,
@@ -55,9 +55,9 @@ local Player = {
   },
   
   -- Add dash properties
-  dashSpeed = 800,         -- Speed multiplier during dash
-  dashDuration = 0.15,     -- How long the dash lasts in seconds
-  dashCooldown = 0.5,      -- Time between dashes
+  dashSpeed = 400,         -- Reduced from 800 to 400
+  dashDuration = 0.25,     -- Increased from 0.15 to 0.25 seconds
+  dashCooldown = 1.2,      -- Increased from 0.5 to 1.2 seconds
   isDashing = false,       -- Current dash state
   dashTimer = 0,          -- Current dash duration
   dashCooldownTimer = 0,  -- Current cooldown timer
@@ -204,24 +204,35 @@ function Player:handleInput()
   end
   
   -- Dash (keyboard or controller)
-  if (love.mouse.isDown(2) or (joystick and joystick:isDown(1))) and  -- B button
-     self.dashCooldownTimer <= 0 then
-    -- Normalize direction for dash
-    local moveX = math.sin(self.angle) * self.forward
-    local moveY = math.cos(self.angle) * self.forward
-    
-    -- Add strafe component
-    if self.strafe ~= 0 then
-      moveX = moveX + math.sin(self.angle + math.pi/2) * self.strafe
-      moveY = moveY + math.cos(self.angle + math.pi/2) * self.strafe
-    end
-    
-    local length = math.sqrt(moveX * moveX + moveY * moveY)
-    if length > 0 then
-      self.dashDirection.x = moveX / length
-      self.dashDirection.y = moveY / length
-      self.isDashing = true
-      self.dashTimer = self.dashDuration
+  -- Only initiate dash if not already dashing and cooldown is complete
+  if not self.isDashing and self.dashCooldownTimer <= 0 then
+    if love.mouse.isDown(2) or (joystick and joystick:isDown(1)) then  -- B button
+      -- Calculate movement vector
+      local moveX = 0
+      local moveY = 0
+      
+      -- Add forward/backward component
+      if self.forward ~= 0 then
+        moveX = moveX + math.sin(self.angle) * self.forward
+        moveY = moveY + math.cos(self.angle) * self.forward
+      end
+      
+      -- Add strafe component
+      if self.strafe ~= 0 then
+        moveX = moveX + math.sin(self.angle + math.pi/2) * self.strafe
+        moveY = moveY + math.cos(self.angle + math.pi/2) * self.strafe
+      end
+      
+      -- Only dash if there's movement input
+      local length = math.sqrt(moveX * moveX + moveY * moveY)
+      if length > 0.001 then  -- Small threshold to avoid floating point issues
+        -- Normalize the movement vector
+        self.dashDirection.x = moveX / length
+        self.dashDirection.y = moveY / length
+        self.isDashing = true
+        self.dashTimer = self.dashDuration
+        self.dashCooldownTimer = self.dashCooldown
+      end
     end
   end
 end

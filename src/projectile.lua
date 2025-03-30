@@ -11,7 +11,7 @@ local Projectile = {
   acceleration = 1200, -- Speed increase per second
   lifetime = 2.0,
   age = 0,
-  radius = 15,        -- Increased from 5 to 15
+  radius = 5,
   baseDamage = 50,
   critChance = 0.2,
   critMultiplier = 2.0,
@@ -89,9 +89,7 @@ function Projectile:update(dt)
   -- Handle dropping effect after 75% of lifetime
   if self.age >= self.dropStartTime then
     local dropProgress = (self.age - self.dropStartTime) / (self.lifetime - self.dropStartTime)
-    -- Use quadratic easing for more natural drop
-    local dropAmount = dropProgress * dropProgress * self.dropSpeed
-    self.z = math.max(0, self.initialHeight - dropAmount)
+    self.z = math.max(0, self.initialHeight - (dropProgress * self.dropSpeed))
   end
   
   -- Return true if projectile should be removed
@@ -99,7 +97,6 @@ function Projectile:update(dt)
 end
 
 return Projectile
-
 
 
 

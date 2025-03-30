@@ -760,23 +760,3 @@ function spawnRandomRunes(count)
     end
   end
 end
-
--- Add these near the top with other love callbacks
-function love.joystickadded(joystick)
-  print("Controller connected:", joystick:getName())
-end
-
-function love.joystickremoved(joystick)
-  print("Controller disconnected:", joystick:getName())
-end
-
--- Add controller button press handling
-function love.gamepadpressed(joystick, button)
-  if button == 'start' then
-    -- Toggle pause
-    _G.isPaused = not _G.isPaused
-  elseif button == 'back' then
-    -- Toggle console
-    console:toggle()
-  end
-end
