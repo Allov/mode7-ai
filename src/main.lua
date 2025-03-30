@@ -208,7 +208,7 @@ function initializeGame()
   _G.Rune = require('src.rune')
   
   -- Initialize mobSpawner after player and enemies table
-  mobSpawner = MobSpawner:new():init(enemies, player)
+  mobSpawner = MobSpawner:new():init(enemies, player, experienceOrbs)  -- Add experienceOrbs parameter
   
   -- Initialize console
   console = Console:new()
@@ -267,16 +267,8 @@ function love.update(dt)
         local projectile = projectiles[j]
         if projectile:checkCollision(enemy, camera) then
           table.remove(projectiles, j)
-          -- If enemy died, spawn experience orb
-          if enemy.shouldDropExp then
-            local expValue = enemy.isElite and (enemy.experienceValue * 2) or enemy.experienceValue
-            local expOrb = ExperienceOrb:new():init(enemy.x, enemy.y, expValue)
-            table.insert(experienceOrbs, expOrb)
-            print("Spawned exp orb worth: " .. expValue) -- Debug print
-            
-            table.remove(enemies, i)
-            break
-          end
+          -- Remove the enemy removal logic from here - let death queue handle it
+          break
         end
       end
     end

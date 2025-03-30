@@ -12,7 +12,8 @@ local Enemy = {
   thinkTime = 0,
   thinkInterval = 2,
   targetAngle = 0,
-  health = 100,
+  health = 200,        -- Increased from 100 to 200
+  maxHealth = 200,     -- Add maxHealth property
   damageAmount = 20,
   damageRadius = 50,  -- How close enemy needs to be to damage player
   damageNumber = nil,  -- Single damage number instead of array
@@ -32,6 +33,20 @@ function Enemy:new(o)
   o = o or {}
   setmetatable(o, self)
   self.__index = self
+  
+  -- Set initial health and maxHealth BEFORE applying elite multiplier
+  o.maxHealth = o.health  -- Set maxHealth to match initial health
+  
+  -- Apply elite multiplier if needed
+  if o.isElite then
+    o.health = o.health * o.eliteMultiplier
+    o.maxHealth = o.maxHealth * o.eliteMultiplier
+    o.damageAmount = o.damageAmount * 1.5
+    o.radius = o.radius * o.eliteScale
+    o.experienceValue = math.floor(o.experienceValue * o.eliteMultiplier)
+    o.dropChance = 1.0  -- Elite enemies always drop exp
+  end
+  
   return o
 end
 
@@ -44,10 +59,11 @@ function Enemy:init(x, y, makeElite)
   if makeElite then
     self.isElite = true
     self.health = self.health * self.eliteMultiplier
+    self.maxHealth = self.maxHealth * self.eliteMultiplier
     self.damageAmount = self.damageAmount * 1.5
     self.radius = self.radius * self.eliteScale
     self.experienceValue = math.floor(self.experienceValue * self.eliteMultiplier)
-    self.dropChance = 1.0  -- Elite enemies always drop exp
+    self.dropChance = 1.0
   end
   
   return self
@@ -134,15 +150,39 @@ function Enemy:hit(damage)
     })
   end
   
+  -- Only queue death if not already dead
   if self.health <= 0 and not self.isDead then
     self.isDead = true
+    
+    -- Elite enemies drop orbs (no runes)
+    if self.isElite then
+      local orbDropChance = 0.25  -- 25% chance to drop an orb
+      if math.random() < orbDropChance then
+        local availableOrbs = _G.player.orbSpawner.orbTypes
+        local randomOrbType = availableOrbs[math.random(#availableOrbs)]
+        
+        self.shouldDropOrb = {
+          type = randomOrbType,
+          x = self.x,
+          y = self.y
+        }
+      end
+    end
+    
+    -- Always drop experience
+    self.shouldDropExp = true
+    
     _G.mobSpawner:queueEnemyDeath(self)
-    return true
   end
+  
   return false
 end
 
 return Enemy
+
+
+
+
 
 
 

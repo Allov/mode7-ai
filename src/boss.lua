@@ -10,6 +10,7 @@ local Boss = Enemy:new({
   radius = 75,         -- Much bigger than normal enemies
   isMoving = true,
   health = 500,        -- Much more health
+  maxHealth = 500,     -- Add maxHealth to match health
   damageAmount = 40,   -- Double damage
   damageRadius = 100,  -- Larger damage radius
   experienceValue = 500,  -- Increased from 100 to 500
@@ -30,6 +31,10 @@ function Boss:new(o)
   o = o or {}
   setmetatable(o, self)
   self.__index = self
+  
+  -- Ensure maxHealth is set properly
+  o.maxHealth = o.health
+  
   return o
 end
 
@@ -123,7 +128,7 @@ function Boss:hit(damage, isCritical)
     -- Always drop experience
     self.shouldDropExp = true
     
-    -- Drop a random rune
+    -- Bosses always drop a random rune
     local runeTypes = {}
     for runeType, _ in pairs(Rune.TYPES) do
       table.insert(runeTypes, runeType)
@@ -140,6 +145,8 @@ function Boss:hit(damage, isCritical)
 end
 
 return Boss
+
+
 
 
 

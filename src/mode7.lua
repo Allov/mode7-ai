@@ -177,16 +177,36 @@ function Mode7:load()
   self.bossTexture = bossCanvas
   self.bossTexture:setFilter('nearest', 'nearest')  -- Add filtering
 
+  -- Create projectile (fireball) texture
   local projectileCanvas = love.graphics.newCanvas(16, 16)
   love.graphics.setCanvas(projectileCanvas)
   love.graphics.clear()
-  love.graphics.setColor(1, 1, 0, 1)  -- Yellow for projectile
+  
+  -- Draw outer glow (orange)
+  love.graphics.setColor(1, 0.5, 0, 0.5)  -- Semi-transparent orange
   love.graphics.circle('fill', 8, 8, 8)
+  
+  -- Draw middle layer (bright orange)
+  love.graphics.setColor(1, 0.7, 0, 0.8)  -- More opaque bright orange
+  love.graphics.circle('fill', 8, 8, 6)
+  
+  -- Draw core (bright yellow-white)
+  love.graphics.setColor(1, 1, 0.8, 1)  -- Bright yellow-white
+  love.graphics.circle('fill', 8, 8, 4)
+  
+  -- Add some "trailing flames" effect
+  love.graphics.setColor(1, 0.3, 0, 0.6)  -- Semi-transparent red-orange
+  love.graphics.polygon('fill', 
+    0, 8,  -- Left point
+    8, 6,  -- Top middle
+    8, 10, -- Bottom middle
+    4, 8   -- Center point
+  )
+  
   love.graphics.setCanvas()
   self.projectileTexture = projectileCanvas
-  self.projectileTexture:setFilter('nearest', 'nearest')  -- Add filtering
-  
-  -- Create experience orb texture
+  self.projectileTexture:setFilter('nearest', 'nearest')
+
   local orbCanvas = love.graphics.newCanvas(32, 32)  -- Reduced from 64x64
   love.graphics.setCanvas(orbCanvas)
   love.graphics.clear()
@@ -708,8 +728,8 @@ function Mode7:drawSprite(entity, camera, options)
     love.graphics.setColor(1, 0, 0, 0.8)
     love.graphics.rectangle('fill', barX, barY, barWidth, barHeight)
     
-    -- Draw health (green)
-    local healthPercent = entity.health / (entity.isElite and (100 * entity.eliteMultiplier) or 100)
+    -- Draw health (green) - use maxHealth instead of hardcoded value
+    local healthPercent = entity.health / entity.maxHealth
     love.graphics.setColor(0, 1, 0, 0.8)
     love.graphics.rectangle('fill', barX, barY, barWidth * healthPercent, barHeight)
     

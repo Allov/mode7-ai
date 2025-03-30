@@ -40,9 +40,6 @@ function LightningOrb:onActivate()
             type = "lightning",
             object = lightning
         })
-        
-        print("Lightning effect created at:", target.x, target.y)  -- Debug print
-        print("Current effects count:", #_G.effects)  -- Debug print
     end
 end
 

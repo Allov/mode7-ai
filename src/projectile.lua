@@ -12,9 +12,9 @@ local Projectile = {
   lifetime = 2.0,
   age = 0,
   radius = 5,
-  baseDamage = 50,
-  critChance = 0.2,
-  critMultiplier = 2.0,
+  baseDamage = 40,     -- Reduced from 50 to 40
+  critChance = 0.15,   -- Reduced from 0.2 to 0.15
+  critMultiplier = 1.5, -- Reduced from 2.0 to 1.5
   
   -- Drop properties
   dropStartTime = 0,  -- Will be set to 75% of lifetime
@@ -97,6 +97,7 @@ function Projectile:update(dt)
 end
 
 return Projectile
+
 
 
 

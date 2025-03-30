@@ -11,6 +11,12 @@ local MobSpawner = {
     minEnemyDistance = 200,
     spawnInterval = 12.0,
     
+    -- Wave control
+    enemiesPerWave = 1,
+    maxEnemiesPerWave = 8,
+    waveCount = 0,
+    enemiesPerWaveIncrease = 0.2,  -- Increase by 0.2 enemies per wave (rounded up)
+    
     -- References to game state
     enemies = nil,
     player = nil,
@@ -32,6 +38,8 @@ function MobSpawner:init(enemies, player, experienceOrbs)
     self.spawnTimer = 0
     self.spawnInterval = 12.0
     self.recentDeaths = {}
+    self.enemiesPerWave = 1
+    self.waveCount = 0
     return self
 end
 
@@ -134,7 +142,27 @@ function MobSpawner:update(dt)
     self.spawnTimer = self.spawnTimer + dt
     if self.spawnTimer >= self.spawnInterval then
         self.spawnTimer = 0
-        self:spawnEnemy()
+        self.waveCount = self.waveCount + 1
+        
+        -- Calculate how many enemies to spawn this wave
+        local spawnCount = math.ceil(self.enemiesPerWave)
+        
+        -- Spawn multiple enemies
+        for i = 1, spawnCount do
+            self:spawnEnemy()
+        end
+        
+        -- Increase enemies per wave, but don't exceed maximum
+        self.enemiesPerWave = math.min(
+            self.maxEnemiesPerWave,
+            self.enemiesPerWave + self.enemiesPerWaveIncrease
+        )
+        
+        -- Reduce spawn interval, but not below minimum
+        self.spawnInterval = math.max(
+            self.minSpawnInterval,
+            self.spawnInterval * self.spawnIntervalDecay
+        )
     end
     
     -- Process any queued deaths
@@ -142,3 +170,4 @@ function MobSpawner:update(dt)
 end
 
 return MobSpawner
+
