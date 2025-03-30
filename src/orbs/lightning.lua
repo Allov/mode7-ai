@@ -7,7 +7,7 @@ local LightningOrb = BaseOrb:new({
     
     baseStats = {
         damage = 25,
-        radius = 200,
+        radius = 500,
         chainCount = 1
     },
     
