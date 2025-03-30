@@ -504,44 +504,34 @@ end
 
 -- Helper function for drawing bars
 local function drawBar(x, y, width, height, value, maxValue, colors, showText, text)
-    -- Background shadow
-    love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.rectangle('fill', x + 2, y + 2, width, height, height/3)
+    -- Background shadow (reduced opacity)
+    love.graphics.setColor(0, 0, 0, 0.2)
+    love.graphics.rectangle('fill', x + 2, y + 2, width, height)
     
-    -- Background
-    love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
-    love.graphics.rectangle('fill', x, y, width, height, height/3)
+    -- Background (made darker and more opaque)
+    love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
+    love.graphics.rectangle('fill', x, y, width, height)
     
     -- Progress
     local progress = value / maxValue
     local progressWidth = width * progress
     
-    -- Gradient effect
-    for i = 0, progressWidth, 2 do
-        local gradientProgress = i / width
-        local r = colors.r1 + (colors.r2 - colors.r1) * gradientProgress
-        local g = colors.g1 + (colors.g2 - colors.g1) * gradientProgress
-        local b = colors.b1 + (colors.b2 - colors.b1) * gradientProgress
-        love.graphics.setColor(r, g, b, 0.9)
-        love.graphics.rectangle('fill', x + i, y, 2, height, height/3)
-    end
+    -- Main bar color (flat look)
+    love.graphics.setColor(colors.r1, colors.g1, colors.b1, 0.9)
+    love.graphics.rectangle('fill', x, y, progressWidth, height)
     
-    -- Highlight
-    love.graphics.setColor(1, 1, 1, 0.2)
-    love.graphics.rectangle('fill', x, y, progressWidth, height/2, height/3)
-    
-    -- Border
-    love.graphics.setColor(1, 1, 1, 0.4)
-    love.graphics.rectangle('line', x, y, width, height, height/3)
+    -- Subtle highlight at top
+    love.graphics.setColor(1, 1, 1, 0.1)
+    love.graphics.rectangle('fill', x, y, progressWidth, height/3)
     
     -- Text
     if showText then
         -- Text shadow
-        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.setColor(0, 0, 0, 0.4)
         love.graphics.printf(text, x + 1, y + height/2 - 9, width, "center")
         
         -- Actual text
-        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.setColor(1, 1, 1, 1)
         love.graphics.printf(text, x, y + height/2 - 10, width, "center")
     end
 end
@@ -599,16 +589,53 @@ function love.draw()
   local barX = 10
   local healthY = Constants.SCREEN_HEIGHT - 70
   local expY = Constants.SCREEN_HEIGHT - 35
-  
+  local gapBetweenBars = expY - (healthY + barHeight) -- Calculate gap between bars
+  local totalHeight = (barHeight * 2) + gapBetweenBars -- Height of both bars plus gap
+  local countSize = totalHeight -- Square, so width = height
+
   -- Draw health bar
   local healthColors = {
     r1 = 0.8, g1 = 0.2, b1 = 0.2,  -- Dark red
     r2 = 1.0, g2 = 0.3, b2 = 0.3   -- Bright red
   }
-  local healthText = string.format("%d / %d HP", math.floor(player.health), player.maxHealth)
-  drawBar(barX, healthY, barWidth, barHeight, player.health, player.maxHealth, 
-         healthColors, true, healthText)
   
+  -- Draw enemy count box (tall square)
+  -- Background shadow
+  love.graphics.setColor(0, 0, 0, 0.2)
+  love.graphics.rectangle('fill', barX + barWidth + 12, healthY + 2, countSize, totalHeight)
+  
+  -- Main background
+  love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
+  love.graphics.rectangle('fill', barX + barWidth + 10, healthY, countSize, totalHeight)
+  
+  -- Enemy count fill
+  love.graphics.setColor(healthColors.r1, healthColors.g1, healthColors.b1, 0.9)
+  love.graphics.rectangle('fill', barX + barWidth + 10, healthY, countSize, totalHeight)
+  
+  -- Enemy count text
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.printf("MOBS", barX + barWidth + 10, healthY + totalHeight/2 - 20, countSize, "center")
+  love.graphics.printf(#enemies, barX + barWidth + 10, healthY + totalHeight/2, countSize, "center")
+
+  -- Draw health bar
+  -- Background shadow
+  love.graphics.setColor(0, 0, 0, 0.2)
+  love.graphics.rectangle('fill', barX + 2, healthY + 2, barWidth, barHeight)
+  
+  -- Main background
+  love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
+  love.graphics.rectangle('fill', barX, healthY, barWidth, barHeight)
+
+  -- Health bar fill
+  local progress = player.health / player.maxHealth
+  love.graphics.setColor(healthColors.r1, healthColors.g1, healthColors.b1, 0.9)
+  love.graphics.rectangle('fill', barX, healthY, barWidth * progress, barHeight)
+
+  -- Health text
+  local healthText = string.format("%d / %d HP", math.floor(player.health), player.maxHealth)
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.printf(healthText, barX, healthY + barHeight/2 - 10, barWidth, "center")
+
   -- Draw experience bar
   local expColors = {
     r1 = 0.2, g1 = 0.6, b1 = 0.8,  -- Dark cyan
@@ -618,7 +645,7 @@ function love.draw()
                               player.level, player.experience, player.experienceToNextLevel)
   drawBar(barX, expY, barWidth, barHeight, player.experience, player.experienceToNextLevel, 
          expColors, true, expText)
-  
+
   -- Draw active power-ups with hudFont
   local powerUpY = 250
   love.graphics.print("Active Power-ups:", 10, powerUpY)
