@@ -285,41 +285,41 @@ function Mode7:load()
   self.orbItemTexture:setFilter('nearest', 'nearest')
 
   -- Create lightning texture
-  local lightningCanvas = love.graphics.newCanvas(64, 128)  -- Taller canvas for lightning bolt
+  local lightningCanvas = love.graphics.newCanvas(32, 256)  -- Taller and thinner canvas
   love.graphics.setCanvas(lightningCanvas)
   love.graphics.clear()
   
   -- Draw main lightning bolt
   love.graphics.setColor(1, 1, 1, 0.9)  -- Bright white core
   local points = {
-    32, 0,    -- Top point
-    24, 30,   -- First zag left
-    36, 50,   -- Zag right
-    28, 80,   -- Zag left
-    40, 100,  -- Zag right
-    32, 128   -- Bottom point
+    16, 0,     -- Top point
+    12, 50,    -- First zag left
+    20, 100,   -- Zag right
+    14, 150,   -- Zag left
+    22, 200,   -- Zag right
+    16, 256    -- Bottom point
   }
-  love.graphics.setLineWidth(4)
+  love.graphics.setLineWidth(3)
   love.graphics.line(points)
   
   -- Draw outer glow
   love.graphics.setColor(0.3, 0.3, 1.0, 0.5)  -- Light blue glow
-  love.graphics.setLineWidth(8)
+  love.graphics.setLineWidth(6)
   love.graphics.line(points)
   
   -- Add some small branches
   love.graphics.setColor(0.7, 0.7, 1.0, 0.6)
   love.graphics.setLineWidth(2)
   -- Branch 1
-  love.graphics.line(24, 30, 16, 40)
+  love.graphics.line(12, 50, 8, 70)
   -- Branch 2
-  love.graphics.line(36, 50, 44, 60)
+  love.graphics.line(20, 100, 24, 120)
   -- Branch 3
-  love.graphics.line(28, 80, 20, 90)
+  love.graphics.line(14, 150, 10, 170)
   
   love.graphics.setCanvas()
   self.lightningTexture = lightningCanvas
-  self.lightningTexture:setFilter('nearest', 'nearest')
+  self.lightningTexture:setFilter('linear', 'linear')  -- Smooth scaling
   
   -- Debug print to verify texture creation
   print("Lightning texture created:", self.lightningTexture ~= nil)
@@ -536,10 +536,10 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       love.graphics.setColor(1, 1, 1, obj.object.alpha or 1)
       self:drawSprite(obj.object, camera, {
         texture = self.lightningTexture,
-        scale = 200.0 * Constants.SPRITE_SCALE,
-        heightScale = 2.0,
+        scale = 100.0 * Constants.SPRITE_SCALE,  -- Increased scale
+        heightScale = 2.5,  -- Increased height scaling
         useAngleScaling = false,
-        heightOffset = -100  -- Makes the lightning appear to come from above
+        heightOffset = -150  -- Adjusted offset to position higher
       })
     end
   end
