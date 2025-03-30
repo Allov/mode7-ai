@@ -33,7 +33,7 @@ function Chest:update(dt)
     local dy = _G.player.y - self.y
     local distance = math.sqrt(dx * dx + dy * dy)
     
-    if distance < self.interactRadius and love.keyboard.isDown('e') then
+    if distance < self.radius then  -- Changed from interactRadius to radius
       self.isOpen = true
       
       -- Determine rarity
@@ -71,6 +71,7 @@ function Chest:update(dt)
 end
 
 return Chest
+
 
 
 
