@@ -541,8 +541,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       self:drawSprite(obj.object, camera, {
         texture = self.projectileTexture,
         scale = 400.0 * Constants.SPRITE_SCALE,
-        useAngleScaling = false,
-        rotation = obj.object.rotation or 0  -- Use projectile's rotation value
+        useAngleScaling = false
       })
     elseif obj.type == "experienceOrb" then
       love.graphics.setColor(0, 1, 1, 1)
