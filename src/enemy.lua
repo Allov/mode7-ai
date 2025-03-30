@@ -87,10 +87,10 @@ function Enemy:update(dt)
   self.x = self.x + math.sin(self.angle) * self.speed * dt
   self.y = self.y + math.cos(self.angle) * self.speed * dt
   
-  -- Keep within bounds (optional)
-  local bound = 1000
-  self.x = math.clamp(self.x, -bound, bound)
-  self.y = math.clamp(self.y, -bound, bound)
+  -- Keep within bounds (optional) - REMOVING THIS
+  -- local bound = 1000
+  -- self.x = math.clamp(self.x, -bound, bound)
+  -- self.y = math.clamp(self.y, -bound, bound)
   
   -- Check for collision with player
   local distanceToPlayer = math.sqrt(dx * dx + dy * dy)
@@ -145,6 +145,7 @@ function Enemy:hit(damage, isCritical)
 end
 
 return Enemy
+
 
 
 

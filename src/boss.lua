@@ -88,10 +88,10 @@ function Boss:update(dt)
     self.y = self.y + math.sin(self.angle) * self.speed * dt
   end
   
-  -- Keep within bounds
-  local bound = 1000
-  self.x = math.clamp(self.x, -bound, bound)
-  self.y = math.clamp(self.y, -bound, bound)
+  -- Keep within bounds - REMOVING THIS
+  -- local bound = 1000
+  -- self.x = math.clamp(self.x, -bound, bound)
+  -- self.y = math.clamp(self.y, -bound, bound)
   
   -- Check for collision with player
   local dx = _G.player.x - self.x
@@ -144,6 +144,7 @@ function Boss:hit(damage, isCritical)
 end
 
 return Boss
+
 
 
 
