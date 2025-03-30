@@ -1,6 +1,58 @@
 # Planned Features
 
-## High Priority
+## MVP Plan (3 Weeks)
+
+### Week 1: Core Mechanics
+- [x] Implement basic Mode 7 rendering
+- [x] Add camera controls
+- [x] Controller support
+- [x] Add targeting system
+- [ ] Implement basic enemy types
+  - [ ] Grunt (basic enemy)
+  - [ ] Shooter (ranged enemy)
+  - [ ] Cycler (trail enemy)
+- [ ] Basic combat system
+  - [ ] Player projectiles
+  - [ ] Enemy damage
+  - [ ] Health system
+  - [ ] Death/respawn
+
+### Week 2: Progression Systems
+- [ ] Experience system
+  - [ ] Orb collection
+  - [ ] Level progression
+  - [ ] Basic stats increase
+- [ ] First two realms
+  - [ ] Crystal Plains (starter)
+  - [ ] Ember Wastes
+- [ ] Basic events
+  - [ ] Time-based enemy waves
+  - [ ] Simple collection quests
+  - [ ] Defense missions
+- [ ] First boss: The Pursuer
+
+### Week 3: Polish and Essential Features
+- [ ] UI implementation
+  - [ ] Health bar
+  - [ ] Experience bar
+  - [ ] Event notifications
+  - [ ] Basic HUD
+- [ ] Sound effects
+  - [ ] Combat sounds
+  - [ ] Movement sounds
+  - [ ] Ambient music
+- [ ] Basic safe zones
+  - [ ] Healing areas
+  - [ ] Enemy-free boundaries
+- [ ] Testing and balancing
+  - [ ] Difficulty curve
+  - [ ] Enemy spawns
+  - [ ] Experience gains
+  - [ ] Player progression
+
+## Post-MVP Features
+
+### High Priority
 - [x] Implement basic Mode 7 rendering
   - [x] Ground plane transformation
   - [x] Texture mapping
@@ -18,7 +70,7 @@
   - [x] Target lock-on
   - [x] Orbit behavior
 
-## Medium Priority
+### Medium Priority
 - [x] Add sprites/objects
   - [x] Sprite scaling
   - [x] Depth sorting
@@ -98,7 +150,7 @@
     - [ ] Store inventory progression
     - [ ] Unlock mechanics
 
-## Low Priority
+### Low Priority
 - [x] Add skybox
 - [x] Add boss system
   - [x] Special attacks
@@ -113,6 +165,7 @@
 - [ ] Save/Load system
   - [ ] Player progress
   - [ ] Settings persistence
+
 
 
 
