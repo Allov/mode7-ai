@@ -57,7 +57,7 @@ local Player = {
   -- Add dash properties
   dashSpeed = 400,         -- Reduced from 800 to 400
   dashDuration = 0.25,     -- Increased from 0.15 to 0.25 seconds
-  dashCooldown = 1.2,      -- Increased from 0.5 to 1.2 seconds
+  dashCooldown = 0.6,      -- Increased from 0.5 to 1.2 seconds
   isDashing = false,       -- Current dash state
   dashTimer = 0,          -- Current dash duration
   dashCooldownTimer = 0,  -- Current cooldown timer
@@ -160,26 +160,29 @@ function Player:handleInput()
   -- Get gamepad (using first connected gamepad)
   local joystick = love.joystick.getJoysticks()[1]
   
-  -- Forward/Backward movement (Left stick Y-axis)
-  if love.keyboard.isDown('w') or (joystick and joystick:getAxis(2) < -0.25) then
+  -- Forward/Backward movement (WASD and Up/Down arrows)
+  if love.keyboard.isDown('w') or love.keyboard.isDown('up') then
     self.forward = 1
   end
-  if love.keyboard.isDown('s') or (joystick and joystick:getAxis(2) > 0.25) then
+  if love.keyboard.isDown('s') or love.keyboard.isDown('down') then
     self.forward = -1
   end
   
-  -- Strafe movement (Left stick X-axis)
-  if love.keyboard.isDown('a') or (joystick and joystick:getAxis(1) < -0.25) then
+  -- Check if Alt is being held
+  local altHeld = love.keyboard.isDown('lalt') or love.keyboard.isDown('ralt')
+  
+  -- Strafe movement (AD or Alt + Left/Right arrows)
+  if love.keyboard.isDown('a') or (altHeld and love.keyboard.isDown('left')) then
     self.strafe = -1
   end
-  if love.keyboard.isDown('d') or (joystick and joystick:getAxis(1) > 0.25) then
+  if love.keyboard.isDown('d') or (altHeld and love.keyboard.isDown('right')) then
     self.strafe = 1
   end
   
-  -- Keyboard rotation with Q and E
-  if love.keyboard.isDown('q') then
+  -- Rotation (QE or Left/Right arrows without Alt)
+  if love.keyboard.isDown('q') or (not altHeld and love.keyboard.isDown('left')) then
     self.rotation = -1
-  elseif love.keyboard.isDown('e') then
+  elseif love.keyboard.isDown('e') or (not altHeld and love.keyboard.isDown('right')) then
     self.rotation = 1
   end
   
