@@ -22,6 +22,12 @@ local Mode7 = {
     scanline_intensity = 0.1,
     color_depth = 32.0,
     pixel_size = 1.5
+  },
+  postBloomEnabled = true,  -- Enable by default
+  postBloomSettings = {
+    threshold = 0.7,    -- Lower threshold to catch more bright areas
+    intensity = 0.5,    -- Increased intensity for stronger bloom
+    blur_size = 1.5     -- Larger blur for more visible glow
   }
 }
 
@@ -396,23 +402,33 @@ function Mode7:load()
   -- Debug print to verify texture creation
   print("Lightning texture created:", self.lightningTexture ~= nil)
 
-  -- Initialize post-processing shader and canvas
+  -- Initialize post-processing shader and canvases
   self.postFpgaShader = love.graphics.newShader('src/shaders/post_fpga.glsl')
   self.postCanvas = love.graphics.newCanvas()
+  self.tempCanvas = love.graphics.newCanvas()  -- Add temporary canvas
   
   -- Send initial settings to shader
   self.postFpgaShader:send('screen_size', {love.graphics.getWidth(), love.graphics.getHeight()})
   for k, v in pairs(self.postFpgaSettings) do
       self.postFpgaShader:send(k, v)
   end
+
+  -- Initialize bloom shader and canvases
+  self.postBloomShader = love.graphics.newShader('src/shaders/post_bloom.glsl')
+  self.bloomCanvas1 = love.graphics.newCanvas()
+  self.bloomCanvas2 = love.graphics.newCanvas()
+  
+  -- Send initial settings to shader
+  self.postBloomShader:send('screen_size', {love.graphics.getWidth(), love.graphics.getHeight()})
+  for k, v in pairs(self.postBloomSettings) do
+      self.postBloomShader:send(k, v)
+  end
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems)
-  if self.postFpgaEnabled then
-    -- Render everything to post-processing canvas
-    love.graphics.setCanvas(self.postCanvas)
-    love.graphics.clear()
-  end
+  -- First render everything to temp canvas
+  love.graphics.setCanvas(self.tempCanvas)
+  love.graphics.clear()
 
   -- Update first light position to match camera
   self.lightPositions[1] = {camera.x, camera.y}
@@ -690,14 +706,53 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     love.graphics.setColor(1, 1, 1, 1)
   end
 
+  -- Copy temp canvas to post canvas
+  love.graphics.setCanvas(self.postCanvas)
+  love.graphics.clear()
+  love.graphics.draw(self.tempCanvas, 0, 0)
+
+  -- Apply bloom if enabled
+  if self.postBloomEnabled then
+    -- First pass: extract bright parts and blur horizontally
+    love.graphics.setCanvas(self.bloomCanvas1)
+    love.graphics.clear()
+    love.graphics.setShader(self.postBloomShader)
+    self.postBloomShader:send('pass', 0)
+    love.graphics.draw(self.postCanvas, 0, 0)
+
+    -- Second pass: blur vertically
+    love.graphics.setCanvas(self.bloomCanvas2)
+    love.graphics.clear()
+    self.postBloomShader:send('pass', 1)
+    love.graphics.draw(self.bloomCanvas1, 0, 0)
+
+    -- Final composite
+    love.graphics.setCanvas(self.tempCanvas)
+    love.graphics.clear()
+    love.graphics.setShader()
+    love.graphics.draw(self.postCanvas, 0, 0)  -- Draw original scene
+    love.graphics.setBlendMode('add')          -- Use additive blending for bloom
+    love.graphics.draw(self.bloomCanvas2, 0, 0) -- Add bloom on top
+    love.graphics.setBlendMode('alpha')        -- Reset blend mode
+
+    -- Copy result back to post canvas
+    love.graphics.setCanvas(self.postCanvas)
+    love.graphics.clear()
+    love.graphics.draw(self.tempCanvas, 0, 0)
+  end
+
+  -- Apply FPGA effect if enabled (after bloom)
   if self.postFpgaEnabled then
-    -- Apply post-processing effect
     love.graphics.setCanvas()
     love.graphics.setShader(self.postFpgaShader)
-    self.postFpgaShader:send('time', love.timer.getTime())
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(self.postCanvas, 0, 0)
     love.graphics.setShader()
+  else
+    -- If FPGA is disabled, render directly to screen
+    love.graphics.setCanvas()
+    love.graphics.setShader()
+    love.graphics.draw(self.postCanvas, 0, 0)
   end
 end
 
@@ -911,6 +966,20 @@ function Mode7:setPostFpgaSetting(setting, value)
   if self.postFpgaSettings[setting] then
     self.postFpgaSettings[setting] = value
     self.postFpgaShader:send(setting, value)
+    return true
+  end
+  return false
+end
+
+function Mode7:togglePostBloom()
+  self.postBloomEnabled = not self.postBloomEnabled
+  return self.postBloomEnabled
+end
+
+function Mode7:setPostBloomSetting(setting, value)
+  if self.postBloomSettings[setting] then
+    self.postBloomSettings[setting] = value
+    self.postBloomShader:send(setting, value)
     return true
   end
   return false
