@@ -173,26 +173,13 @@ function Mode7:load()
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
-  -- Update light position to follow camera/player
-  self.lightPos = {camera.x, camera.y}  -- Or offset if you want the light slightly ahead
-
-  -- First render the sky
-  love.graphics.setColor(1, 1, 1, 1)
-  local skyScale = love.graphics.getHeight() / self.skyTexture:getHeight()
-  love.graphics.draw(self.skyTexture, 0, 0, 0, 
-    love.graphics.getWidth() / self.skyTexture:getWidth(), 
-    skyScale
-  )
-
-  -- Setup and render the ground using the shader
+  -- Single shader setup and draw call
   love.graphics.setShader(self.shader)
-  
-  -- Update shader uniforms
   self.shader:send('cameraPos', {camera.x, camera.y})
   self.shader:send('cameraAngle', camera.angle)
   self.shader:send('lightPos', self.lightPos)
+  self.shader:send('skyTexture', self.skyTexture)
   
-  -- Draw the ground quad
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.draw(self.texture, 
     0, 0, 0, 
@@ -200,9 +187,8 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     love.graphics.getHeight() / self.texture:getHeight()
   )
   
-  -- Reset shader
   love.graphics.setShader()
-
+  
   -- Add parameter validation with default empty tables
   enemies = enemies or {}
   projectiles = projectiles or {}

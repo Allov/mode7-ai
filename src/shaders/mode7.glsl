@@ -8,14 +8,18 @@ extern vec2 lightPos;
 extern vec3 lightColor;
 extern float lightRadius;
 extern vec2 textureDimensions;
+extern Image skyTexture;
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
-    if (screen_coords.y < horizonLine) {
-        discard;
+    // Handle sky rendering above horizon
+    if (screen_coords.y <= horizonLine) {
+        vec2 skyCoord = vec2(texture_coords.x, screen_coords.y / horizonLine);
+        vec4 skyColor = Texel(skyTexture, skyCoord);
+        return vec4(mix(skyColor.rgb, fogColor, screen_coords.y / horizonLine), 1.0);
     }
     
-    // Calculate distance based on vertical position
+    // Ground rendering below horizon (existing code)
     float distance = (cameraHeight * (love_ScreenSize.y - horizonLine)) 
                     / (screen_coords.y - horizonLine);
     

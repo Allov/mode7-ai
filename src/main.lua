@@ -404,8 +404,8 @@ function drawCompass(player, runes)
 end
 
 function love.draw()
-  -- Clear screen
-  love.graphics.clear(0.5, 0.7, 1.0)
+  -- Clear screen with pure blue
+  love.graphics.clear(0, 0, 1)
   
   -- Render Mode 7 ground with all game objects
   mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes)
