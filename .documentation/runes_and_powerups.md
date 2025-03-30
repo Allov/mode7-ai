@@ -134,3 +134,18 @@ Temporary buffs with duration-based effects.
    - Rarity: 3 (Rare)
    - Color: Green (0, 1, 0)
    - Effect: Max health +50%
+
+### Elite Harvest
+- **Rarity**: 3 (Rare)
+- **Duration**: 60 seconds
+- **Color**: Purple (0.7, 0.3, 1.0)
+- **Effects**:
+  - All elite enemies are guaranteed to drop an orb when defeated
+  - Applies to any elite killed during the power-up duration
+  - Does not affect normal enemies or bosses
+  - Orb type is still randomly selected from available pool
+- **Strategy**:
+  - Best used when multiple elites are present
+  - Can be combined with speed power-ups to hunt elites faster
+  - Consider saving for elite waves (every 2 minutes)
+

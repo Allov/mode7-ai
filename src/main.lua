@@ -502,6 +502,50 @@ function drawCompass(player, runeSpawner)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
+-- Helper function for drawing bars
+local function drawBar(x, y, width, height, value, maxValue, colors, showText, text)
+    -- Background shadow
+    love.graphics.setColor(0, 0, 0, 0.3)
+    love.graphics.rectangle('fill', x + 2, y + 2, width, height, height/3)
+    
+    -- Background
+    love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+    love.graphics.rectangle('fill', x, y, width, height, height/3)
+    
+    -- Progress
+    local progress = value / maxValue
+    local progressWidth = width * progress
+    
+    -- Gradient effect
+    for i = 0, progressWidth, 2 do
+        local gradientProgress = i / width
+        local r = colors.r1 + (colors.r2 - colors.r1) * gradientProgress
+        local g = colors.g1 + (colors.g2 - colors.g1) * gradientProgress
+        local b = colors.b1 + (colors.b2 - colors.b1) * gradientProgress
+        love.graphics.setColor(r, g, b, 0.9)
+        love.graphics.rectangle('fill', x + i, y, 2, height, height/3)
+    end
+    
+    -- Highlight
+    love.graphics.setColor(1, 1, 1, 0.2)
+    love.graphics.rectangle('fill', x, y, progressWidth, height/2, height/3)
+    
+    -- Border
+    love.graphics.setColor(1, 1, 1, 0.4)
+    love.graphics.rectangle('line', x, y, width, height, height/3)
+    
+    -- Text
+    if showText then
+        -- Text shadow
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.printf(text, x + 1, y + height/2 - 9, width, "center")
+        
+        -- Actual text
+        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.printf(text, x, y + height/2 - 10, width, "center")
+    end
+end
+
 function love.draw()
   -- Clear screen with pure blue
   love.graphics.clear(0, 0, 1)
@@ -549,26 +593,32 @@ function love.draw()
   love.graphics.print("Enemies: " .. #enemies, 10, 90)
   love.graphics.print(string.format("Spawn Rate: %.1fs", mobSpawner.spawnInterval), 10, 110)
   
+  -- Constants for bars
+  local barWidth = 250
+  local barHeight = 25
+  local barX = 10
+  local healthY = Constants.SCREEN_HEIGHT - 70
+  local expY = Constants.SCREEN_HEIGHT - 35
+  
   -- Draw health bar
-  love.graphics.setColor(1, 0, 0)
-  love.graphics.rectangle('fill', 10, 130, (player.health / player.maxHealth) * 200, 20)
-  love.graphics.setColor(1, 1, 1)
-  love.graphics.rectangle('line', 10, 130, 200, 20)
-  love.graphics.print("Health: " .. math.floor(player.health), 10, 155)
+  local healthColors = {
+    r1 = 0.8, g1 = 0.2, b1 = 0.2,  -- Dark red
+    r2 = 1.0, g2 = 0.3, b2 = 0.3   -- Bright red
+  }
+  local healthText = string.format("%d / %d HP", math.floor(player.health), player.maxHealth)
+  drawBar(barX, healthY, barWidth, barHeight, player.health, player.maxHealth, 
+         healthColors, true, healthText)
   
   -- Draw experience bar
-  love.graphics.setColor(0, 1, 1, 0.8)  -- Cyan color for XP
-  love.graphics.rectangle('fill', 10, 180, 
-    (player.experience / player.experienceToNextLevel) * 200, 20)
-  love.graphics.setColor(0, 0.7, 0.7, 1)  -- Darker cyan for border
-  love.graphics.rectangle('line', 10, 180, 200, 20)
+  local expColors = {
+    r1 = 0.2, g1 = 0.6, b1 = 0.8,  -- Dark cyan
+    r2 = 0.4, g2 = 0.8, b2 = 1.0   -- Bright cyan
+  }
+  local expText = string.format("Level %d  -  %d / %d XP", 
+                              player.level, player.experience, player.experienceToNextLevel)
+  drawBar(barX, expY, barWidth, barHeight, player.experience, player.experienceToNextLevel, 
+         expColors, true, expText)
   
-  -- Draw level and XP text
-  love.graphics.setColor(1, 1, 1)
-  love.graphics.print("Level " .. player.level, 10, 205)
-  love.graphics.print(string.format("XP: %d/%d", 
-    player.experience, player.experienceToNextLevel), 10, 225)
-    
   -- Draw active power-ups with hudFont
   local powerUpY = 250
   love.graphics.print("Active Power-ups:", 10, powerUpY)
