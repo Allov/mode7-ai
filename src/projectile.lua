@@ -5,6 +5,8 @@ local Projectile = {
   y = 0,
   z = 0,
   angle = 0,
+  rotation = 0,        -- Current rotation for sprite
+  rotationSpeed = 12,  -- Rotations per second
   baseSpeed = 300,    -- Initial speed
   speed = nil,        -- Current speed (will be set in init)
   maxSpeed = 800,     -- Maximum speed
@@ -42,6 +44,7 @@ function Projectile:init(x, y, angle, height)
   self.z = height or Constants.CAMERA_HEIGHT - 20  -- Start slightly below camera
   self.initialHeight = self.z
   self.angle = angle
+  self.rotation = 0    -- Reset rotation
   self.age = 0
   self.speed = self.baseSpeed  -- Make sure speed starts at baseSpeed
   self.dropStartTime = self.lifetime * 0.75
@@ -76,6 +79,9 @@ function Projectile:checkCollision(enemy, camera)
 end
 
 function Projectile:update(dt)
+  -- Update rotation
+  self.rotation = self.rotation + self.rotationSpeed * dt * math.pi * 2  -- Convert to radians
+
   -- Accelerate more noticeably
   self.speed = math.min(self.speed + self.acceleration * dt, self.maxSpeed)
   
@@ -97,6 +103,7 @@ function Projectile:update(dt)
 end
 
 return Projectile
+
 
 
 

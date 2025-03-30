@@ -15,6 +15,7 @@ local MobSpawner = require('src.mobspawner')
 local RuneSpawner = require('src.runespawner')
 local OrbItem = require('src.orbitem')
 local Lightning = require('src.effects.lightning')
+local PlayerArms = require('src.playerarms')
 
 -- Declare all global variables at the top
 local camera
@@ -31,6 +32,7 @@ local orbItems = {}  -- Initialize empty table for orb items on ground
 _G.runes = runes  -- Set global reference once
 local console
 local mobSpawner
+local playerArms  -- Add playerArms here
 
 -- Add to the global declarations section
 _G.Rune = Rune  -- Make Rune class available to console
@@ -187,6 +189,10 @@ function initializeGame()
   mode7 = Mode7:new()
   mode7:load()
   
+  -- Initialize playerArms right after player
+  playerArms = PlayerArms:new()
+  print("PlayerArms initialized:", playerArms) -- Debug print
+  
   -- Initialize rune spawner
   runeSpawner = RuneSpawner:new():init(player)
   _G.runeSpawner = runeSpawner  -- Make globally accessible
@@ -261,6 +267,11 @@ function love.update(dt)
   
   player:update(dt)
   camera:update(dt, player)
+  
+  -- Update playerArms if it exists
+  if playerArms then
+    playerArms:update(dt, player)
+  end
   
   -- Only update game objects if player is alive
   if not player.isDead then
@@ -545,6 +556,11 @@ function love.draw()
   
   -- Render Mode 7 ground with all game objects
   mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItems)
+  
+  -- Draw player arms if it exists
+  if playerArms then
+    playerArms:draw()
+  end
   
   -- Draw HUD with hudFont
   love.graphics.setFont(hudFont)
