@@ -4,6 +4,8 @@ extern float cameraHeight;
 extern float horizonLine;
 extern float maxDistance;
 extern vec3 fogColor;
+extern float fogDampening;
+extern float fogAlpha;
 extern vec2 lightPos;
 extern vec3 lightColor;
 extern float lightRadius;
@@ -44,7 +46,8 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     vec3 litColor = texColor.rgb * vec3(0.3, 0.3, 0.4);
     litColor += texColor.rgb * lightColor * lightFactor;
     
-    float fogFactor = smoothstep(maxDistance * 0.5, maxDistance, distance);
+    // Reduce fog strength by starting further and blending more gradually
+    float fogFactor = smoothstep(maxDistance * fogDampening, maxDistance, distance) * fogAlpha;  // Changed from 0.5 to 0.7, added * 0.7
     vec3 finalColor = mix(litColor, fogColor, fogFactor);
     
     return vec4(finalColor, 1.0);

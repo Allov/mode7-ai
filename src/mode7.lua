@@ -8,7 +8,12 @@ local Mode7 = {
   skyTexture = nil,
   enemyTexture = nil,
   projectileTexture = nil,
-  fogColor = {0.1, 0.2, 0.25}
+  fogColor = {0.1, 0.2, 0.25},
+  fogDampening = 0.9,
+  fogAlpha = 0.93,
+  lightPos = {0, 0},
+  lightColor = {1.0, 0.7, 0.3},
+  lightRadius = 300,
 }
 
 function Mode7:new(o)
@@ -40,6 +45,8 @@ function Mode7:load()
   self.shader:send('cameraHeight', Constants.CAMERA_HEIGHT)
   self.shader:send('maxDistance', Constants.DRAW_DISTANCE)
   self.shader:send('fogColor', self.fogColor)
+  self.shader:send('fogDampening', self.fogDampening)
+  self.shader:send('fogAlpha', self.fogAlpha)
   self.shader:send('lightColor', self.lightColor)
   self.shader:send('lightRadius', self.lightRadius)
   
