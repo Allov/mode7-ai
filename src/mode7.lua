@@ -653,7 +653,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   -- After drawing all objects but before HUD, add damage effect
   if _G.player.invulnerableTimer > 0 then
     -- Calculate alpha based on invulnerability timer
-    local alpha = math.min(0.4, _G.player.invulnerableTimer / _G.player.invulnerableTime)
+    local alpha = math.min(0.1, _G.player.invulnerableTimer / _G.player.invulnerableTime) -- Reduced from 0.4 to 0.2
     
     -- Draw red overlay
     love.graphics.setColor(1, 0, 0, alpha)

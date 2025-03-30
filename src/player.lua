@@ -248,6 +248,10 @@ function Player:takeDamage(amount)
   self.health = math.max(0, self.health - amount)
   self.invulnerableTimer = self.invulnerableTime
   
+  -- Increase shake intensity
+  local shakeIntensity = math.min(amount * 1.2, 100) -- Increased multiplier from 2 to 5
+  _G.camera:shake(shakeIntensity)
+  
   if self.health <= 0 then
     self:die()
   end

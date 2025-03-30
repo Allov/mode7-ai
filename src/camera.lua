@@ -10,14 +10,27 @@ local Camera = {
   bobFrequency = 8,
   bobAmplitude = 5,
   bobAngleAmount = 0.02,
-  bobActive = false
+  bobActive = false,
+  -- Add shake properties
+  shakeAmount = 0,
+  shakeDecay = 5,  -- How fast the shake dies down
+  shakeMaxOffset = 20  -- Maximum pixel offset during shake
 }
+
+-- Add shake method
+function Camera:shake(amount)
+  self.shakeAmount = amount
+end
 
 function Camera:new(o)
   o = o or {}
   setmetatable(o, self)
   self.__index = self
   o.z = self.baseHeight  -- Initialize z to baseHeight
+  -- Initialize shake properties
+  o.shakeAmount = 0
+  o.shakeDecay = 90
+  o.shakeMaxOffset = 20
   return o
 end
 
@@ -38,44 +51,43 @@ function Camera:reset()
 end
 
 function Camera:update(dt, player)
-  if player.isDead then
-    -- Keep last position and angle when player is dead
-    return
+  if player.isDead then return end
+
+  -- Update shake with stronger effect
+  if self.shakeAmount > 0 then
+    self.shakeAmount = math.max(0, self.shakeAmount - self.shakeDecay * dt)
+    
+    -- Apply shake offset
+    local shakePower = self.shakeAmount / 100
+    self.x = player.x + (math.random() - 0.5) * self.shakeMaxOffset * shakePower
+    self.y = player.y + (math.random() - 0.5) * self.shakeMaxOffset * shakePower
+    self.angle = player.angle + (math.random() - 0.5) * 0.2 * shakePower  -- Increased angle shake
+  else
+    -- No shake, just follow player
+    self.x = player.x
+    self.y = player.y
+    self.angle = player.angle
   end
 
-  -- Get movement amount for bob effect
+  -- Handle bob effect
   local dx = player.x - player.lastX
   local dy = player.y - player.lastY
   local isMoving = math.abs(dx) > 0.01 or math.abs(dy) > 0.01
   
-  -- Update bob effect
   if isMoving then
     self.bobActive = true
     self.bobPhase = (self.bobPhase + dt * self.bobFrequency) % (math.pi * 2)
   else
     self.bobActive = false
-    if math.abs(self.bobPhase) > 0.01 then
-      self.bobPhase = self.bobPhase * 0.95
-    else
-      self.bobPhase = 0
-    end
+    self.bobPhase = self.bobPhase * 0.95
   end
   
-  -- Calculate bob offset
-  local bobOffset = 0
-  local angleOffset = 0
+  -- Apply bob effect to height
   if self.bobActive then
-    bobOffset = math.abs(math.sin(self.bobPhase)) * self.bobAmplitude
-    angleOffset = math.cos(self.bobPhase) * self.bobAngleAmount
+    self.z = self.baseHeight + math.sin(self.bobPhase) * self.bobAmplitude
+  else
+    self.z = self.baseHeight
   end
-  
-  -- Apply bob to camera height
-  self.z = self.baseHeight + bobOffset
-  
-  -- Update camera position to follow player
-  self.x = player.x
-  self.y = player.y
-  self.angle = player.angle + angleOffset
 end
 
 -- Helper function to get camera direction vector
