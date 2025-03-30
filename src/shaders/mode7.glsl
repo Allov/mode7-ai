@@ -6,9 +6,10 @@ extern float maxDistance;
 extern vec3 fogColor;
 extern float fogDampening;
 extern float fogAlpha;
-extern vec2 lightPos;
-extern vec3 lightColor;
-extern float lightRadius;
+extern vec2 lightPositions[4];    // Array of light positions
+extern vec3 lightColors[4];       // Array of light colors
+extern float lightRadii[4];       // Array of light radii
+extern vec3 ambientLight;
 extern vec2 textureDimensions;
 extern Image skyTexture;
 
@@ -38,16 +39,18 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     vec2 texCoords = mod(worldPos, textureDimensions) / textureDimensions;
     vec4 texColor = Texel(tex, texCoords);
     
-    // Calculate lighting
-    float lightDist = length(worldPos - lightPos);
-    float lightFactor = 1.0 - smoothstep(0.0, lightRadius, lightDist);
+    // Initialize lighting
+    vec3 litColor = texColor.rgb * ambientLight;
     
-    // Apply lighting and fog
-    vec3 litColor = texColor.rgb * vec3(0.3, 0.3, 0.4);
-    litColor += texColor.rgb * lightColor * lightFactor;
+    // Calculate lighting for all lights
+    for (int i = 0; i < 4; i++) {
+        float lightDist = length(worldPos - lightPositions[i]);
+        float lightFactor = 1.0 - smoothstep(0.0, lightRadii[i], lightDist);
+        litColor += texColor.rgb * lightColors[i] * lightFactor;
+    }
     
     // Reduce fog strength by starting further and blending more gradually
-    float fogFactor = smoothstep(maxDistance * fogDampening, maxDistance, distance) * fogAlpha;  // Changed from 0.5 to 0.7, added * 0.7
+    float fogFactor = smoothstep(maxDistance * fogDampening, maxDistance, distance) * fogAlpha;
     vec3 finalColor = mix(litColor, fogColor, fogFactor);
     
     return vec4(finalColor, 1.0);

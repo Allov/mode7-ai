@@ -11,9 +11,11 @@ local Mode7 = {
   fogColor = {0.1, 0.2, 0.25},
   fogDampening = 0.9,
   fogAlpha = 0.93,
-  lightPos = {0, 0},
-  lightColor = {1.0, 0.7, 0.3},
-  lightRadius = 300,
+  -- lightPositions 4 corners
+  lightPositions = {{300, 300}, {300, -300}, {-300, 300}, {-300, -300}},  -- Array of light positions
+  lightColors = {{1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}},  -- Array of light colors
+  lightRadii = {300, 300, 300, 300},  -- Array of light radii
+  ambientLight = {0.1, 0.1, 0.1},
 }
 
 function Mode7:new(o)
@@ -34,11 +36,6 @@ function Mode7:load()
   self.skyTexture:setFilter('nearest', 'nearest')
   self.skyTexture:setWrap('repeat', 'clamp')
   
-  -- Initialize torch light parameters
-  self.lightPos = {0, 0}  -- Will be updated to follow player/camera
-  self.lightColor = {1.0, 0.7, 0.3}  -- Warm orange color
-  self.lightRadius = 300  -- Adjust this value to change light reach
-  
   -- Load and setup shader
   self.shader = love.graphics.newShader('src/shaders/mode7.glsl')
   self.shader:send('horizonLine', Constants.HORIZON_LINE)
@@ -47,8 +44,9 @@ function Mode7:load()
   self.shader:send('fogColor', self.fogColor)
   self.shader:send('fogDampening', self.fogDampening)
   self.shader:send('fogAlpha', self.fogAlpha)
-  self.shader:send('lightColor', self.lightColor)
-  self.shader:send('lightRadius', self.lightRadius)
+  self.shader:send('lightColors', unpack(self.lightColors))
+  self.shader:send('lightRadii', unpack(self.lightRadii))
+  self.shader:send('ambientLight', self.ambientLight)
   
   local w, h = self.texture:getDimensions()
   self.shader:send('textureDimensions', {w, h})
@@ -184,7 +182,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   love.graphics.setShader(self.shader)
   self.shader:send('cameraPos', {camera.x, camera.y})
   self.shader:send('cameraAngle', camera.angle)
-  self.shader:send('lightPos', self.lightPos)
+  self.shader:send('lightPositions', unpack(self.lightPositions))  -- Update light positions
   self.shader:send('skyTexture', self.skyTexture)
   
   love.graphics.setColor(1, 1, 1, 1)
