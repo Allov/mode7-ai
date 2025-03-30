@@ -549,7 +549,11 @@ function love.draw()
   -- Draw HUD with hudFont
   love.graphics.setFont(hudFont)
   love.graphics.setColor(1, 1, 1)
-  love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
+  -- Remove these lines:
+  -- love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
+  -- love.graphics.print("Projectiles: " .. #projectiles, 10, 70)
+  -- love.graphics.print("Enemies: " .. #enemies, 10, 90)
+  -- love.graphics.print(string.format("Spawn Rate: %.1fs", mobSpawner.spawnInterval), 10, 110)
   
   -- Get cardinal direction based on camera's direction vector
   local dirVector = camera:getDirectionVector()  -- Using colon : for method call
@@ -579,43 +583,22 @@ function love.draw()
   -- Display position, angle, and cardinal direction
   love.graphics.print(string.format("Position: X: %.1f Y: %.1f", player.x, player.y), 10, 30)
   love.graphics.print(string.format("Facing: %s (%.1f°)", direction, degrees), 10, 50)
-  love.graphics.print("Projectiles: " .. #projectiles, 10, 70)
-  love.graphics.print("Enemies: " .. #enemies, 10, 90)
-  love.graphics.print(string.format("Spawn Rate: %.1fs", mobSpawner.spawnInterval), 10, 110)
   
-  -- Constants for bars
+  -- Constants for bars and info box
   local barWidth = 250
   local barHeight = 25
   local barX = 10
   local healthY = Constants.SCREEN_HEIGHT - 70
   local expY = Constants.SCREEN_HEIGHT - 35
-  local gapBetweenBars = expY - (healthY + barHeight) -- Calculate gap between bars
-  local totalHeight = (barHeight * 2) + gapBetweenBars -- Height of both bars plus gap
-  local countSize = totalHeight -- Square, so width = height
+  local gapBetweenBars = expY - (healthY + barHeight)
+  local totalHeight = (barHeight * 2) + gapBetweenBars
+  local countSize = totalHeight
 
-  -- Draw health bar
+  -- Define colors
   local healthColors = {
     r1 = 0.8, g1 = 0.2, b1 = 0.2,  -- Dark red
     r2 = 1.0, g2 = 0.3, b2 = 0.3   -- Bright red
   }
-  
-  -- Draw enemy count box (tall square)
-  -- Background shadow
-  love.graphics.setColor(0, 0, 0, 0.2)
-  love.graphics.rectangle('fill', barX + barWidth + 12, healthY + 2, countSize, totalHeight)
-  
-  -- Main background
-  love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
-  love.graphics.rectangle('fill', barX + barWidth + 10, healthY, countSize, totalHeight)
-  
-  -- Enemy count fill
-  love.graphics.setColor(healthColors.r1, healthColors.g1, healthColors.b1, 0.9)
-  love.graphics.rectangle('fill', barX + barWidth + 10, healthY, countSize, totalHeight)
-  
-  -- Enemy count text
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.printf("MOBS", barX + barWidth + 10, healthY + totalHeight/2 - 20, countSize, "center")
-  love.graphics.printf(#enemies, barX + barWidth + 10, healthY + totalHeight/2, countSize, "center")
 
   -- Draw health bar
   -- Background shadow
@@ -645,6 +628,38 @@ function love.draw()
                               player.level, player.experience, player.experienceToNextLevel)
   drawBar(barX, expY, barWidth, barHeight, player.experience, player.experienceToNextLevel, 
          expColors, true, expText)
+
+  -- Draw enemy count box (tall square)
+  -- Background shadow
+  love.graphics.setColor(0, 0, 0, 0.2)
+  love.graphics.rectangle('fill', barX + barWidth + 12, healthY + 2, countSize, totalHeight)
+  
+  -- Main background
+  love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
+  love.graphics.rectangle('fill', barX + barWidth + 10, healthY, countSize, totalHeight)
+  
+  -- Enemy count fill
+  love.graphics.setColor(healthColors.r1, healthColors.g1, healthColors.b1, 0.9)
+  love.graphics.rectangle('fill', barX + barWidth + 10, healthY, countSize, totalHeight)
+  
+  -- Enemy count text
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.printf("MOBS", barX + barWidth + 10, healthY + totalHeight/2 - 20, countSize, "center")
+  love.graphics.printf(#enemies, barX + barWidth + 10, healthY + totalHeight/2, countSize, "center")
+
+  -- Draw FPS counter to the right of mobs counter
+  -- Background shadow
+  love.graphics.setColor(0, 0, 0, 0.2)
+  love.graphics.rectangle('fill', barX + barWidth + countSize + 22, healthY + 2, countSize, totalHeight)
+  
+  -- Main background
+  love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
+  love.graphics.rectangle('fill', barX + barWidth + countSize + 20, healthY, countSize, totalHeight)
+  
+  -- FPS text
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.printf("FPS", barX + barWidth + countSize + 20, healthY + totalHeight/2 - 20, countSize, "center")
+  love.graphics.printf(love.timer.getFPS(), barX + barWidth + countSize + 20, healthY + totalHeight/2, countSize, "center")
 
   -- Draw active power-ups with hudFont
   local powerUpY = 250
