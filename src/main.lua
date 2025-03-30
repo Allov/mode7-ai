@@ -466,9 +466,9 @@ function drawCompass(player, runeSpawner)
     if runeX >= barX and runeX <= barX + barWidth then
       -- Draw distance above the compass bar with background
       love.graphics.setColor(0.1, 0.1, 0.15, 0.8)
-      love.graphics.rectangle('fill', runeX - 20, barY - 20, 40, 15, 3, 3)
+      love.graphics.rectangle('fill', runeX - 25, barY - 20, 50, 15, 3, 3)  -- Increased width from 40 to 50
       love.graphics.setColor(1, 0.8, 0, 0.9)
-      love.graphics.printf(math.floor(distance), runeX - 20, barY - 19, 40, "center")
+      love.graphics.printf(math.floor(distance), runeX - 25, barY - 19, 50, "center")  -- Increased width from 40 to 50
       
       -- Draw rune indicator (improved triangle)
       love.graphics.setColor(1, 0.8, 0, 0.9)
@@ -506,12 +506,12 @@ function drawCompass(player, runeSpawner)
     if orbX >= barX and orbX <= barX + barWidth then
       -- Draw distance below compass with background
       love.graphics.setColor(0.1, 0.1, 0.15, 0.8)
-      love.graphics.rectangle('fill', orbX - 20, barY + barHeight + 5, 40, 15, 3, 3)
+      love.graphics.rectangle('fill', orbX - 25, barY + barHeight + 5, 50, 15, 3, 3)  -- Increased width from 40 to 50
       
       -- Get orb color from GameData
       local orbColor = GameData.ORBS[orbItem.type] and GameData.ORBS[orbItem.type].color or {1, 1, 1}
       love.graphics.setColor(orbColor[1], orbColor[2], orbColor[3], 0.9)
-      love.graphics.printf(math.floor(distance), orbX - 20, barY + barHeight + 6, 40, "center")
+      love.graphics.printf(math.floor(distance), orbX - 25, barY + barHeight + 6, 50, "center")  -- Increased width from 40 to 50
       
       -- Draw improved orb indicator
       love.graphics.circle('fill', orbX, barY + barHeight - 4, 3)
