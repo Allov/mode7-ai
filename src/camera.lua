@@ -3,21 +3,19 @@ local Constants = require('src.constants')
 local Camera = {
   x = 0,
   y = 0,
-  z = 0,
+  z = Constants.CAMERA_HEIGHT,  -- Initialize z to base height
   angle = 0,
-  baseHeight = Constants.CAMERA_HEIGHT,  -- Set default height from constants
+  baseHeight = Constants.CAMERA_HEIGHT,
   bobPhase = 0,
-  bobFrequency = 8,
-  bobAmplitude = 5,
-  bobAngleAmount = 0.02,
+  bobFrequency = 16,      -- Fast enough to match running/walking
+  bobAmplitude = 4,      -- Larger amplitude for noticeable effect in Mode7
+  bobSideAmount = 3,      -- Side-to-side movement
   bobActive = false,
-  -- Add shake properties
   shakeAmount = 0,
-  shakeDecay = 5,  -- How fast the shake dies down
-  shakeMaxOffset = 20  -- Maximum pixel offset during shake
+  shakeDecay = 5,
+  shakeMaxOffset = 20
 }
 
--- Add shake method
 function Camera:shake(amount)
   self.shakeAmount = amount
 end
@@ -53,40 +51,37 @@ end
 function Camera:update(dt, player)
   if player.isDead then return end
 
-  -- Update shake with stronger effect
-  if self.shakeAmount > 0 then
-    self.shakeAmount = math.max(0, self.shakeAmount - self.shakeDecay * dt)
-    
-    -- Apply shake offset
-    local shakePower = self.shakeAmount / 100
-    self.x = player.x + (math.random() - 0.5) * self.shakeMaxOffset * shakePower
-    self.y = player.y + (math.random() - 0.5) * self.shakeMaxOffset * shakePower
-    self.angle = player.angle + (math.random() - 0.5) * 0.2 * shakePower  -- Increased angle shake
-  else
-    -- No shake, just follow player
-    self.x = player.x
-    self.y = player.y
-    self.angle = player.angle
-  end
+  -- Base position follows player
+  self.x = player.x
+  self.y = player.y
+  self.angle = player.angle
 
-  -- Handle bob effect
-  local dx = player.x - player.lastX
-  local dy = player.y - player.lastY
-  local isMoving = math.abs(dx) > 0.01 or math.abs(dy) > 0.01
+  -- Head bob effect based on movement
+  local isMoving = math.abs(player.forward) > 0.01 or math.abs(player.strafe) > 0.01
   
   if isMoving then
-    self.bobActive = true
     self.bobPhase = (self.bobPhase + dt * self.bobFrequency) % (math.pi * 2)
-  else
-    self.bobActive = false
-    self.bobPhase = self.bobPhase * 0.95
-  end
-  
-  -- Apply bob effect to height
-  if self.bobActive then
+    
+    -- Update camera height with bobbing
     self.z = self.baseHeight + math.sin(self.bobPhase) * self.bobAmplitude
+    
+    -- Horizontal movement (side to side)
+    local sideOffset = math.cos(self.bobPhase) * self.bobSideAmount
+    local dirVector = self:getRightVector()
+    self.x = self.x + dirVector.x * sideOffset
+    self.y = self.y + dirVector.y * sideOffset
   else
+    -- Smoothly return to base height when not moving
     self.z = self.baseHeight
+  end
+
+  -- Handle shake effect
+  if self.shakeAmount > 0 then
+    self.shakeAmount = math.max(0, self.shakeAmount - self.shakeDecay * dt)
+    local shakePower = self.shakeAmount / 100
+    self.x = self.x + (math.random() - 0.5) * self.shakeMaxOffset * shakePower
+    self.y = self.y + (math.random() - 0.5) * self.shakeMaxOffset * shakePower
+    self.angle = self.angle + (math.random() - 0.5) * 0.2 * shakePower
   end
 end
 

@@ -397,6 +397,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
   love.graphics.setShader(self.shader)
   self.shader:send('cameraPos', {camera.x, camera.y})
   self.shader:send('cameraAngle', camera.angle)
+  self.shader:send('cameraHeight', camera.z)  -- Use camera's z value for height
   self.shader:send('lightPositions', unpack(self.lightPositions))
   self.shader:send('skyTexture', self.skyTexture)
   
