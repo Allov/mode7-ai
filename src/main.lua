@@ -146,6 +146,11 @@ function Player:levelUp()
 end
 
 function love.load()
+  -- Seed random number generator with current time
+  math.randomseed(os.time())
+  -- Warm up the random number generator by discarding first few values
+  for i = 1, 3 do math.random() end
+  
   -- Load different fonts for different UI elements
   hudFont = love.graphics.newFont(16)  -- Smaller font for HUD
   notificationFont = love.graphics.newFont(32)  -- Larger font for center notifications
@@ -220,14 +225,19 @@ function initializeGame()
   -- Initialize orb spawner
   player.orbSpawner = require('src.orbspawner'):new():init(player)
   
-  -- Spawn initial orb item near player
+  -- Spawn initial orb item near player with random type
   local orbAngle = math.random() * math.pi * 2
   local orbDist = 100 + math.random() * 100  -- Between 100 and 200 units
   local orbX = player.x + math.cos(orbAngle) * orbDist
   local orbY = player.y + math.sin(orbAngle) * orbDist
-  local orbItem = OrbItem:new():init(orbX, orbY, "lightning")
+  
+  -- Get random orb type from available types
+  local availableTypes = player.orbSpawner.orbTypes
+  local randomOrbType = availableTypes[math.random(#availableTypes)]
+  
+  local orbItem = OrbItem:new():init(orbX, orbY, randomOrbType)
   table.insert(orbItems, orbItem)
-  print(string.format("Spawned lightning orb at X:%.1f Y:%.1f", orbX, orbY))
+  print(string.format("Spawned %s orb at X:%.1f Y:%.1f", randomOrbType, orbX, orbY))
 
   _G.effects = {} -- Global effects table
 

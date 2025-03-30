@@ -101,11 +101,19 @@ local GameData = {
       damage = 10,
       range = 200
     },
-    -- Add more orb types here as needed
+    pulse = {
+      name = "Pulsing Orb",
+      color = {1.0, 1.0, 0.8},  -- Soft white
+      description = "Fires projectiles in a ring",
+      cooldown = 2.0,
+      damage = 15,
+      range = 300
+    }
   }
 }
 
 return GameData
+
 
 
 

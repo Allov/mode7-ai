@@ -2,6 +2,7 @@ local OrbSpawner = {
     -- Available orb types
     orbTypes = {
         "lightning",
+        "pulse",
         -- Add more orb types here as they're implemented
     },
     
