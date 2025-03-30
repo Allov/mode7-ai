@@ -196,7 +196,7 @@ function initializeGame()
   
   -- Reset spawn control
   spawnTimer = 0
-  spawnInterval = 24.0
+  spawnInterval = 12.0
   
   -- Initialize console
   console = Console:new()
