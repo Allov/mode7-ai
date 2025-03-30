@@ -8,20 +8,20 @@
 - [x] Controller support
 - [x] Add targeting system
 - [ ] Implement basic enemy types
-  - [ ] Grunt (basic enemy)
+  - [x] Grunt (basic enemy)
   - [ ] Shooter (ranged enemy)
   - [ ] Cycler (trail enemy)
-- [ ] Basic combat system
-  - [ ] Player projectiles
-  - [ ] Enemy damage
-  - [ ] Health system
-  - [ ] Death/respawn
+- [x] Basic combat system
+  - [x] Player projectiles
+  - [x] Enemy damage
+  - [x] Health system
+  - [x] Death/respawn
 
 ### Week 2: Progression Systems
-- [ ] Experience system
-  - [ ] Orb collection
-  - [ ] Level progression
-  - [ ] Basic stats increase
+- [x] Experience system
+  - [x] Orb collection
+  - [x] Level progression
+  - [x] Basic stats increase
 - [ ] First two realms
   - [ ] Crystal Plains (starter)
   - [ ] Ember Wastes
@@ -29,7 +29,7 @@
   - [ ] Time-based enemy waves
   - [ ] Simple collection quests
   - [ ] Defense missions
-- [ ] First boss: The Pursuer
+- [x] First boss: The Pursuer
 
 ### Week 3: Polish and Essential Features
 - [ ] UI implementation
@@ -165,6 +165,7 @@
 - [ ] Save/Load system
   - [ ] Player progress
   - [ ] Settings persistence
+
 
 
 
