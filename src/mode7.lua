@@ -273,6 +273,23 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     })
   end
 
+  -- Add orbs to render list if player has an orbManager
+  if _G.player and _G.player.orbManager then
+    for _, orb in ipairs(_G.player.orbManager.orbs) do
+      if orb.x and orb.y then  -- Only add if position exists
+        local dx = orb.x - camera.x
+        local dy = orb.y - camera.y
+        local distance = math.sqrt(dx * dx + dy * dy)
+        
+        table.insert(allObjects, {
+          type = "orb",
+          object = orb,
+          distance = distance
+        })
+      end
+    end
+  end
+
   -- Sort objects by distance (furthest first)
   table.sort(allObjects, function(a, b)
     return a.distance > b.distance
@@ -365,6 +382,14 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
           useAngleScaling = false
         })
       end
+    elseif obj.type == "orb" then
+      love.graphics.setColor(0, 1, 1, 1) -- Cyan color
+      self:drawSprite(obj.object, camera, {
+        texture = self.orbTexture, -- We need to create this texture
+        scale = 100.0 * Constants.SPRITE_SCALE,
+        heightScale = 1.0,
+        useAngleScaling = false
+      })
     end
   end
 

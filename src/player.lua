@@ -85,7 +85,9 @@ function Player:new(o)
   self.__index = self
   o.lastX = o.x
   o.lastY = o.y
-  o.activePowerUps = {}  -- Initialize power-ups table
+  o.activePowerUps = {}
+  o.orbManager = require('src.orbmanager'):new():init(o)
+  o.orbSpawner = require('src.orbspawner'):new():init(o)
   return o
 end
 
@@ -360,6 +362,11 @@ function Player:update(dt)
       table.remove(self.activePowerUps, i)
       self:updatePowerUpEffects()  -- Recalculate effects when power-up expires
     end
+  end
+
+  -- Update orbs
+  if self.orbManager then
+    self.orbManager:update(dt)
   end
 end
 

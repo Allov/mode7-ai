@@ -1,6 +1,12 @@
 local Enemy = require('src.enemy')
 local GameData = require('src.gamedata')
 
+local function sanitizeText(text)
+  if text == nil then return "" end
+  -- Convert to string and only keep basic ASCII characters
+  return tostring(text):gsub('[^%w%s%.%-%_%(%)%:%,]', '')
+end
+
 local Console = {
   isVisible = false,
   inputText = "",
@@ -122,7 +128,54 @@ local Console = {
         self:print(string.format("Targeting system: %s", 
           _G.player.targetingEnabled and "ENABLED" or "DISABLED"))
       end
-    }
+    },
+    
+    orb = {
+      desc = "Orb commands: add <type>, upgrade <type>, remove <type>, list",
+      func = function(self, args)
+        if not _G.player.orbSpawner then
+          _G.player.orbSpawner = require('src.orbspawner'):new():init(_G.player)
+        end
+        
+        if not args[1] or args[1] == "list" then
+          self:print("Available orb types:")
+          local available = _G.player.orbSpawner:listAvailableOrbs()
+          for _, orb in ipairs(available) do
+            local status = orb.owned and string.format("(Rank %d)", orb.rank) or "(Not owned)"
+            self:print(string.format("  %s %s", orb.type, status))
+          end
+          return
+        end
+        
+        local command = args[1]
+        local orbType = args[2]
+        
+        if command == "add" then
+          local success, error = _G.player.orbSpawner:addOrb(orbType)
+          if success then
+            self:print(string.format("Added %s orb", orbType))
+          else
+            self:print(string.format("Failed to add orb: %s", error))
+          end
+        elseif command == "upgrade" then
+          local success, error = _G.player.orbSpawner:upgradeOrb(orbType)
+          if success then
+            self:print(string.format("Upgraded %s orb", orbType))
+          else
+            self:print(string.format("Failed to upgrade orb: %s", error))
+          end
+        elseif command == "remove" then
+          local success = _G.player.orbSpawner:removeOrb(orbType)
+          if success then
+            self:print(string.format("Removed %s orb", orbType))
+          else
+            self:print("Failed to remove orb")
+          end
+        else
+          self:print("Unknown orb command. Use: add, upgrade, remove, or list")
+        end
+      end
+    },
   }
 }
 
@@ -136,9 +189,12 @@ function Console:new()
 end
 
 function Console:print(text)
-  table.insert(self.outputLines, text)
-  if #self.outputLines > self.maxOutputLines then
-    table.remove(self.outputLines, 1)
+  local cleanText = sanitizeText(text)
+  if cleanText ~= "" then
+    table.insert(self.outputLines, cleanText)
+    if #self.outputLines > self.maxOutputLines then
+      table.remove(self.outputLines, 1)
+    end
   end
 end
 
@@ -212,7 +268,10 @@ end
 
 function Console:textinput(text)
   if not self.isVisible then return false end
-  self.inputBuffer = self.inputBuffer .. text
+  local cleanText = sanitizeText(text)
+  if cleanText ~= "" then
+    self.inputBuffer = self.inputBuffer .. cleanText
+  end
   return true
 end
 
@@ -230,12 +289,16 @@ function Console:draw()
   -- Draw output lines
   love.graphics.setColor(self.textColor)
   for i, line in ipairs(self.outputLines) do
-    love.graphics.print(line, self.padding, 
-      self.padding + (i - 1) * self.lineHeight)
+    local text = sanitizeText(line)
+    if text ~= "" then
+      love.graphics.print(text, self.padding, 
+        self.padding + (i - 1) * self.lineHeight)
+    end
   end
   
-  -- Draw input line
-  love.graphics.print("> " .. self.inputBuffer .. "_", 
+  -- Draw input line with cursor
+  local input = sanitizeText(self.inputBuffer)
+  love.graphics.print("> " .. input .. "_", 
     self.padding, 
     self.padding + #self.outputLines * self.lineHeight)
   

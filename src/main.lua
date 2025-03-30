@@ -573,6 +573,45 @@ function love.draw()
     end
   end
 
+  -- Draw active orbs in top right, below runes
+  love.graphics.setFont(hudFont)
+  local orbX = Constants.SCREEN_WIDTH - 210  -- Same X position as runes
+  local orbY = runeY + 20  -- Start below the last rune
+  
+  love.graphics.print("Active Orbs:", orbX, orbY)
+  orbY = orbY + 25
+  
+  if player.orbManager then
+    for _, orb in ipairs(player.orbManager.orbs) do
+      -- Draw orb background
+      love.graphics.setColor(orb.color[1], orb.color[2], orb.color[3], 0.3)
+      
+      local orbWidth = 200
+      local orbHeight = 50  -- Fixed height for orb display
+      
+      love.graphics.rectangle('fill', orbX, orbY, orbWidth, orbHeight)
+      
+      -- Draw orb name and rank
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.print(string.format("%s (Rank %d)", 
+        orb.type:gsub("^%l", string.upper), -- Capitalize first letter
+        orb.rank), 
+        orbX + 5, 
+        orbY + 2)
+      
+      -- Draw cooldown bar
+      local cooldownWidth = ((orb.cooldown - orb.currentCooldown) / orb.cooldown) * (orbWidth - 10)
+      love.graphics.setColor(orb.color[1], orb.color[2], orb.color[3], 0.8)
+      love.graphics.rectangle('fill', 
+        orbX + 5, 
+        orbY + orbHeight - 10, 
+        cooldownWidth, 
+        5)
+      
+      orbY = orbY + orbHeight + 5  -- Add small gap between orbs
+    end
+  end
+
   -- Reset color and font
   love.graphics.setColor(1, 1, 1)
   love.graphics.setFont(hudFont)
