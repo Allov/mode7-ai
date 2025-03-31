@@ -31,7 +31,10 @@ local Mode7 = {
     intensity = 0.5,    -- Increased intensity for stronger bloom
     blur_size = 1.5     -- Larger blur for more visible glow
   },
-  spookyBushTexture = nil
+  spookyBushTexture = nil,
+  moonPosition = {0.8, 0.5},  -- Position in normalized coordinates (x, y)
+  moonSize = 128,             -- Size in pixels
+  moonGlow = 0.3             -- Glow intensity
 }
 
 function Mode7:new(o)
@@ -45,9 +48,11 @@ end
 function Mode7:load()
   -- Initialize texture manager first
   self.textureManager:load()
-  -- Now we can get the dead tree texture
+  
+  -- Get textures from texture manager
   self.deadTreeTexture = self.textureManager:getTexture('deadTree')
   self.spookyBushTexture = self.textureManager:getTexture('spookyBush')
+  self.moonTexture = self.textureManager:getTexture('moon')
   
   -- Set filtering for ground texture
   self.texture = love.graphics.newImage('assets/images/ground.png')
@@ -437,12 +442,51 @@ function Mode7:load()
   -- Get the spooky bush texture
   self.spookyBushTexture = self.textureManager:getTexture('spookyBush')
   self.spookyBushTexture:setFilter('nearest', 'nearest')
+
+  -- Debug print to verify moon texture and position
+  print("Moon texture loaded:", self.moonTexture ~= nil)
+  print("Moon position:", self.moonPosition[1] * love.graphics.getWidth(), 
+        self.moonPosition[2] * Constants.HORIZON_LINE)
+  print("Horizon line:", Constants.HORIZON_LINE)
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems, deadTrees, spookyBushes)
   -- First render everything to temp canvas
   love.graphics.setCanvas(self.tempCanvas)
   love.graphics.clear()
+
+  -- Draw ground with shader first
+  love.graphics.setShader(self.shader)
+  self.shader:send('cameraPos', {camera.x, camera.y})
+  self.shader:send('cameraAngle', camera.angle)
+  self.shader:send('cameraHeight', camera.z)  -- Use camera's z value for height
+  self.shader:send('lightPositions', unpack(self.lightPositions))
+  self.shader:send('skyTexture', self.skyTexture)
+  
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(self.texture, 
+    0, 0, 0, 
+    love.graphics.getWidth() / self.texture:getWidth(), 
+    love.graphics.getHeight() / self.texture:getHeight()
+  )
+  
+  love.graphics.setShader()
+
+  -- Draw moon after sky but before other objects
+  local moonX = self.moonPosition[1] * love.graphics.getWidth()
+  local moonY = self.moonPosition[2] * Constants.HORIZON_LINE
+  
+  -- Draw moon glow
+  love.graphics.setBlendMode('add')
+  love.graphics.setColor(0.3, 0.3, 0.2, self.moonGlow)
+  local glowSize = self.moonSize * 1.5
+  love.graphics.draw(self.moonTexture, moonX, moonY, 0, glowSize/128, glowSize/128, 64, 64)
+  
+  -- Draw moon itself
+  love.graphics.setBlendMode('alpha')
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(self.moonTexture, moonX, moonY, 0, self.moonSize/128, self.moonSize/128, 64, 64)
+  love.graphics.setBlendMode('alpha')  -- Reset blend mode
 
   -- Update first light position to match camera
   self.lightPositions[1] = {camera.x, camera.y}

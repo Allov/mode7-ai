@@ -15,6 +15,7 @@ function TextureManager:load()
     -- Create dead tree texture first to ensure it exists
     self:createDeadTreeTexture()
     self:createSpookyBushTexture()
+    self:createMoonTexture()  -- Add moon texture creation
 end
 
 function TextureManager:getTexture(name)
@@ -238,7 +239,55 @@ function TextureManager:createSpookyBushTexture()
     return bushCanvas
 end
 
+function TextureManager:createMoonTexture()
+    print("Creating moon texture...")
+    
+    local moonCanvas = love.graphics.newCanvas(128, 128)
+    love.graphics.setCanvas(moonCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    
+    -- Main moon circle with slight yellow tint
+    love.graphics.setColor(0.95, 0.93, 0.88, 1)
+    love.graphics.circle('fill', 64, 64, 60)
+    
+    -- Add subtle outer glow
+    love.graphics.setColor(0.95, 0.93, 0.88, 0.2)
+    love.graphics.circle('fill', 64, 64, 63)
+    
+    -- Add craters with slightly darker color
+    love.graphics.setColor(0.85, 0.83, 0.78, 1)
+    
+    -- Large craters
+    love.graphics.circle('fill', 45, 45, 15)  -- Top left
+    love.graphics.circle('fill', 85, 75, 12)  -- Bottom right
+    love.graphics.circle('fill', 60, 90, 14)  -- Bottom
+    
+    -- Medium craters
+    love.graphics.circle('fill', 75, 40, 8)   -- Top right
+    love.graphics.circle('fill', 35, 70, 10)  -- Bottom left
+    love.graphics.circle('fill', 90, 50, 9)   -- Right
+    
+    -- Small craters
+    love.graphics.circle('fill', 50, 65, 6)   -- Center
+    love.graphics.circle('fill', 70, 60, 5)   -- Center right
+    love.graphics.circle('fill', 40, 85, 4)   -- Bottom left
+    love.graphics.circle('fill', 80, 30, 5)   -- Top right
+    
+    -- Add darker shading to craters
+    love.graphics.setColor(0.75, 0.73, 0.68, 0.5)
+    love.graphics.circle('fill', 45, 45, 12)  -- Top left
+    love.graphics.circle('fill', 85, 75, 9)   -- Bottom right
+    love.graphics.circle('fill', 60, 90, 11)  -- Bottom
+    
+    love.graphics.setCanvas()
+    moonCanvas:setFilter('linear', 'linear')  -- Use linear filtering for smoother scaling
+    self.textures.moon = moonCanvas
+    
+    return moonCanvas
+end
+
 return TextureManager
+
 
 
 
