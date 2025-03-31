@@ -267,13 +267,13 @@ function initializeGame()
 
   -- Initialize dead trees with clusters
   local deadTrees = DeadTree.generateClusters(
-      15,         -- Number of clusters
+      50,         -- Number of clusters
       8,          -- Trees per cluster
       20000       -- Map radius
   )
 
   -- Add some random individual trees for variety
-  for i = 1, 30 do
+  for i = 1, 300 do
       local angle = math.random() * math.pi * 2
       local distance = math.random() * 20000
       local x = math.cos(angle) * distance
@@ -301,13 +301,13 @@ function initializeGame()
 
   -- Initialize spooky bushes with clusters
   local spookyBushes = SpookyBush.generateClusters(
-      25,         -- More clusters than trees
+      70,         -- More clusters than trees
       6,          -- Bushes per cluster
       20000       -- Map radius
   )
 
   -- Add some random individual bushes
-  for i = 1, 40 do
+  for i = 1, 400 do
       local angle = math.random() * math.pi * 2
       local distance = math.random() * 20000
       local x = math.cos(angle) * distance

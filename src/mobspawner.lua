@@ -8,7 +8,7 @@ local MobSpawner = {
     minSpawnInterval = 2.0,
     spawnIntervalDecay = 0.99,
     spawnDistance = 800,
-    minEnemyDistance = 200,
+    minEnemyDistance = 500,
     spawnInterval = 12.0,
     
     -- Wave control
