@@ -639,8 +639,6 @@ function love.draw()
   
   -- Debug print tree count periodically
   if not _G.lastTreeCount or love.timer.getTime() - _G.lastTreeCount > 1 then
-    print("Trees in _G.deadTrees: " .. (_G.deadTrees and #_G.deadTrees or "nil"))
-    print("Trees in local deadTrees: " .. (deadTrees and #deadTrees or "nil"))
     _G.lastTreeCount = love.timer.getTime()
   end
   

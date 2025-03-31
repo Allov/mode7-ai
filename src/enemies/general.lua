@@ -53,10 +53,6 @@ function General:update(dt)
     Enemy.update(self, dt)
     
     -- Debug print for this general's status
-    if _G.debug then
-        print(string.format("General %s at (%.1f, %.1f) with buffRadius %.1f", 
-            self.generalId, self.x, self.y, self.buffRadius))
-    end
     
     local buffedCount = 0
     for _, enemy in ipairs(_G.enemies) do
@@ -65,20 +61,9 @@ function General:update(dt)
             local dy = enemy.y - self.y
             local distance = math.sqrt(dx * dx + dy * dy)
             
-            -- Debug distance check
-            if _G.debug then
-                print(string.format("General %s checking enemy at distance %.1f (buffRadius: %.1f)", 
-                    self.generalId, distance, self.buffRadius))
-            end
-            
             if distance <= self.buffRadius then
                 -- Track which general applied the buff
                 if not enemy.isBuffed or enemy.buffedByGeneral ~= self.generalId then
-                    if _G.debug then
-                        print(string.format("General %s applying buff to enemy at distance %.1f", 
-                            self.generalId, distance))
-                    end
-                    
                     -- Store original values if not already buffed
                     if not enemy.isBuffed then
                         enemy.originalSpeed = enemy.speed
@@ -99,11 +84,6 @@ function General:update(dt)
             else
                 -- Only remove buff if this general applied it
                 if enemy.isBuffed and enemy.buffedByGeneral == self.generalId then
-                    if _G.debug then
-                        print(string.format("General %s removing buff from enemy at distance %.1f", 
-                            self.generalId, distance))
-                    end
-                    
                     enemy.isBuffed = false
                     enemy.buffedByGeneral = nil
                     enemy.speed = enemy.originalSpeed
@@ -114,10 +94,6 @@ function General:update(dt)
                 end
             end
         end
-    end
-    
-    if _G.debug then
-        print(string.format("General %s is buffing %d enemies", self.generalId, buffedCount))
     end
     
     -- Always show buff radius for generals
