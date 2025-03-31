@@ -16,6 +16,7 @@ local RuneSpawner = require('src.runespawner')
 local OrbItem = require('src.orbitem')
 local Lightning = require('src.effects.lightning')
 local PlayerArms = require('src.playerarms')
+local DeadTree = require('src.environment.dead_tree')
 
 -- Declare all global variables at the top
 local camera
@@ -33,6 +34,8 @@ _G.runes = runes  -- Set global reference once
 local console
 local mobSpawner
 local playerArms  -- Add playerArms here
+local deadTrees = {}  -- Initialize as empty table
+local textureManager  -- Add texture manager variable
 
 -- Add to the global declarations section
 _G.Rune = Rune  -- Make Rune class available to console
@@ -259,6 +262,40 @@ function initializeGame()
 
   -- After creating mobSpawner
   _G.mobSpawner = mobSpawner
+
+  -- Initialize dead trees with clusters
+  local deadTrees = DeadTree.generateClusters(
+      15,         -- Number of clusters
+      8,          -- Trees per cluster
+      20000       -- Map radius
+  )
+
+  -- Add some random individual trees for variety
+  for i = 1, 30 do
+      local angle = math.random() * math.pi * 2
+      local distance = math.random() * 20000
+      local x = math.cos(angle) * distance
+      local y = math.sin(angle) * distance
+      
+      -- Check if position is valid
+      local validPosition = true
+      for _, tree in ipairs(deadTrees) do
+          local dx = tree.x - x
+          local dy = tree.y - y
+          local dist = math.sqrt(dx * dx + dy * dy)
+          if dist < DeadTree.minTreeSpacing then
+              validPosition = false
+              break
+          end
+      end
+      
+      if validPosition then
+          table.insert(deadTrees, DeadTree:new():init(x, y))
+      end
+  end
+
+  -- Make trees globally accessible if needed
+  _G.deadTrees = deadTrees
 end
 
 function love.update(dt)
@@ -565,8 +602,18 @@ function love.draw()
   -- Get runes directly from runeSpawner instead of global table
   local runesToRender = runeSpawner:getRunes()
   
+  -- Debug print tree count periodically
+  if not _G.lastTreeCount or love.timer.getTime() - _G.lastTreeCount > 1 then
+    print("Trees in _G.deadTrees: " .. (_G.deadTrees and #_G.deadTrees or "nil"))
+    print("Trees in local deadTrees: " .. (deadTrees and #deadTrees or "nil"))
+    _G.lastTreeCount = love.timer.getTime()
+  end
+  
+  -- Make sure we're using the correct trees variable
+  local treesToRender = _G.deadTrees or deadTrees or {}
+  
   -- Render Mode 7 ground with all game objects
-  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItemSpawner:getOrbItems())
+  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItemSpawner:getOrbItems(), treesToRender)
   
   -- Draw player arms if it exists
   if playerArms then

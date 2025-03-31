@@ -1,6 +1,7 @@
 local Constants = require('src.constants')
 local Rune = require('src.rune')
 local GameData = require('src.gamedata')
+local TextureManager = require('src.rendering.texture_manager')
 
 local Mode7 = {
   texture = nil,
@@ -8,6 +9,7 @@ local Mode7 = {
   skyTexture = nil,
   enemyTexture = nil,
   projectileTexture = nil,
+  textureManager = nil,
   fogColor = {0.1, 0.2, 0.25},
   fogDampening = 0.9,
   fogAlpha = 0.93,
@@ -35,10 +37,16 @@ function Mode7:new(o)
   o = o or {}
   setmetatable(o, self)
   self.__index = self
+  o.textureManager = TextureManager:new()  -- Initialize texture manager
   return o
 end
 
 function Mode7:load()
+  -- Initialize texture manager first
+  self.textureManager:load()
+  -- Now we can get the dead tree texture
+  self.deadTreeTexture = self.textureManager:getTexture('deadTree')
+  
   -- Set filtering for ground texture
   self.texture = love.graphics.newImage('assets/images/ground.png')
   self.texture:setFilter('nearest', 'nearest')
@@ -425,7 +433,7 @@ function Mode7:load()
   end
 end
 
-function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems)
+function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems, deadTrees)
   -- First render everything to temp canvas
   love.graphics.setCanvas(self.tempCanvas)
   love.graphics.clear()
@@ -459,6 +467,19 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
 
   -- Create a table of all objects to sort
   local allObjects = {}
+
+  -- Add dead trees to render list
+  for _, tree in ipairs(deadTrees or {}) do
+    local dx = tree.x - camera.x
+    local dy = tree.y - camera.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    table.insert(allObjects, {
+      type = "deadTree",
+      object = tree,
+      distance = distance
+    })
+  end
 
   -- Add enemies to render list
   for _, enemy in ipairs(enemies) do
@@ -548,7 +569,16 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
 
   -- Draw all objects in sorted order
   for _, obj in ipairs(allObjects) do
-    if obj.type == "enemy" then
+    if obj.type == "deadTree" then
+      love.graphics.setColor(1, 1, 1, 1)
+      self:drawSprite(obj.object, camera, {
+        texture = self.deadTreeTexture,  -- Make sure this texture is initialized
+        scale = 300.0 * Constants.SPRITE_SCALE * (obj.object.scale or 1.0),
+        heightScale = 1.5,
+        useAngleScaling = false,
+        rotation = 0  -- Set rotation to 0 to keep trees standing still
+      })
+    elseif obj.type == "enemy" then
       local enemy = obj.object
       if enemy.isBoss then
         love.graphics.setColor(1, 1, 1, 1)
