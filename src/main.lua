@@ -647,6 +647,8 @@ function love.draw()
   -- Make sure we're using the correct trees variable
   local treesToRender = _G.deadTrees or deadTrees or {}
   local bushesToRender = _G.spookyBushes or spookyBushes or {}
+
+  enemies = _G.enemies
   
   -- Render Mode 7 ground with all game objects
   mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItemSpawner:getOrbItems(), treesToRender, bushesToRender)

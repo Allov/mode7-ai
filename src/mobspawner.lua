@@ -1,6 +1,7 @@
 local Enemy = require('src.enemy')
 local Boss = require('src.boss')
 local ExperienceOrb = require('src.experienceorb')
+local General = require('src.enemies.general')
 
 local MobSpawner = {
     -- Spawn control variables
@@ -16,6 +17,12 @@ local MobSpawner = {
     maxEnemiesPerWave = 8,
     waveCount = 0,
     enemiesPerWaveIncrease = 0.2,  -- Increase by 0.2 enemies per wave (rounded up)
+    
+    -- General spawn control
+    generalWaveCount = 0,
+    minionsPerGeneral = 8,  -- Each general gets 8 minions
+    generalSpawnTimer = 0,
+    generalSpawnInterval = 60,  -- Spawn generals every 60 seconds
     
     -- References to game state
     enemies = nil,
@@ -149,6 +156,38 @@ function MobSpawner:processDeathQueue()
     end
 end
 
+function MobSpawner:spawnGeneralGroup()
+    self.generalWaveCount = self.generalWaveCount + 1
+    print("Spawning new general wave:", self.generalWaveCount)
+    
+    -- Spawn 4 generals in a circle around the player
+    for i = 1, 4 do
+        local angle = (i - 1) * (math.pi / 2)  -- Evenly space around player
+        local spawnDistance = 800  -- Further than normal enemies
+        
+        local spawnX = self.player.x + math.cos(angle) * spawnDistance
+        local spawnY = self.player.y + math.sin(angle) * spawnDistance
+        
+        -- Spawn the general
+        local general = General:new():init(spawnX, spawnY)
+        print("Spawned general at position:", spawnX, spawnY)
+        table.insert(self.enemies, general)
+        
+        -- Spawn minions around each general
+        for j = 1, self.minionsPerGeneral do
+            local minionAngle = math.random() * math.pi * 2
+            local minionDistance = 100 + math.random() * 100  -- Random distance between 100-200 units from general
+            
+            local minionX = spawnX + math.cos(minionAngle) * minionDistance
+            local minionY = spawnY + math.sin(minionAngle) * minionDistance
+            
+            local minion = Enemy:new():init(minionX, minionY, false)  -- Regular enemy, not elite
+            table.insert(self.enemies, minion)
+            print("Spawned minion at position:", minionX, minionY)
+        end
+    end
+end
+
 function MobSpawner:update(dt)
     self.spawnTimer = self.spawnTimer + dt
     if self.spawnTimer >= self.spawnInterval then
@@ -174,6 +213,13 @@ function MobSpawner:update(dt)
             self.minSpawnInterval,
             self.spawnInterval * self.spawnIntervalDecay
         )
+    end
+    
+    -- Update general spawn timer
+    self.generalSpawnTimer = self.generalSpawnTimer + dt
+    if self.generalSpawnTimer >= self.generalSpawnInterval then
+        self.generalSpawnTimer = 0
+        self:spawnGeneralGroup()
     end
     
     -- Process any queued deaths

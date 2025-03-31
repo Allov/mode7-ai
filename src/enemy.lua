@@ -1,5 +1,5 @@
 local Constants = require('src.constants')
-local DamageNumber = require('src.damagenumber')  -- Make sure path is correct
+local DamageNumber = require('src.damagenumber')  -- Make sure path # correct
 
 local Enemy = {
   x = 0,
@@ -21,6 +21,7 @@ local Enemy = {
   dropChance = 0.75,  -- 75% chance to drop exp orb
   isDead = false,  -- Add this flag
   shouldDropExp = true,  -- Add this flag
+  isBuffed = false,
   
   -- Elite properties
   isElite = false,

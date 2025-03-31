@@ -170,6 +170,40 @@ function Mode7:load()
   self.eliteTexture = eliteCanvas
   self.eliteTexture:setFilter('nearest', 'nearest')  -- Add filtering
 
+  -- General texture (pentagon shape with crown)
+  local generalCanvas = love.graphics.newCanvas(32, 32)
+  love.graphics.setCanvas(generalCanvas)
+  love.graphics.clear()
+  
+  -- Draw base pentagon (dark red)
+  love.graphics.setColor(0.8, 0.1, 0.1, 1)
+  local centerX, centerY = 16, 16
+  local radius = 14
+  local points = {}
+  for i = 1, 5 do
+      local angle = (i * 2 * math.pi / 5) - math.pi/2
+      table.insert(points, centerX + radius * math.cos(angle))
+      table.insert(points, centerY + radius * math.sin(angle))
+  end
+  love.graphics.polygon('fill', points)
+  
+  -- Draw crown on top
+  love.graphics.setColor(1, 0.8, 0, 1)  -- Gold color
+  love.graphics.setLineWidth(2)
+  -- Crown base
+  love.graphics.line(8, 8, 24, 8)
+  -- Crown points
+  love.graphics.polygon('fill', 8,8, 12,4, 16,8, 20,4, 24,8)
+  
+  -- Add glowing border
+  love.graphics.setColor(1, 0.3, 0.3, 1)  -- Bright red
+  love.graphics.setLineWidth(2)
+  love.graphics.polygon('line', points)
+  
+  love.graphics.setCanvas()
+  self.generalTexture = generalCanvas
+  self.generalTexture:setFilter('nearest', 'nearest')
+
   -- Boss texture (pentagonal shape with details)
   local bossCanvas = love.graphics.newCanvas(64, 64)  -- Larger canvas for more detail
   love.graphics.setCanvas(bossCanvas)
@@ -662,20 +696,38 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
           useAngleScaling = true
         })
       elseif enemy.isElite then
-        love.graphics.setColor(1, 1, 1, 1)
+        -- Use elite's custom color
+        love.graphics.setColor(enemy.color or enemy.eliteColor or {1, 0.5, 0, 1})
         self:drawSprite(enemy, camera, {
           texture = self.eliteTexture,
           scale = 300.0 * Constants.SPRITE_SCALE,
           heightScale = 1.5,
           useAngleScaling = true
         })
+      elseif enemy.isGeneral then
+        -- Use general's custom color
+        love.graphics.setColor(enemy.color or {0.8, 0.1, 0.1, 1})
+        self:drawSprite(enemy, camera, {
+          texture = self.generalTexture,
+          scale = 300.0 * Constants.SPRITE_SCALE,
+          heightScale = 1.5,
+          useAngleScaling = true
+        })
       else
-        love.graphics.setColor(1, 1, 1, 1)
+        -- For regular enemies, check if they're buffed
+        local enemyColor = enemy.isBuffed and enemy.buffedColor or enemy.color or {1, 1, 1, 1}
+        local scale = 200.0
+        if enemy.isBuffed then
+
+          scale = scale * enemy.scale
+        end
+
         self:drawSprite(enemy, camera, {
           texture = self.enemyTexture,
-          scale = 200.0 * Constants.SPRITE_SCALE,
+          scale = scale * Constants.SPRITE_SCALE,
           heightScale = 1.0,
-          useAngleScaling = true
+          useAngleScaling = true,
+          color = enemyColor
         })
       end
     elseif obj.type == "projectile" then

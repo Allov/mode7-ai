@@ -170,6 +170,13 @@ local Console = {
         end
       end
     },
+    general = {
+      desc = "Spawn a group of generals with their minions",
+      func = function(self)
+        _G.mobSpawner:spawnGeneralGroup()
+        self:print("Spawned general group")
+      end
+    },
   }
 }
 
