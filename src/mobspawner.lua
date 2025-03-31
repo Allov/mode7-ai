@@ -22,7 +22,11 @@ local MobSpawner = {
     generalWaveCount = 0,
     minionsPerGeneral = 8,  -- Each general gets 8 minions
     generalSpawnTimer = 0,
-    generalSpawnInterval = 60,  -- Spawn generals every 60 seconds
+    generalSpawnInterval = 120,  -- 2 minutes between general waves
+    minGeneralsPerWave = 1,     -- Start with 1 general
+    maxGeneralsPerWave = 8,     -- Maximum of 8 generals
+    generalsPerWave = 1,        -- Current number of generals per wave
+    generalWaveIncrease = 1,    -- Increase by 1 general each wave
     
     -- References to game state
     enemies = nil,
@@ -160,9 +164,15 @@ function MobSpawner:spawnGeneralGroup()
     self.generalWaveCount = self.generalWaveCount + 1
     print("Spawning new general wave:", self.generalWaveCount)
     
-    -- Spawn 4 generals in a circle around the player
-    for i = 1, 4 do
-        local angle = (i - 1) * (math.pi / 2)  -- Evenly space around player
+    -- Calculate number of generals for this wave
+    local generalsToSpawn = math.min(self.maxGeneralsPerWave, 
+                                   self.minGeneralsPerWave + 
+                                   (self.generalWaveCount - 1) * self.generalWaveIncrease)
+    
+    -- Evenly space generals in a circle around the player
+    local angleStep = (math.pi * 2) / generalsToSpawn
+    for i = 1, generalsToSpawn do
+        local angle = (i - 1) * angleStep
         local spawnDistance = 800  -- Further than normal enemies
         
         local spawnX = self.player.x + math.cos(angle) * spawnDistance
@@ -170,7 +180,8 @@ function MobSpawner:spawnGeneralGroup()
         
         -- Spawn the general
         local general = General:new():init(spawnX, spawnY)
-        print("Spawned general at position:", spawnX, spawnY)
+        print(string.format("Spawned general %d/%d at position: %.1f, %.1f", 
+            i, generalsToSpawn, spawnX, spawnY))
         table.insert(self.enemies, general)
         
         -- Spawn minions around each general
@@ -183,8 +194,12 @@ function MobSpawner:spawnGeneralGroup()
             
             local minion = Enemy:new():init(minionX, minionY, false)  -- Regular enemy, not elite
             table.insert(self.enemies, minion)
-            print("Spawned minion at position:", minionX, minionY)
         end
+    end
+    
+    if _G.console then
+        _G.console:print(string.format("Wave %d: Spawned %d generals with %d minions each", 
+            self.generalWaveCount, generalsToSpawn, self.minionsPerGeneral))
     end
 end
 
