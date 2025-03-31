@@ -10,7 +10,7 @@ return {
   -- Mode 7 specific constants
   HORIZON_LINE = 100,
   FOV = 75,
-  DRAW_DISTANCE = 1500,
+  DRAW_DISTANCE = 1200,
   SPRITE_SCALE = 0.5,
 
   -- Camera settings

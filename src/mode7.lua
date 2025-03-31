@@ -10,9 +10,9 @@ local Mode7 = {
   enemyTexture = nil,
   projectileTexture = nil,
   textureManager = nil,
-  fogColor = {0.1, 0.2, 0.25},
-  fogDampening = 0.9,
-  fogAlpha = 0.93,
+  fogColor = {0.1, 0.05, 0.05},
+  fogDampening = 0.3,
+  fogAlpha = 0.83,
   -- Add camera light as first light, followed by static lights
   lightPositions = {{0, 0}, {300, 300}, {-300, -300}},  -- Camera light + static lights
   lightColors = {{1.0, 0.9, 0.7}, {1.0, 0.7, 0.3}, {1.0, 0.7, 0.3}},  -- Brighter white-ish for camera light
@@ -594,7 +594,8 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         scale = 150.0 * Constants.SPRITE_SCALE * (obj.object.scale or 1.0),
         heightScale = 1.0,
         useAngleScaling = false,
-        rotation = 0
+        rotation = 0,
+        heightOffset = obj.object.z or 30  -- Add height offset
       })
       
     elseif obj.type == "deadTree" then

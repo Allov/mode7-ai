@@ -165,28 +165,37 @@ function TextureManager:createSpookyBushTexture()
     -- Base color (very dark green-grey)
     love.graphics.setColor(0.06, 0.08, 0.05, 1)
     
-    -- Central mass (irregular and spiky)
-    local centerX, centerY = 48, 48
-    local spikes = 12  -- Number of major spikes
+    -- Solid base at the bottom
+    love.graphics.rectangle('fill', 24, 72, 48, 24)  -- Flat bottom third
+    
+    -- Main bush body (more dense in middle, spiky at top)
+    local centerX, centerY = 48, 36  -- Moved center point up
     local points = {}
     
-    -- Create irregular spiky shape
+    -- Create bottom points (wider, flatter)
+    table.insert(points, 24)  -- left bottom
+    table.insert(points, 72)
+    table.insert(points, 72)  -- right bottom
+    table.insert(points, 72)
+    
+    -- Create spiky top points
+    local spikes = 8  -- Number of major spikes for top half
     for i = 1, spikes do
-        local angle = (i / spikes) * math.pi * 2
-        local radius = 30 + math.random() * 10  -- Varying radius
+        local angle = (i / spikes) * math.pi - math.pi/2  -- Start from top
+        local radius = 25 + math.random() * 15  -- Varying radius
         local x = centerX + math.cos(angle) * radius
-        local y = centerY + math.sin(angle) * radius
+        local y = centerY + math.sin(angle) * math.max(0, radius)  -- Prevent downward spikes
         table.insert(points, x)
         table.insert(points, y)
     end
     
-    love.graphics.polygon('fill', unpack(points))
+    love.graphics.polygon('fill', points)
     
-    -- Add darker thorny spikes
+    -- Add darker thorny spikes (only on top half)
     love.graphics.setColor(0.04, 0.05, 0.03, 1)  -- Even darker for thorns
-    for i = 1, 16 do
-        local angle = math.random() * math.pi * 2
-        local dist = 20 + math.random() * 15
+    for i = 1, 12 do
+        local angle = (math.random() * math.pi) - math.pi/2  -- Only top half
+        local dist = 15 + math.random() * 20
         local x1 = centerX + math.cos(angle) * 15
         local y1 = centerY + math.sin(angle) * 15
         local x2 = centerX + math.cos(angle) * dist
@@ -203,10 +212,10 @@ function TextureManager:createSpookyBushTexture()
         love.graphics.polygon('fill', x1, y1, x3, y3, x4, y4)
     end
     
-    -- Add some smaller thorns
-    for i = 1, 24 do
-        local angle = math.random() * math.pi * 2
-        local dist = 15 + math.random() * 10
+    -- Add some smaller thorns (top half only)
+    for i = 1, 16 do
+        local angle = (math.random() * math.pi) - math.pi/2  -- Only top half
+        local dist = 10 + math.random() * 15
         local x1 = centerX + math.cos(angle) * 10
         local y1 = centerY + math.sin(angle) * 10
         local x2 = centerX + math.cos(angle) * dist
@@ -230,5 +239,6 @@ function TextureManager:createSpookyBushTexture()
 end
 
 return TextureManager
+
 
 

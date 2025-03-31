@@ -1,6 +1,7 @@
 local SpookyBush = {
     x = 0,
     y = 0,
+    z = 0,  -- Add height off ground
     rotation = 0,
     scale = 1.0,
     -- Clustering parameters
