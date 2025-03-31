@@ -17,6 +17,7 @@ local OrbItem = require('src.orbitem')
 local Lightning = require('src.effects.lightning')
 local PlayerArms = require('src.playerarms')
 local DeadTree = require('src.environment.dead_tree')
+local SpookyBush = require('src.environment.spooky_bush')
 
 -- Declare all global variables at the top
 local camera
@@ -36,6 +37,7 @@ local mobSpawner
 local playerArms  -- Add playerArms here
 local deadTrees = {}  -- Initialize as empty table
 local textureManager  -- Add texture manager variable
+local spookyBushes = {}  -- Initialize as empty table
 
 -- Add to the global declarations section
 _G.Rune = Rune  -- Make Rune class available to console
@@ -296,6 +298,39 @@ function initializeGame()
 
   -- Make trees globally accessible if needed
   _G.deadTrees = deadTrees
+
+  -- Initialize spooky bushes with clusters
+  local spookyBushes = SpookyBush.generateClusters(
+      25,         -- More clusters than trees
+      6,          -- Bushes per cluster
+      20000       -- Map radius
+  )
+
+  -- Add some random individual bushes
+  for i = 1, 40 do
+      local angle = math.random() * math.pi * 2
+      local distance = math.random() * 20000
+      local x = math.cos(angle) * distance
+      local y = math.sin(angle) * distance
+      
+      local validPosition = true
+      for _, bush in ipairs(spookyBushes) do
+          local dx = bush.x - x
+          local dy = bush.y - y
+          local dist = math.sqrt(dx * dx + dy * dy)
+          if dist < SpookyBush.minBushSpacing then
+              validPosition = false
+              break
+          end
+      end
+      
+      if validPosition then
+          table.insert(spookyBushes, SpookyBush:new():init(x, y))
+      end
+  end
+
+  -- Make bushes globally accessible
+  _G.spookyBushes = spookyBushes
 end
 
 function love.update(dt)
@@ -611,9 +646,10 @@ function love.draw()
   
   -- Make sure we're using the correct trees variable
   local treesToRender = _G.deadTrees or deadTrees or {}
+  local bushesToRender = _G.spookyBushes or spookyBushes or {}
   
   -- Render Mode 7 ground with all game objects
-  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItemSpawner:getOrbItems(), treesToRender)
+  mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runesToRender, orbItemSpawner:getOrbItems(), treesToRender, bushesToRender)
   
   -- Draw player arms if it exists
   if playerArms then

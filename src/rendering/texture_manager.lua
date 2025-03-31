@@ -14,6 +14,7 @@ function TextureManager:load()
     
     -- Create dead tree texture first to ensure it exists
     self:createDeadTreeTexture()
+    self:createSpookyBushTexture()
 end
 
 function TextureManager:getTexture(name)
@@ -154,9 +155,80 @@ function TextureManager:createDeadTreeTexture()
     return treeCanvas
 end
 
+function TextureManager:createSpookyBushTexture()
+    print("Creating spooky bush texture...")
+    
+    local bushCanvas = love.graphics.newCanvas(96, 96)
+    love.graphics.setCanvas(bushCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    
+    -- Base color (very dark green-grey)
+    love.graphics.setColor(0.06, 0.08, 0.05, 1)
+    
+    -- Central mass (irregular and spiky)
+    local centerX, centerY = 48, 48
+    local spikes = 12  -- Number of major spikes
+    local points = {}
+    
+    -- Create irregular spiky shape
+    for i = 1, spikes do
+        local angle = (i / spikes) * math.pi * 2
+        local radius = 30 + math.random() * 10  -- Varying radius
+        local x = centerX + math.cos(angle) * radius
+        local y = centerY + math.sin(angle) * radius
+        table.insert(points, x)
+        table.insert(points, y)
+    end
+    
+    love.graphics.polygon('fill', unpack(points))
+    
+    -- Add darker thorny spikes
+    love.graphics.setColor(0.04, 0.05, 0.03, 1)  -- Even darker for thorns
+    for i = 1, 16 do
+        local angle = math.random() * math.pi * 2
+        local dist = 20 + math.random() * 15
+        local x1 = centerX + math.cos(angle) * 15
+        local y1 = centerY + math.sin(angle) * 15
+        local x2 = centerX + math.cos(angle) * dist
+        local y2 = centerY + math.sin(angle) * dist
+        
+        -- Make thorns triangular
+        local perpAngle = angle + math.pi/2
+        local thornWidth = 2 + math.random() * 3
+        local x3 = x2 + math.cos(perpAngle) * thornWidth
+        local x4 = x2 - math.cos(perpAngle) * thornWidth
+        local y3 = y2 + math.sin(perpAngle) * thornWidth
+        local y4 = y2 - math.sin(perpAngle) * thornWidth
+        
+        love.graphics.polygon('fill', x1, y1, x3, y3, x4, y4)
+    end
+    
+    -- Add some smaller thorns
+    for i = 1, 24 do
+        local angle = math.random() * math.pi * 2
+        local dist = 15 + math.random() * 10
+        local x1 = centerX + math.cos(angle) * 10
+        local y1 = centerY + math.sin(angle) * 10
+        local x2 = centerX + math.cos(angle) * dist
+        local y2 = centerY + math.sin(angle) * dist
+        
+        local perpAngle = angle + math.pi/2
+        local thornWidth = 1 + math.random() * 2
+        local x3 = x2 + math.cos(perpAngle) * thornWidth
+        local x4 = x2 - math.cos(perpAngle) * thornWidth
+        local y3 = y2 + math.sin(perpAngle) * thornWidth
+        local y4 = y2 - math.sin(perpAngle) * thornWidth
+        
+        love.graphics.polygon('fill', x1, y1, x3, y3, x4, y4)
+    end
+    
+    love.graphics.setCanvas()
+    bushCanvas:setFilter('nearest', 'nearest')
+    self.textures.spookyBush = bushCanvas
+    
+    return bushCanvas
+end
+
 return TextureManager
-
-
-
 
 

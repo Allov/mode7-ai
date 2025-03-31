@@ -30,7 +30,8 @@ local Mode7 = {
     threshold = 0.7,    -- Lower threshold to catch more bright areas
     intensity = 0.5,    -- Increased intensity for stronger bloom
     blur_size = 1.5     -- Larger blur for more visible glow
-  }
+  },
+  spookyBushTexture = nil
 }
 
 function Mode7:new(o)
@@ -46,6 +47,7 @@ function Mode7:load()
   self.textureManager:load()
   -- Now we can get the dead tree texture
   self.deadTreeTexture = self.textureManager:getTexture('deadTree')
+  self.spookyBushTexture = self.textureManager:getTexture('spookyBush')
   
   -- Set filtering for ground texture
   self.texture = love.graphics.newImage('assets/images/ground.png')
@@ -431,9 +433,13 @@ function Mode7:load()
   for k, v in pairs(self.postBloomSettings) do
       self.postBloomShader:send(k, v)
   end
+
+  -- Get the spooky bush texture
+  self.spookyBushTexture = self.textureManager:getTexture('spookyBush')
+  self.spookyBushTexture:setFilter('nearest', 'nearest')
 end
 
-function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems, deadTrees)
+function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems, deadTrees, spookyBushes)
   -- First render everything to temp canvas
   love.graphics.setCanvas(self.tempCanvas)
   love.graphics.clear()
@@ -561,6 +567,18 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
     })
   end
 
+  -- Add spooky bushes to render list
+  for _, bush in ipairs(spookyBushes or {}) do
+    local dx = bush.x - camera.x
+    local dy = bush.y - camera.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    table.insert(allObjects, {
+      type = "spookyBush",
+      object = bush,
+      distance = distance
+    })
+  end
 
   -- Sort objects by distance (furthest first)
   table.sort(allObjects, function(a, b)
@@ -569,7 +587,17 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
 
   -- Draw all objects in sorted order
   for _, obj in ipairs(allObjects) do
-    if obj.type == "deadTree" then
+    if obj.type == "spookyBush" then
+      love.graphics.setColor(1, 1, 1, 1)
+      self:drawSprite(obj.object, camera, {
+        texture = self.spookyBushTexture,
+        scale = 150.0 * Constants.SPRITE_SCALE * (obj.object.scale or 1.0),
+        heightScale = 1.0,
+        useAngleScaling = false,
+        rotation = 0
+      })
+      
+    elseif obj.type == "deadTree" then
       love.graphics.setColor(1, 1, 1, 1)
       self:drawSprite(obj.object, camera, {
         texture = self.deadTreeTexture,  -- Make sure this texture is initialized
