@@ -485,15 +485,23 @@ function Mode7:load()
 end
 
 function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, runes, orbItems, deadTrees, spookyBushes)
+  -- Calculate side bob offset before rendering
+  local sideOffset = math.cos(camera.bobPhase) * camera.bobSideAmount
+  local cosA = math.cos(camera.angle + math.pi/2)
+  local sinA = math.sin(camera.angle + math.pi/2)
+  local bobX = camera.x + cosA * sideOffset
+  local bobY = camera.y + sinA * sideOffset
+
   -- First render everything to temp canvas
   love.graphics.setCanvas(self.tempCanvas)
   love.graphics.clear()
 
   -- Draw ground with shader first
   love.graphics.setShader(self.shader)
-  self.shader:send('cameraPos', {camera.x, camera.y})
+  -- Use bobbed position for ground rendering
+  self.shader:send('cameraPos', {bobX, bobY})
   self.shader:send('cameraAngle', camera.angle)
-  self.shader:send('cameraHeight', camera.z)  -- Use camera's z value for height
+  self.shader:send('cameraHeight', camera.z)
   self.shader:send('lightPositions', unpack(self.lightPositions))
   self.shader:send('skyTexture', self.skyTexture)
   
@@ -959,7 +967,7 @@ function Mode7:drawSprite(entity, camera, options)
   -- Calculate ground position using the same projection as the shader
   local groundY = Constants.HORIZON_LINE + 
                  (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
-                 (Constants.CAMERA_HEIGHT / ry)
+                 (camera.z / ry)  -- Use camera.z instead of Constants.CAMERA_HEIGHT
   
   -- Position sprite directly at ground level
   local screenY = groundY
