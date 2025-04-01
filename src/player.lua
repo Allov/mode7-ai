@@ -248,6 +248,20 @@ function Player:handleInput()
 end
 
 function Player:takeDamage(amount)
+  -- Check for shield power-up
+  local shieldPowerUp = nil
+  for _, powerUp in ipairs(self.activePowerUps) do
+    if powerUp.type == "shield" then
+      shieldPowerUp = powerUp
+      break
+    end
+  end
+
+  -- Apply shield damage reduction if active
+  if shieldPowerUp then
+    amount = amount * shieldPowerUp.multiplier
+  end
+
   if self.invulnerableTimer > 0 or self.isDead then return false end
   
   self.health = math.max(0, self.health - amount)

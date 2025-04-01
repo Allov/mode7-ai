@@ -177,6 +177,38 @@ local Console = {
         self:print("Spawned general group")
       end
     },
+    powerup = {
+      desc = "Add a power-up to player: powerup <type>",
+      func = function(self, args)
+        if not args[1] then
+          self:print("Available power-up types:")
+          for type, data in pairs(GameData.POWERUP_TYPES) do
+            local rarityText = ""
+            if data.rarity == 1 then rarityText = "(Common)"
+            elseif data.rarity == 2 then rarityText = "(Uncommon)"
+            elseif data.rarity == 3 then rarityText = "(Rare)"
+            end
+            self:print(string.format("  %s %s: %s%s%%", 
+              type, 
+              rarityText,
+              data.description,
+              math.abs((data.multiplier - 1) * 100)))
+          end
+          return
+        end
+        
+        local powerupType = string.upper(args[1])
+        if not GameData.POWERUP_TYPES[powerupType] then
+          self:print("Invalid power-up type: " .. args[1])
+          self:print("Type 'powerup' to see available types")
+          return
+        end
+        
+        local powerupData = GameData.POWERUP_TYPES[powerupType]
+        _G.player:addPowerUp(powerupType, powerupData.multiplier, 30) -- Default 30s duration
+        self:print(string.format("Added %s power-up to player (30s)", powerupData.name))
+      end
+    },
   }
 }
 

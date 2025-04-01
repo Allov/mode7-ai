@@ -38,6 +38,14 @@ local GameData = {
       multiplier = 1.3,     -- 30% faster firing
       description = "Fire Rate +",
       rarity = 2
+    },
+    -- Add new Shield power-up
+    SHIELD = {
+      name = "shield",
+      color = {0.4, 0.4, 0.8},  -- Steel blue
+      multiplier = 0.5,         -- 50% damage reduction
+      description = "Damage Taken -",
+      rarity = 3               -- Rare, like Health
     }
   },
 
