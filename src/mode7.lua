@@ -367,37 +367,40 @@ function Mode7:load()
   self.orbItemTexture:setFilter('nearest', 'nearest')
 
   -- Create lightning texture
-  local lightningCanvas = love.graphics.newCanvas(32, 256)  -- Taller and thinner canvas
+  local lightningCanvas = love.graphics.newCanvas(48, 384)  -- Increased from 32x256 to 48x384
   love.graphics.setCanvas(lightningCanvas)
   love.graphics.clear()
   
   -- Draw main lightning bolt
-  love.graphics.setColor(1, 1, 1, 0.9)  -- Bright white core
+  love.graphics.setColor(1, 1, 1, 0.95)  -- Slightly increased opacity
   local points = {
-    16, 0,     -- Top point
-    12, 50,    -- First zag left
-    20, 100,   -- Zag right
-    14, 150,   -- Zag left
-    22, 200,   -- Zag right
-    16, 256    -- Bottom point
+    24, 0,      -- Top point
+    18, 75,     -- First zag left
+    30, 150,    -- Zag right
+    21, 225,    -- Zag left
+    33, 300,    -- Zag right
+    24, 384     -- Bottom point
   }
-  love.graphics.setLineWidth(3)
+  love.graphics.setLineWidth(4)  -- Increased from 3 to 4
   love.graphics.line(points)
   
   -- Draw outer glow
-  love.graphics.setColor(0.3, 0.3, 1.0, 0.5)  -- Light blue glow
-  love.graphics.setLineWidth(6)
+  love.graphics.setColor(0.3, 0.3, 1.0, 0.6)  -- Increased opacity from 0.5 to 0.6
+  love.graphics.setLineWidth(8)  -- Increased from 6 to 8
   love.graphics.line(points)
   
-  -- Add some small branches
-  love.graphics.setColor(0.7, 0.7, 1.0, 0.6)
-  love.graphics.setLineWidth(2)
+  -- Add more dramatic branches
+  love.graphics.setColor(0.7, 0.7, 1.0, 0.7)  -- Increased opacity
+  love.graphics.setLineWidth(3)  -- Increased from 2 to 3
   -- Branch 1
-  love.graphics.line(12, 50, 8, 70)
+  love.graphics.line(18, 75, 12, 105)
   -- Branch 2
-  love.graphics.line(20, 100, 24, 120)
+  love.graphics.line(30, 150, 36, 180)
   -- Branch 3
-  love.graphics.line(14, 150, 10, 170)
+  love.graphics.line(21, 225, 15, 255)
+  -- Additional branches
+  love.graphics.line(33, 300, 39, 330)
+  love.graphics.line(24, 150, 18, 180)
   
   love.graphics.setCanvas()
   self.lightningTexture = lightningCanvas
@@ -804,10 +807,10 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
       love.graphics.setColor(1, 1, 1, obj.object.alpha or 1)
       self:drawSprite(obj.object, camera, {
         texture = self.lightningTexture,
-        scale = 100.0 * Constants.SPRITE_SCALE,  -- Increased scale
-        heightScale = 2.5,  -- Increased height scaling
+        scale = 200.0 * Constants.SPRITE_SCALE,  -- Increased from 100.0 to 200.0
+        heightScale = 3.5,  -- Increased from 2.5 to 3.5
         useAngleScaling = false,
-        heightOffset = -150  -- Adjusted offset to position higher
+        heightOffset = -200  -- Increased from -150 to -200 to position higher
       })
     end
   end
