@@ -59,6 +59,18 @@ Rune.TYPES = {
     },
     description = "Extra Projectile, Fire Rate -15%, Damage -10%",
     rarity = 3  -- Slightly rarer than other runes
+  },
+  FROST = {
+    name = "Rune of Frost",
+    color = {0.5, 0.8, 1.0}, -- Ice blue
+    effects = {
+      fireRateMultiplier = 1.10,      -- 10% faster firing
+      moveSpeedMultiplier = 1.15,     -- 15% more speed (ice skating theme)
+      powerDurationMultiplier = 1.20,  -- 20% longer power-ups
+      onHitSlow = 0.15                -- 15% slow on all hits
+    },
+    description = "All hits slow enemies by 15%, Fire Rate +10%, Speed +15%, Power Duration +20%",
+    rarity = 2
   }
 }
 
@@ -108,6 +120,7 @@ function Rune:update(dt)
 end
 
 return Rune
+
 
 
 

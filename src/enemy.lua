@@ -1,5 +1,6 @@
 local Constants = require('src.constants')
 local DamageNumber = require('src.damagenumber')  -- Make sure path # correct
+local FrostOrb = require('src.orbs.frost')  -- Add this at the top with other requires
 
 local Enemy = {
   x = 0,
@@ -22,6 +23,8 @@ local Enemy = {
   isDead = false,  -- Add this flag
   shouldDropExp = true,  -- Add this flag
   isBuffed = false,
+  baseSpeed = 50,     -- Store base speed
+  slowEffects = {},   -- Track active slows
   
   -- Elite properties
   isElite = false,
@@ -71,6 +74,17 @@ function Enemy:init(x, y, makeElite)
 end
 
 function Enemy:update(dt)
+  -- Update slow effects
+  for i = #self.slowEffects, 1, -1 do
+    local slow = self.slowEffects[i]
+    slow.duration = slow.duration - dt
+    
+    if slow.duration <= 0 then
+      table.remove(self.slowEffects, i)
+      self:updateSpeed()  -- Recalculate speed when a slow expires
+    end
+  end
+
   if not self.isMoving then return end  -- Skip movement logic if standing still
   
   -- Update damage number if it exists
@@ -136,20 +150,40 @@ function math.clamp(x, min, max)
 end
 
 -- Add hit method with damage numbers
-function Enemy:hit(damage)
-  self.health = self.health - damage
+function Enemy:hit(damage, isCritical)
+  self.health = self.health - (damage or 25)
   
-  -- Create damage number with proper initialization
-  if DamageNumber then
-    self.damageNumber = DamageNumber:new({
-      value = damage,
-      x = self.x,
-      y = self.y,
-      z = Constants.CAMERA_HEIGHT - 10,
-      isCritical = false,
-      baseScale = 1.0
+  -- Apply slow if player has frost rune
+  if _G.player and _G.player.runeEffects.onHitSlow then
+    local slowAmount = _G.player.runeEffects.onHitSlow
+    local slowDuration = 2.0  -- 2 seconds slow duration
+    
+    print("Applying slow: " .. slowAmount)
+
+    -- Add new slow effect
+    table.insert(self.slowEffects, {
+      amount = slowAmount,
+      duration = slowDuration
     })
+    
+    -- Update speed with all active slows
+    self:updateSpeed()
+    
+    -- Add frost visual effect when slowed
+    if _G.effects then
+      FrostOrb:spawnFrostEffect(self.x, self.y, 0.5)
+    end
   end
+  
+  -- Create damage number
+  self.damageNumber = DamageNumber:new({
+    value = damage or 25,
+    x = self.x,
+    y = self.y,
+    z = Constants.CAMERA_HEIGHT - 10,
+    baseScale = isCritical and 1.5 or 1.0,
+    isCritical = isCritical
+  })
   
   -- Only queue death if not already dead
   if self.health <= 0 and not self.isDead then
@@ -179,7 +213,22 @@ function Enemy:hit(damage)
     _G.mobSpawner:queueEnemyDeath(self)
   end
   
-  return false
+  return self.health <= 0
+end
+
+-- Add new function to update speed based on slows
+function Enemy:updateSpeed()
+  -- Start with base speed
+  self.speed = self.baseSpeed
+  
+  -- Apply all active slows multiplicatively
+  for _, slow in ipairs(self.slowEffects) do
+    print("Applying slow: " .. slow.amount)
+    self.speed = self.speed * (1 - slow.amount)
+  end
+  
+  -- Ensure minimum speed
+  self.speed = math.max(self.speed, self.baseSpeed * 0.2)  -- Can't go below 20% speed
 end
 
 return Enemy

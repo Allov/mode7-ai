@@ -839,7 +839,7 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
         love.graphics.setColor(0.5, 0.8, 1.0, effect.object.alpha)
         self:drawSprite(effect.object, camera, {
           texture = self.frostTexture,
-          scale = 75.0 * Constants.SPRITE_SCALE * effect.object.scale,
+          scale = 25.0 * Constants.SPRITE_SCALE * effect.object.scale,
           heightScale = 1.0,
           useAngleScaling = false,
           rotation = effect.object.rotation

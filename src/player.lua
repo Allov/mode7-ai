@@ -51,7 +51,8 @@ local Player = {
     damageMultiplier = 1.0,
     critChanceBonus = 0,
     fireRateMultiplier = 1.0,
-    projectileCount = 0  -- New effect: additional projectiles
+    projectileCount = 0,  -- New effect: additional projectiles
+    onHitSlow = 0  -- Add this initialization
   },
   
   -- Add dash properties
