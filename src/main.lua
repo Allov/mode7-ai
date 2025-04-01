@@ -773,26 +773,61 @@ function love.draw()
 
   -- Draw active power-ups with hudFont
   local powerUpY = 250
-  love.graphics.print("Active Power-ups:", 10, powerUpY)
-  powerUpY = powerUpY + 25
-  
+  local powerUpX = 10
+  local powerUpWidth = 280  -- Increased from 220 to 280
+  local powerUpHeight = 30
+  local padding = 5
+  local cornerRadius = 6
+
+  -- Title with background
+  love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+  love.graphics.rectangle('fill', powerUpX, powerUpY, powerUpWidth, 25, cornerRadius)
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.print("Active Power-ups", powerUpX + padding, powerUpY + 4)
+  powerUpY = powerUpY + 30
+
+  -- Draw each power-up
   for _, powerUp in ipairs(player.activePowerUps) do
     local powerUpKey = powerUp.type:upper()
     local powerUpData = GameData.POWERUP_TYPES[powerUpKey]
     
     if powerUpData then
-      love.graphics.setColor(powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.3)
-      love.graphics.rectangle('fill', 10, powerUpY, 200, 20)
+      -- Background with alpha
+      love.graphics.setColor(0.1, 0.1, 0.1, 0.7)
+      love.graphics.rectangle('fill', powerUpX, powerUpY, powerUpWidth, powerUpHeight, cornerRadius)
       
+      -- Power-up name and effect
       love.graphics.setColor(1, 1, 1)
-      local text = string.format("%s (%.1fs)", powerUpData.description, powerUp.timeLeft)
-      love.graphics.print(text, 15, powerUpY + 2)
+      local effectText = string.format("%s%d%%", powerUpData.description, 
+        math.abs((powerUpData.multiplier - 1) * 100))
+      love.graphics.print(effectText, powerUpX + padding, powerUpY + 4)
       
+      -- Time remaining on the right side
+      love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
+      local timeText = string.format("%.1fs", powerUp.timeLeft)
+      local timeWidth = love.graphics.getFont():getWidth(timeText)
+      love.graphics.print(timeText, powerUpX + powerUpWidth - timeWidth - padding, 
+        powerUpY + 4)
+      
+      -- Progress bar
+      local barWidth = powerUpWidth - padding * 2
+      local barHeight = 3
+      -- Bar background
+      love.graphics.setColor(0.2, 0.2, 0.2, 0.5)
+      love.graphics.rectangle('fill', 
+        powerUpX + padding, 
+        powerUpY + powerUpHeight - barHeight - 4,
+        barWidth,
+        barHeight)
+      -- Bar fill
       love.graphics.setColor(powerUpData.color[1], powerUpData.color[2], powerUpData.color[3], 0.8)
-      local barWidth = (powerUp.timeLeft / powerUp.duration) * 190
-      love.graphics.rectangle('fill', 15, powerUpY + 15, barWidth, 3)
+      love.graphics.rectangle('fill', 
+        powerUpX + padding, 
+        powerUpY + powerUpHeight - barHeight - 4,
+        (powerUp.timeLeft / powerUp.duration) * barWidth,
+        barHeight)
       
-      powerUpY = powerUpY + 25
+      powerUpY = powerUpY + powerUpHeight + padding
     end
   end
   
