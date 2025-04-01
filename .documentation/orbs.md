@@ -27,9 +27,11 @@
    - Sound: Fire crackling
 
 4. **Orb of Frost**
-   - Effect: Every 3 seconds, freeze nearest {rank} enemies for 1 second
+   - Effect: Freezes enemies within range, dealing initial damage and DoT
+   - Slow: Reduces enemy speed by {50 + (5 * rank)}%
+   - Duration: 4 seconds
    - Visual: Ice crystals
-   - Sound: Ice formation
+   - Sound: Freezing wind
 
 5. **Orb of Seeking**
    - Effect: Launch {rank} homing projectiles every 4 seconds, dealing 75% player damage

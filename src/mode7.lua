@@ -53,6 +53,8 @@ function Mode7:load()
   self.deadTreeTexture = self.textureManager:getTexture('deadTree')
   self.spookyBushTexture = self.textureManager:getTexture('spookyBush')
   self.moonTexture = self.textureManager:getTexture('moon')
+  self.frostTexture = self.textureManager:getTexture('frost')
+  self.frostNovaTexture = self.textureManager:getTexture('frostNova')
   
   -- Set filtering for ground texture
   self.texture = love.graphics.newImage('assets/images/ground.png')
@@ -833,6 +835,25 @@ function Mode7:render(camera, enemies, projectiles, experienceOrbs, chests, rune
             yOffset = math.random(-1, 1),
           })
         end
+      elseif effect.type == "frost" then
+        love.graphics.setColor(0.5, 0.8, 1.0, effect.object.alpha)
+        self:drawSprite(effect.object, camera, {
+          texture = self.frostTexture,
+          scale = 75.0 * Constants.SPRITE_SCALE * effect.object.scale,
+          heightScale = 1.0,
+          useAngleScaling = false,
+          rotation = effect.object.rotation
+        })
+      elseif effect.type == "frost_nova" then
+        love.graphics.setColor(0.5, 0.8, 1.0, effect.object.alpha)
+        self:drawSprite(effect.object, camera, {
+          texture = self.frostNovaTexture,
+          scale = 150.0 * Constants.SPRITE_SCALE * effect.object.scale,  -- Increased base scale
+          heightScale = 0.1,  -- Very flat
+          useAngleScaling = false,  -- Don't scale with angle
+          rotation = 0,  -- No rotation
+          heightOffset = 0.05  -- Just above ground
+        })
       end
     end
   end
@@ -1110,6 +1131,59 @@ function Mode7:drawSprite(entity, camera, options)
       love.graphics.pop()
     end
   end
+end
+
+function Mode7:drawGroundSprite(entity, camera, options)
+    local texture = options.texture
+    local scale = options.scale or 100.0
+    local rotation = options.rotation or 0
+    local heightOffset = options.heightOffset or 0
+    local useAngleScaling = options.useAngleScaling or false
+    
+    -- Calculate relative position to camera
+    local dx = entity.x - camera.x
+    local dy = entity.y - camera.y
+    
+    -- Rotate position based on camera angle
+    local cosA = math.cos(camera.angle)
+    local sinA = math.sin(camera.angle)
+    local rx = dx * cosA - dy * sinA
+    local ry = dx * sinA + dy * cosA
+    
+    -- Skip if behind camera
+    if ry <= 0 then return end
+    
+    -- Calculate screen position
+    local screenX = Constants.SCREEN_WIDTH/2 + (rx * Constants.SCREEN_HEIGHT * 0.5) / ry
+    
+    -- Calculate ground position
+    local groundY = Constants.HORIZON_LINE + 
+                   (Constants.SCREEN_HEIGHT - Constants.HORIZON_LINE) * 
+                   (camera.z / ry)
+    
+    -- Apply height offset if any
+    local screenY = groundY + heightOffset
+    
+    -- Calculate perspective scale
+    local perspectiveScale = (Constants.SCREEN_HEIGHT) / (ry * math.tan(Constants.FOV * 0.5))
+    local spriteScale = perspectiveScale * scale * 0.01
+    
+    -- If using angle scaling, adjust for perspective
+    if useAngleScaling then
+        -- Use entity.angle if it exists, otherwise default to camera.angle
+        local entityAngle = entity.angle or camera.angle
+        spriteScale = spriteScale * (1 / math.cos(camera.angle - entityAngle))
+    end
+    
+    -- Draw the sprite
+    love.graphics.draw(
+        texture,
+        screenX, screenY,
+        rotation,
+        spriteScale, spriteScale,
+        texture:getWidth() / 2,
+        texture:getHeight() / 2
+    )
 end
 
 function Mode7:update(dt)

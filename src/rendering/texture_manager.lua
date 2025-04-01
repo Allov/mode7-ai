@@ -15,7 +15,8 @@ function TextureManager:load()
     -- Create dead tree texture first to ensure it exists
     self:createDeadTreeTexture()
     self:createSpookyBushTexture()
-    self:createMoonTexture()  -- Add moon texture creation
+    self:createMoonTexture()
+    self:createFrostTextures()  -- Add frost textures creation
 end
 
 function TextureManager:getTexture(name)
@@ -286,7 +287,119 @@ function TextureManager:createMoonTexture()
     return moonCanvas
 end
 
+function TextureManager:createFrostTextures()
+    print("Creating frost textures...")
+    
+    -- Create frost particle texture (snowflake/ice crystal)
+    local frostCanvas = love.graphics.newCanvas(64, 64)
+    love.graphics.setCanvas(frostCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    
+    -- Ice blue color
+    love.graphics.setColor(0.8, 0.9, 1.0, 1)
+    
+    -- Draw a snowflake pattern
+    local center = 32
+    local size = 28
+    
+    -- Draw main cross
+    love.graphics.setLineWidth(3)
+    for i = 0, 5 do
+        local angle = i * math.pi / 3
+        local x1 = center + math.cos(angle) * size
+        local y1 = center + math.sin(angle) * size
+        love.graphics.line(center, center, x1, y1)
+        
+        -- Draw smaller branches
+        local branchSize = size * 0.4
+        local branchAngle = math.pi / 6
+        local midX = center + math.cos(angle) * (size * 0.6)
+        local midY = center + math.sin(angle) * (size * 0.6)
+        
+        local branch1Angle = angle + branchAngle
+        local branch2Angle = angle - branchAngle
+        
+        love.graphics.line(
+            midX, midY,
+            midX + math.cos(branch1Angle) * branchSize,
+            midY + math.sin(branch1Angle) * branchSize
+        )
+        love.graphics.line(
+            midX, midY,
+            midX + math.cos(branch2Angle) * branchSize,
+            midY + math.sin(branch2Angle) * branchSize
+        )
+    end
+    
+    -- Add center detail
+    love.graphics.circle('fill', center, center, 4)
+    
+    love.graphics.setCanvas()
+    frostCanvas:setFilter('linear', 'linear')
+    self.textures.frost = frostCanvas
+    
+    -- Create frost nova texture (expanding ice wave)
+    local novaCanvas = love.graphics.newCanvas(256, 256)
+    love.graphics.setCanvas(novaCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+
+    -- Draw expanding wave pattern
+    local centerX, centerY = 128, 128
+    local maxRadius = 120
+
+    -- Draw ground frost pattern
+    for radius = maxRadius, 0, -15 do
+        local alpha = (radius / maxRadius) * 0.7  -- Reduced alpha for better blending
+        love.graphics.setColor(0.8, 0.9, 1.0, alpha)
+        
+        -- Draw filled circle with gradient
+        love.graphics.circle('fill', centerX, centerY, radius)
+    end
+
+    -- Add crystalline pattern
+    love.graphics.setLineWidth(2)
+    for i = 1, 16 do
+        local angle = i * math.pi / 8
+        local innerRadius = 20
+        local outerRadius = maxRadius
+        
+        -- Draw ice cracks
+        love.graphics.setColor(0.9, 0.95, 1.0, 0.5)
+        local x1 = centerX + math.cos(angle) * innerRadius
+        local y1 = centerY + math.sin(angle) * innerRadius
+        local x2 = centerX + math.cos(angle) * outerRadius
+        local y2 = centerY + math.sin(angle) * outerRadius
+        love.graphics.line(x1, y1, x2, y2)
+        
+        -- Add smaller branching cracks
+        local midRadius = outerRadius * 0.6
+        local midX = centerX + math.cos(angle) * midRadius
+        local midY = centerY + math.sin(angle) * midRadius
+        local branchLength = outerRadius * 0.2
+        
+        love.graphics.setColor(0.9, 0.95, 1.0, 0.3)
+        love.graphics.line(
+            midX,
+            midY,
+            midX + math.cos(angle + 0.5) * branchLength,
+            midY + math.sin(angle + 0.5) * branchLength
+        )
+        love.graphics.line(
+            midX,
+            midY,
+            midX + math.cos(angle - 0.5) * branchLength,
+            midY + math.sin(angle - 0.5) * branchLength
+        )
+    end
+
+    love.graphics.setCanvas()
+    novaCanvas:setFilter('linear', 'linear')
+    self.textures.frostNova = novaCanvas
+end
+
 return TextureManager
+
+
 
 
 
