@@ -57,7 +57,12 @@ function Camera:update(dt, player)
   self.angle = player.angle
 
   -- Head bob effect based on movement
-  local isMoving = math.abs(player.forward) > 0.01 or math.abs(player.strafe) > 0.01
+  local forward = player.forward or 0  -- Default to 0 if nil
+  local strafe = player.strafe or 0    -- Default to 0 if nil
+  local isMoving = math.abs(forward) > 0.01 or math.abs(strafe) > 0.01
+  
+  -- Set bobActive based on movement
+  self.bobActive = isMoving
   
   if isMoving then
     -- Update phase

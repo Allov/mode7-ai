@@ -49,7 +49,9 @@ lovetest.test('Camera follows player', function()
     angle = 1.5,
     isDead = false,
     lastX = 100,
-    lastY = 200
+    lastY = 200,
+    forward = 0,  -- Add these properties
+    strafe = 0    -- Add these properties
   }
   
   cam:update(1.0, mockPlayer)
@@ -66,8 +68,10 @@ lovetest.test('Camera bob effect when moving', function()
     y = 200,
     angle = 0,
     isDead = false,
-    lastX = 90, -- Different from current position to simulate movement
-    lastY = 190
+    lastX = 90,
+    lastY = 190,
+    forward = 1.0,  -- Add movement values
+    strafe = 0.5    -- Add movement values
   }
   
   cam:update(1.0, mockPlayer)
@@ -100,5 +104,6 @@ if arg[2] == "test" then
 end
 
 return lovetest
+
 
 
