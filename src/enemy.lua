@@ -154,7 +154,7 @@ function Enemy:hit(damage, isCritical)
   self.health = self.health - (damage or 25)
   
   -- Apply slow if player has frost rune
-  if _G.player and _G.player.runeEffects.onHitSlow then
+  if _G.player and _G.player.runeEffects.onHitSlow and _G.player.runeEffects.onHitSlow > 0 then
     local slowAmount = _G.player.runeEffects.onHitSlow
     local slowDuration = 2.0  -- 2 seconds slow duration
     
