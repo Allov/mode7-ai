@@ -1,0 +1,99 @@
+name: Game CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LÖVE
+        run: |
+          sudo add-apt-repository ppa:bartbes/love-stable
+          sudo apt-get update
+          sudo apt-get install love xvfb
+
+      - name: Setup Luacheck
+        run: |
+          sudo apt-get install luarocks
+          sudo luarocks install luacheck
+
+      - name: Code Quality Check
+        run: luacheck . --config .luacheckrc
+
+      - name: Run Test Suite
+        run: xvfb-run love . test
+
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Game Package
+        run: |
+          zip -9 -r game.love . -x "*.git*" "*.github*" "*.bat" "*.md"
+
+      - name: Build Windows Version
+        run: |
+          wget https://github.com/love2d/love/releases/download/11.4/love-11.4-win64.zip
+          unzip love-11.4-win64.zip
+          mkdir -p build/win
+          cp love-11.4-win64/* build/win/
+          cat build/win/love.exe game.love > build/win/Mode7.exe
+
+      - name: Build macOS Version
+        run: |
+          wget https://github.com/love2d/love/releases/download/11.4/love-11.4-macos.zip
+          unzip love-11.4-macos.zip
+          mkdir -p build/macos
+          cp -r love.app build/macos/Mode7.app
+          cp game.love build/macos/Mode7.app/Contents/Resources/
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-builds
+          path: |
+            game.love
+            build/win
+            build/macos
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: game-builds
+
+      - name: Package Builds
+        run: |
+          zip -r Mode7-Windows.zip build/win/
+          zip -r Mode7-macOS.zip build/macos/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            game.love
+            Mode7-Windows.zip
+            Mode7-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+

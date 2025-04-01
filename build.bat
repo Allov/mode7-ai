@@ -17,10 +17,10 @@ copy "C:\Program Files\LOVE\*.dll" win\
 copy "C:\Program Files\LOVE\love.exe" win\
 
 :: Combine love.exe and game.love into a single executable
-copy /b "C:\Program Files\LOVE\love.exe"+game.love win\FoodTruckJourney.exe
+copy /b "C:\Program Files\LOVE\love.exe"+game.love win\Mode7.exe
 
 echo Done! Created:
 echo - build\game.love
-echo - build\win\FoodTruckJourney.exe
+echo - build\win\Mode7.exe
 
 echo Done! Created build\game.love
